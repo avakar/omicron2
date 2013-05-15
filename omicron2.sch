@@ -10160,6 +10160,206 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 </deviceset>
 </devicesets>
 </library>
+<library name="transistors">
+<packages>
+<package name="SOT23">
+<description>&lt;b&gt;SOT-23&lt;/b&gt;</description>
+<wire x1="1.4224" y1="0.6604" x2="1.4224" y2="-0.6604" width="0.1524" layer="51"/>
+<wire x1="1.4224" y1="-0.6604" x2="-1.4224" y2="-0.6604" width="0.1524" layer="51"/>
+<wire x1="-1.4224" y1="-0.6604" x2="-1.4224" y2="0.6604" width="0.1524" layer="51"/>
+<wire x1="-1.4224" y1="0.6604" x2="1.4224" y2="0.6604" width="0.1524" layer="51"/>
+<wire x1="-1.4224" y1="-0.1854" x2="-1.4224" y2="0.6604" width="0.1524" layer="21"/>
+<wire x1="-1.4224" y1="0.6604" x2="-0.6576" y2="0.6604" width="0.1524" layer="21"/>
+<wire x1="1.4224" y1="0.6604" x2="1.4224" y2="-0.1854" width="0.1524" layer="21"/>
+<wire x1="0.6326" y1="0.6604" x2="1.4224" y2="0.6604" width="0.1524" layer="21"/>
+<smd name="3" x="0" y="1.1" dx="1" dy="1.4" layer="1"/>
+<smd name="2" x="0.95" y="-1.1" dx="1" dy="1.4" layer="1"/>
+<smd name="1" x="-0.95" y="-1.1" dx="1" dy="1.4" layer="1"/>
+<text x="-1.905" y="1.905" size="1.27" layer="25">&gt;NAME</text>
+<text x="-1.905" y="-3.175" size="1.27" layer="27">&gt;VALUE</text>
+<rectangle x1="-0.2286" y1="0.7112" x2="0.2286" y2="1.2954" layer="51"/>
+<rectangle x1="0.7112" y1="-1.2954" x2="1.1684" y2="-0.7112" layer="51"/>
+<rectangle x1="-1.1684" y1="-1.2954" x2="-0.7112" y2="-0.7112" layer="51"/>
+</package>
+<package name="SOT323">
+<description>SOT323 Philips</description>
+<wire x1="0.9224" y1="0.4604" x2="0.9224" y2="-0.4604" width="0.127" layer="51"/>
+<wire x1="0.9224" y1="-0.4604" x2="-0.9224" y2="-0.4604" width="0.127" layer="51"/>
+<wire x1="-0.9224" y1="-0.4604" x2="-0.9224" y2="0.4604" width="0.127" layer="51"/>
+<wire x1="-0.9224" y1="0.4604" x2="0.9224" y2="0.4604" width="0.127" layer="51"/>
+<smd name="3" x="0" y="0.9" dx="0.6" dy="1" layer="1"/>
+<smd name="1" x="-0.65" y="-0.9" dx="0.6" dy="1" layer="1"/>
+<smd name="2" x="0.65" y="-0.9" dx="0.6" dy="1" layer="1"/>
+<text x="-1.905" y="1.505" size="1.27" layer="25">&gt;NAME</text>
+<text x="-1.905" y="-2.775" size="1.27" layer="27">&gt;VALUE</text>
+<rectangle x1="-0.8" y1="-1.1" x2="-0.5" y2="-0.5" layer="51"/>
+<rectangle x1="0.5" y1="-1.1" x2="0.8" y2="-0.5" layer="51"/>
+<rectangle x1="-0.15" y1="0.5" x2="0.15" y2="1.1" layer="51"/>
+</package>
+</packages>
+<symbols>
+<symbol name="NPN-BIAS">
+<wire x1="2.54" y1="2.54" x2="0.508" y2="1.524" width="0.1524" layer="94"/>
+<wire x1="1.778" y1="-1.524" x2="2.54" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="2.54" y1="-2.54" x2="1.27" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="1.27" y1="-2.54" x2="1.778" y2="-1.524" width="0.1524" layer="94"/>
+<wire x1="1.54" y1="-2.04" x2="0.308" y2="-1.424" width="0.1524" layer="94"/>
+<wire x1="1.524" y1="-2.413" x2="2.286" y2="-2.413" width="0.254" layer="94"/>
+<wire x1="2.286" y1="-2.413" x2="1.778" y2="-1.778" width="0.254" layer="94"/>
+<wire x1="1.778" y1="-1.778" x2="1.524" y2="-2.286" width="0.254" layer="94"/>
+<wire x1="1.524" y1="-2.286" x2="1.905" y2="-2.286" width="0.254" layer="94"/>
+<wire x1="1.905" y1="-2.286" x2="1.778" y2="-2.032" width="0.254" layer="94"/>
+<wire x1="-5.08" y1="0" x2="-4.826" y2="0.762" width="0.1524" layer="94"/>
+<wire x1="-4.826" y1="0.762" x2="-4.572" y2="-0.508" width="0.1524" layer="94"/>
+<wire x1="-4.572" y1="-0.508" x2="-4.318" y2="0.762" width="0.1524" layer="94"/>
+<wire x1="-4.318" y1="0.762" x2="-4.064" y2="-0.508" width="0.1524" layer="94"/>
+<wire x1="-4.064" y1="-0.508" x2="-3.81" y2="0.762" width="0.1524" layer="94"/>
+<wire x1="-3.81" y1="0.762" x2="-3.556" y2="-0.508" width="0.1524" layer="94"/>
+<wire x1="-3.556" y1="-0.508" x2="-3.302" y2="0" width="0.1524" layer="94"/>
+<wire x1="-3.302" y1="0" x2="-2.286" y2="0" width="0.1524" layer="94"/>
+<wire x1="-2.286" y1="0" x2="-0.254" y2="0" width="0.1524" layer="94"/>
+<wire x1="-2.286" y1="0" x2="-2.286" y2="-0.762" width="0.1524" layer="94"/>
+<wire x1="-2.286" y1="-0.762" x2="-1.778" y2="-1.016" width="0.1524" layer="94"/>
+<wire x1="-1.778" y1="-1.016" x2="-2.794" y2="-1.27" width="0.1524" layer="94"/>
+<wire x1="-2.794" y1="-1.27" x2="-1.778" y2="-1.524" width="0.1524" layer="94"/>
+<wire x1="-1.778" y1="-1.524" x2="-2.794" y2="-1.778" width="0.1524" layer="94"/>
+<wire x1="-2.794" y1="-1.778" x2="-1.778" y2="-2.032" width="0.1524" layer="94"/>
+<wire x1="-1.778" y1="-2.032" x2="-2.794" y2="-2.286" width="0.1524" layer="94"/>
+<wire x1="-2.794" y1="-2.286" x2="-2.286" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="-2.286" y1="-2.54" x2="-2.286" y2="-3.556" width="0.1524" layer="94"/>
+<wire x1="-2.286" y1="-3.556" x2="2.54" y2="-3.556" width="0.1524" layer="94"/>
+<circle x="-2.286" y="0" radius="0.254" width="0.3048" layer="94"/>
+<circle x="2.54" y="-3.556" radius="0.254" width="0.3048" layer="94"/>
+<text x="-10.16" y="7.62" size="1.778" layer="95">&gt;NAME</text>
+<text x="-10.16" y="5.08" size="1.778" layer="96">&gt;VALUE</text>
+<rectangle x1="-0.254" y1="-2.54" x2="0.508" y2="2.54" layer="94"/>
+<pin name="B" x="-7.62" y="0" visible="off" length="short" direction="pas" swaplevel="1"/>
+<pin name="E" x="2.54" y="-5.08" visible="off" length="short" direction="pas" swaplevel="3" rot="R90"/>
+<pin name="C" x="2.54" y="5.08" visible="off" length="short" direction="pas" swaplevel="2" rot="R270"/>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="NPN-BIAS" prefix="Q" uservalue="yes">
+<gates>
+<gate name="G$1" symbol="NPN-BIAS" x="0" y="0"/>
+</gates>
+<devices>
+<device name="-SOT23-BEC" package="SOT23">
+<connects>
+<connect gate="G$1" pin="B" pad="1"/>
+<connect gate="G$1" pin="C" pad="3"/>
+<connect gate="G$1" pin="E" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="-SOT323-BEC" package="SOT323">
+<connects>
+<connect gate="G$1" pin="B" pad="1"/>
+<connect gate="G$1" pin="C" pad="3"/>
+<connect gate="G$1" pin="E" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
+<library name="transistor-pnp">
+<description>&lt;b&gt;PNP Transistors&lt;/b&gt;&lt;p&gt;
+&lt;author&gt;Created by librarian@cadsoft.de&lt;/author&gt;</description>
+<packages>
+<package name="SOT23-BEC">
+<description>&lt;b&gt;TO-236&lt;/b&gt; ITT Intermetall</description>
+<wire x1="1.4224" y1="0.6604" x2="1.4224" y2="-0.6604" width="0.127" layer="51"/>
+<wire x1="1.4224" y1="-0.6604" x2="-1.4224" y2="-0.6604" width="0.127" layer="51"/>
+<wire x1="-1.4224" y1="-0.6604" x2="-1.4224" y2="0.6604" width="0.127" layer="51"/>
+<wire x1="-1.4224" y1="0.6604" x2="1.4224" y2="0.6604" width="0.127" layer="51"/>
+<smd name="C" x="0" y="1.1" dx="1" dy="1.4" layer="1"/>
+<smd name="E" x="0.95" y="-1.1" dx="1" dy="1.4" layer="1"/>
+<smd name="B" x="-0.95" y="-1.1" dx="1" dy="1.4" layer="1"/>
+<text x="-1.905" y="1.905" size="1.27" layer="25">&gt;NAME</text>
+<text x="-1.905" y="-3.175" size="1.27" layer="27">&gt;VALUE</text>
+<rectangle x1="-0.2286" y1="0.7112" x2="0.2286" y2="1.2954" layer="51"/>
+<rectangle x1="0.7112" y1="-1.2954" x2="1.1684" y2="-0.7112" layer="51"/>
+<rectangle x1="-1.1684" y1="-1.2954" x2="-0.7112" y2="-0.7112" layer="51"/>
+</package>
+<package name="SOT323-BEC">
+<description>SOT323 Philips</description>
+<wire x1="0.9224" y1="0.4604" x2="0.9224" y2="-0.4604" width="0.127" layer="51"/>
+<wire x1="0.9224" y1="-0.4604" x2="-0.9224" y2="-0.4604" width="0.127" layer="51"/>
+<wire x1="-0.9224" y1="-0.4604" x2="-0.9224" y2="0.4604" width="0.127" layer="51"/>
+<wire x1="-0.9224" y1="0.4604" x2="0.9224" y2="0.4604" width="0.127" layer="51"/>
+<smd name="3" x="0" y="0.9" dx="0.6" dy="1" layer="1"/>
+<smd name="1" x="-0.65" y="-0.9" dx="0.6" dy="1" layer="1"/>
+<smd name="2" x="0.65" y="-0.9" dx="0.6" dy="1" layer="1"/>
+<text x="-1.905" y="1.505" size="1.27" layer="25">&gt;NAME</text>
+<text x="-1.905" y="-2.775" size="1.27" layer="27">&gt;VALUE</text>
+<rectangle x1="-0.8" y1="-1.1" x2="-0.5" y2="-0.5" layer="51"/>
+<rectangle x1="0.5" y1="-1.1" x2="0.8" y2="-0.5" layer="51"/>
+<rectangle x1="-0.15" y1="0.5" x2="0.15" y2="1.1" layer="51"/>
+</package>
+</packages>
+<symbols>
+<symbol name="PNP">
+<wire x1="2.086" y1="1.678" x2="1.578" y2="2.594" width="0.1524" layer="94"/>
+<wire x1="1.578" y1="2.594" x2="0.516" y2="1.478" width="0.1524" layer="94"/>
+<wire x1="0.516" y1="1.478" x2="2.086" y2="1.678" width="0.1524" layer="94"/>
+<wire x1="2.54" y1="2.54" x2="1.808" y2="2.124" width="0.1524" layer="94"/>
+<wire x1="2.54" y1="-2.54" x2="0.508" y2="-1.524" width="0.1524" layer="94"/>
+<wire x1="1.905" y1="1.778" x2="1.524" y2="2.413" width="0.254" layer="94"/>
+<wire x1="1.524" y1="2.413" x2="0.762" y2="1.651" width="0.254" layer="94"/>
+<wire x1="0.762" y1="1.651" x2="1.778" y2="1.778" width="0.254" layer="94"/>
+<wire x1="1.778" y1="1.778" x2="1.524" y2="2.159" width="0.254" layer="94"/>
+<wire x1="1.524" y1="2.159" x2="1.143" y2="1.905" width="0.254" layer="94"/>
+<wire x1="1.143" y1="1.905" x2="1.524" y2="1.905" width="0.254" layer="94"/>
+<text x="-10.16" y="7.62" size="1.778" layer="95">&gt;NAME</text>
+<text x="-10.16" y="5.08" size="1.778" layer="96">&gt;VALUE</text>
+<rectangle x1="-0.254" y1="-2.54" x2="0.508" y2="2.54" layer="94"/>
+<pin name="B" x="-2.54" y="0" visible="off" length="short" direction="pas"/>
+<pin name="E" x="2.54" y="5.08" visible="off" length="short" direction="pas" rot="R270"/>
+<pin name="C" x="2.54" y="-5.08" visible="off" length="short" direction="pas" rot="R90"/>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="BC807*" prefix="Q">
+<description>&lt;b&gt;PNP Transistror&lt;/b&gt;</description>
+<gates>
+<gate name="G$1" symbol="PNP" x="0" y="0"/>
+</gates>
+<devices>
+<device name="SMD" package="SOT23-BEC">
+<connects>
+<connect gate="G$1" pin="B" pad="B"/>
+<connect gate="G$1" pin="C" pad="C"/>
+<connect gate="G$1" pin="E" pad="E"/>
+</connects>
+<technologies>
+<technology name="-16"/>
+<technology name="-16LT1"/>
+<technology name="-25"/>
+<technology name="-25LT1"/>
+<technology name="-40"/>
+<technology name="-40LT1"/>
+</technologies>
+</device>
+<device name="W" package="SOT323-BEC">
+<connects>
+<connect gate="G$1" pin="B" pad="1"/>
+<connect gate="G$1" pin="C" pad="3"/>
+<connect gate="G$1" pin="E" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -10452,7 +10652,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="R6" library="rcl" deviceset="R-EU_" device="R0603" value="4k7"/>
 <part name="+3V9" library="supply1" deviceset="+3V3" device=""/>
 <part name="TP1" library="testpad" deviceset="TP" device="TP15R" value="TPTP15R"/>
-<part name="TP2" library="testpad" deviceset="TP" device="TP15R" value="TPTP15R">
+<part name="TP2" library="testpad" deviceset="TP" device="TP20R" value="TPTP20R">
 <attribute name="TP_SIGNAL_NAME" value=""/>
 </part>
 <part name="GND53" library="supply1" deviceset="GND" device=""/>
@@ -10501,6 +10701,20 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="R7" library="rcl" deviceset="R-EU_" device="R0603" value="47k"/>
 <part name="GND99" library="supply1" deviceset="GND" device=""/>
 <part name="GND100" library="supply1" deviceset="GND" device=""/>
+<part name="Q1" library="transistors" deviceset="NPN-BIAS" device="-SOT323-BEC"/>
+<part name="R60" library="rcl" deviceset="R-EU_" device="R0603" value="6k8 1%"/>
+<part name="Q2" library="transistor-pnp" deviceset="BC807*" device="W"/>
+<part name="GND47" library="supply1" deviceset="GND" device=""/>
+<part name="P+3" library="supply1" deviceset="+5V" device=""/>
+<part name="Q3" library="transistors" deviceset="NPN-BIAS" device="-SOT323-BEC"/>
+<part name="R61" library="rcl" deviceset="R-EU_" device="R0603" value="6k8 1%"/>
+<part name="Q4" library="transistor-pnp" deviceset="BC807*" device="W"/>
+<part name="GND48" library="supply1" deviceset="GND" device=""/>
+<part name="+3V6" library="supply1" deviceset="+3V3" device=""/>
+<part name="C31" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
+<part name="C32" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
+<part name="GND94" library="supply1" deviceset="GND" device=""/>
+<part name="GND101" library="supply1" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -10510,17 +10724,11 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <instance part="IC5" gate="G$1" x="43.18" y="68.58"/>
 <instance part="+3V16" gate="G$1" x="22.86" y="76.2" rot="R90"/>
 <instance part="GND51" gate="1" x="22.86" y="71.12" rot="R270"/>
-<instance part="R5" gate="G$1" x="63.5" y="83.82" smashed="yes" rot="R90">
-<attribute name="NAME" x="67.0814" y="80.01" size="1.778" layer="95" rot="R90"/>
-<attribute name="VALUE" x="66.802" y="80.01" size="1.778" layer="96" rot="R90"/>
-</instance>
+<instance part="R5" gate="G$1" x="63.5" y="83.82" rot="R90"/>
 <instance part="+3V17" gate="G$1" x="63.5" y="91.44"/>
 <instance part="+3V18" gate="G$1" x="63.5" y="60.96" rot="R270"/>
 <instance part="+3V19" gate="G$1" x="63.5" y="58.42" rot="R270"/>
-<instance part="R6" gate="G$1" x="43.18" y="38.1" smashed="yes" rot="R90">
-<attribute name="NAME" x="41.6814" y="34.29" size="1.778" layer="95" rot="R90"/>
-<attribute name="VALUE" x="46.482" y="34.29" size="1.778" layer="96" rot="R90"/>
-</instance>
+<instance part="R6" gate="G$1" x="43.18" y="38.1" rot="R90"/>
 <instance part="+3V9" gate="G$1" x="43.18" y="45.72"/>
 <instance part="TP1" gate="G$1" x="38.1" y="30.48" rot="R90"/>
 <instance part="TP2" gate="G$1" x="38.1" y="25.4" rot="R90"/>
@@ -10528,11 +10736,18 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
 <instance part="IC4" gate="G$1" x="198.12" y="114.3"/>
 <instance part="LED5" gate="G$1" x="127" y="35.56" rot="R90"/>
-<instance part="R59" gate="G$1" x="119.38" y="35.56" smashed="yes">
-<attribute name="NAME" x="115.57" y="37.0586" size="1.778" layer="95"/>
-<attribute name="VALUE" x="115.57" y="32.258" size="1.778" layer="96"/>
-</instance>
+<instance part="R59" gate="G$1" x="119.38" y="35.56"/>
 <instance part="GND95" gate="1" x="134.62" y="35.56" rot="R90"/>
+<instance part="Q1" gate="G$1" x="58.42" y="127"/>
+<instance part="R60" gate="G$1" x="71.12" y="134.62" rot="R180"/>
+<instance part="Q2" gate="G$1" x="83.82" y="134.62"/>
+<instance part="GND47" gate="1" x="60.96" y="119.38"/>
+<instance part="P+3" gate="1" x="86.36" y="144.78"/>
+<instance part="Q3" gate="G$1" x="109.22" y="152.4"/>
+<instance part="R61" gate="G$1" x="121.92" y="160.02" rot="R180"/>
+<instance part="Q4" gate="G$1" x="134.62" y="160.02"/>
+<instance part="GND48" gate="1" x="111.76" y="144.78"/>
+<instance part="+3V6" gate="G$1" x="137.16" y="170.18"/>
 </instances>
 <busses>
 </busses>
@@ -10551,6 +10766,14 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <segment>
 <pinref part="LED5" gate="G$1" pin="C"/>
 <pinref part="GND95" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="Q1" gate="G$1" pin="E"/>
+<pinref part="GND47" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="Q3" gate="G$1" pin="E"/>
+<pinref part="GND48" gate="1" pin="GND"/>
 </segment>
 </net>
 <net name="+3V3" class="0">
@@ -10573,6 +10796,11 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <segment>
 <pinref part="R6" gate="G$1" pin="2"/>
 <pinref part="+3V9" gate="G$1" pin="+3V3"/>
+</segment>
+<segment>
+<pinref part="Q4" gate="G$1" pin="E"/>
+<wire x1="137.16" y1="167.64" x2="137.16" y2="165.1" width="0.1524" layer="91"/>
+<pinref part="+3V6" gate="G$1" pin="+3V3"/>
 </segment>
 </net>
 <net name="FLASH_SO" class="0">
@@ -10902,6 +11130,69 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC4" gate="G$1" pin="DQML"/>
 <wire x1="185.42" y1="129.54" x2="165.1" y2="129.54" width="0.1524" layer="91"/>
 <label x="165.1" y="129.54" size="1.778" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="N$7" class="0">
+<segment>
+<pinref part="R60" gate="G$1" pin="1"/>
+<pinref part="Q2" gate="G$1" pin="B"/>
+<wire x1="76.2" y1="134.62" x2="81.28" y2="134.62" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$24" class="0">
+<segment>
+<pinref part="R60" gate="G$1" pin="2"/>
+<wire x1="66.04" y1="134.62" x2="60.96" y2="134.62" width="0.1524" layer="91"/>
+<pinref part="Q1" gate="G$1" pin="C"/>
+<wire x1="60.96" y1="134.62" x2="60.96" y2="132.08" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="VIO33" class="0">
+<segment>
+<pinref part="Q3" gate="G$1" pin="B"/>
+<wire x1="101.6" y1="152.4" x2="96.52" y2="152.4" width="0.1524" layer="91"/>
+<label x="96.52" y="152.4" size="1.778" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="+5V" class="0">
+<segment>
+<pinref part="Q2" gate="G$1" pin="E"/>
+<pinref part="P+3" gate="1" pin="+5V"/>
+<wire x1="86.36" y1="142.24" x2="86.36" y2="139.7" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="VCC_B2" class="0">
+<segment>
+<pinref part="Q2" gate="G$1" pin="C"/>
+<wire x1="86.36" y1="129.54" x2="86.36" y2="124.46" width="0.1524" layer="91"/>
+<label x="86.36" y="124.46" size="1.778" layer="95" rot="R270" xref="yes"/>
+</segment>
+<segment>
+<pinref part="Q4" gate="G$1" pin="C"/>
+<wire x1="137.16" y1="154.94" x2="137.16" y2="149.86" width="0.1524" layer="91"/>
+<label x="137.16" y="149.86" size="1.778" layer="95" rot="R270" xref="yes"/>
+</segment>
+</net>
+<net name="N$25" class="0">
+<segment>
+<pinref part="R61" gate="G$1" pin="1"/>
+<pinref part="Q4" gate="G$1" pin="B"/>
+<wire x1="127" y1="160.02" x2="132.08" y2="160.02" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="N$26" class="0">
+<segment>
+<pinref part="R61" gate="G$1" pin="2"/>
+<wire x1="116.84" y1="160.02" x2="111.76" y2="160.02" width="0.1524" layer="91"/>
+<pinref part="Q3" gate="G$1" pin="C"/>
+<wire x1="111.76" y1="160.02" x2="111.76" y2="157.48" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="VIO50" class="0">
+<segment>
+<pinref part="Q1" gate="G$1" pin="B"/>
+<wire x1="50.8" y1="127" x2="45.72" y2="127" width="0.1524" layer="91"/>
+<label x="45.72" y="127" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 </nets>
@@ -11469,8 +11760,8 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <instance part="TR14" gate="G$1" x="170.18" y="78.74"/>
 <instance part="TR15" gate="G$1" x="170.18" y="60.96"/>
 <instance part="TR16" gate="G$1" x="170.18" y="43.18"/>
-<instance part="+3V23" gate="G$1" x="55.88" y="177.8"/>
-<instance part="+3V24" gate="G$1" x="152.4" y="177.8"/>
+<instance part="+3V23" gate="G$1" x="55.88" y="198.12"/>
+<instance part="+3V24" gate="G$1" x="152.4" y="198.12"/>
 <instance part="GND60" gate="1" x="58.42" y="20.32"/>
 <instance part="GND61" gate="1" x="154.94" y="17.78"/>
 <instance part="JP97" gate="G$1" x="205.74" y="165.1" smashed="yes" rot="R180">
@@ -11677,14 +11968,18 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <instance part="GND91" gate="1" x="144.78" y="114.3"/>
 <instance part="GND92" gate="1" x="144.78" y="132.08"/>
 <instance part="GND93" gate="1" x="144.78" y="149.86"/>
-<instance part="P+2" gate="1" x="248.92" y="175.26" rot="R90"/>
-<instance part="JP9" gate="G$1" x="261.62" y="177.8" smashed="yes" rot="R180">
-<attribute name="NAME" x="266.7" y="177.8" size="1.778" layer="95" rot="R180"/>
+<instance part="P+2" gate="1" x="236.22" y="167.64" rot="R90"/>
+<instance part="JP9" gate="G$1" x="248.92" y="170.18" smashed="yes" rot="R180">
+<attribute name="NAME" x="254" y="170.18" size="1.778" layer="95" rot="R180"/>
 </instance>
-<instance part="JP10" gate="G$1" x="259.08" y="175.26" smashed="yes" rot="R180">
-<attribute name="NAME" x="264.16" y="175.26" size="1.778" layer="95" rot="R180"/>
+<instance part="JP10" gate="G$1" x="246.38" y="167.64" smashed="yes" rot="R180">
+<attribute name="NAME" x="251.46" y="167.64" size="1.778" layer="95" rot="R180"/>
 </instance>
 <instance part="FRAME3" gate="G$1" x="7.62" y="7.62"/>
+<instance part="C31" gate="G$1" x="144.78" y="175.26"/>
+<instance part="C32" gate="G$1" x="48.26" y="175.26"/>
+<instance part="GND94" gate="1" x="48.26" y="167.64"/>
+<instance part="GND101" gate="1" x="144.78" y="167.64"/>
 </instances>
 <busses>
 <bus name="S[1..16],SD[1..16]">
@@ -11738,6 +12033,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="63.5" y1="27.94" x2="63.5" y2="25.4" width="0.1524" layer="91"/>
 <wire x1="63.5" y1="25.4" x2="58.42" y2="25.4" width="0.1524" layer="91"/>
 <junction x="63.5" y="25.4"/>
+<junction x="58.42" y="25.4"/>
 </segment>
 <segment>
 <pinref part="TR9" gate="G$1" pin="GND"/>
@@ -11780,6 +12076,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="160.02" y1="25.4" x2="160.02" y2="22.86" width="0.1524" layer="91"/>
 <wire x1="160.02" y1="22.86" x2="154.94" y2="22.86" width="0.1524" layer="91"/>
 <junction x="160.02" y="22.86"/>
+<junction x="154.94" y="22.86"/>
 </segment>
 <segment>
 <pinref part="R27" gate="G$1" pin="1"/>
@@ -11917,12 +12214,21 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="R51" gate="G$1" pin="1"/>
 <pinref part="GND93" gate="1" pin="GND"/>
 </segment>
+<segment>
+<pinref part="C32" gate="G$1" pin="2"/>
+<pinref part="GND94" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="C31" gate="G$1" pin="2"/>
+<pinref part="GND101" gate="1" pin="GND"/>
+</segment>
 </net>
 <net name="+3V3" class="0">
 <segment>
 <pinref part="+3V23" gate="G$1" pin="+3V3"/>
 <pinref part="TR1" gate="G$1" pin="VCCA"/>
-<wire x1="55.88" y1="175.26" x2="55.88" y2="170.18" width="0.1524" layer="91"/>
+<wire x1="55.88" y1="195.58" x2="55.88" y2="180.34" width="0.1524" layer="91"/>
+<wire x1="55.88" y1="180.34" x2="55.88" y2="170.18" width="0.1524" layer="91"/>
 <wire x1="55.88" y1="170.18" x2="60.96" y2="170.18" width="0.1524" layer="91"/>
 <pinref part="TR2" gate="G$1" pin="VCCA"/>
 <wire x1="55.88" y1="170.18" x2="55.88" y2="152.4" width="0.1524" layer="91"/>
@@ -11952,11 +12258,16 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <junction x="55.88" y="99.06"/>
 <junction x="55.88" y="81.28"/>
 <junction x="55.88" y="63.5"/>
+<pinref part="C32" gate="G$1" pin="1"/>
+<wire x1="55.88" y1="180.34" x2="48.26" y2="180.34" width="0.1524" layer="91"/>
+<wire x1="48.26" y1="180.34" x2="48.26" y2="177.8" width="0.1524" layer="91"/>
+<junction x="55.88" y="180.34"/>
 </segment>
 <segment>
 <pinref part="+3V24" gate="G$1" pin="+3V3"/>
 <pinref part="TR9" gate="G$1" pin="VCCA"/>
-<wire x1="152.4" y1="175.26" x2="152.4" y2="170.18" width="0.1524" layer="91"/>
+<wire x1="152.4" y1="195.58" x2="152.4" y2="180.34" width="0.1524" layer="91"/>
+<wire x1="152.4" y1="180.34" x2="152.4" y2="170.18" width="0.1524" layer="91"/>
 <wire x1="152.4" y1="170.18" x2="157.48" y2="170.18" width="0.1524" layer="91"/>
 <pinref part="TR10" gate="G$1" pin="VCCA"/>
 <wire x1="152.4" y1="170.18" x2="152.4" y2="152.4" width="0.1524" layer="91"/>
@@ -11986,18 +12297,22 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <junction x="152.4" y="99.06"/>
 <junction x="152.4" y="81.28"/>
 <junction x="152.4" y="63.5"/>
+<pinref part="C31" gate="G$1" pin="1"/>
+<wire x1="152.4" y1="180.34" x2="144.78" y2="180.34" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="180.34" x2="144.78" y2="177.8" width="0.1524" layer="91"/>
+<junction x="152.4" y="180.34"/>
 </segment>
 </net>
 <net name="+5V" class="0">
 <segment>
 <pinref part="JP10" gate="G$1" pin="1"/>
 <pinref part="P+2" gate="1" pin="+5V"/>
-<wire x1="256.54" y1="175.26" x2="254" y2="175.26" width="0.1524" layer="91"/>
+<wire x1="243.84" y1="167.64" x2="241.3" y2="167.64" width="0.1524" layer="91"/>
 <pinref part="JP9" gate="G$1" pin="1"/>
-<wire x1="254" y1="175.26" x2="251.46" y2="175.26" width="0.1524" layer="91"/>
-<wire x1="259.08" y1="177.8" x2="254" y2="177.8" width="0.1524" layer="91"/>
-<wire x1="254" y1="177.8" x2="254" y2="175.26" width="0.1524" layer="91"/>
-<junction x="254" y="175.26"/>
+<wire x1="241.3" y1="167.64" x2="238.76" y2="167.64" width="0.1524" layer="91"/>
+<wire x1="246.38" y1="170.18" x2="241.3" y2="170.18" width="0.1524" layer="91"/>
+<wire x1="241.3" y1="170.18" x2="241.3" y2="167.64" width="0.1524" layer="91"/>
+<junction x="241.3" y="167.64"/>
 </segment>
 </net>
 <net name="IO9" class="0">
@@ -12772,7 +13087,6 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <segment>
 <wire x1="302.26" y1="243.84" x2="302.26" y2="17.78" width="0.762" layer="92"/>
 <wire x1="302.26" y1="243.84" x2="76.2" y2="243.84" width="0.762" layer="92"/>
-<wire x1="76.2" y1="243.84" x2="55.88" y2="243.84" width="0.762" layer="92"/>
 <wire x1="76.2" y1="243.84" x2="76.2" y2="17.78" width="0.762" layer="92"/>
 <wire x1="302.26" y1="17.78" x2="76.2" y2="17.78" width="0.762" layer="92"/>
 </segment>
@@ -13464,13 +13778,21 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 </net>
 <net name="S9" class="0">
 <segment>
+<pinref part="IC1" gate="G$1" pin="IO_L42N_GCLK24_3"/>
+<wire x1="111.76" y1="127" x2="78.74" y2="127" width="0.1524" layer="91"/>
+<wire x1="78.74" y1="127" x2="76.2" y2="129.54" width="0.1524" layer="91"/>
+<label x="78.74" y="127" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="SD9" class="0">
+<segment>
 <pinref part="IC1" gate="G$1" pin="IO_L42P_GCLK25_TRDY2_3"/>
 <wire x1="111.76" y1="124.46" x2="78.74" y2="124.46" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="124.46" x2="76.2" y2="127" width="0.1524" layer="91"/>
 <label x="78.74" y="124.46" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="SD9" class="0">
+<net name="S10" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L41N_GCLK26_3"/>
 <wire x1="111.76" y1="121.92" x2="78.74" y2="121.92" width="0.1524" layer="91"/>
@@ -13478,7 +13800,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="78.74" y="121.92" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="S10" class="0">
+<net name="SD10" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L41P_GCLK27_3"/>
 <wire x1="111.76" y1="119.38" x2="78.74" y2="119.38" width="0.1524" layer="91"/>
@@ -13486,7 +13808,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="78.74" y="119.38" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="SD10" class="0">
+<net name="S11" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L37N_3"/>
 <wire x1="111.76" y1="114.3" x2="78.74" y2="114.3" width="0.1524" layer="91"/>
@@ -13494,7 +13816,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="78.74" y="114.3" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="S11" class="0">
+<net name="SD11" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L37P_3"/>
 <wire x1="111.76" y1="111.76" x2="78.74" y2="111.76" width="0.1524" layer="91"/>
@@ -13502,7 +13824,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="78.74" y="111.76" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="SD11" class="0">
+<net name="S12" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L36N_3"/>
 <wire x1="111.76" y1="106.68" x2="78.74" y2="106.68" width="0.1524" layer="91"/>
@@ -13510,7 +13832,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="78.74" y="106.68" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="S12" class="0">
+<net name="SD12" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L36P_3"/>
 <wire x1="111.76" y1="104.14" x2="78.74" y2="104.14" width="0.1524" layer="91"/>
@@ -13518,7 +13840,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="78.74" y="104.14" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="SD12" class="0">
+<net name="S13" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L2N_3"/>
 <wire x1="111.76" y1="99.06" x2="78.74" y2="99.06" width="0.1524" layer="91"/>
@@ -13526,14 +13848,14 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="78.74" y="99.06" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="S13" class="0">
+<net name="SD13" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L2P_3"/>
 <wire x1="111.76" y1="96.52" x2="78.74" y2="96.52" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="96.52" x2="76.2" y2="99.06" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="SD13" class="0">
+<net name="S14" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L1N_VREF_3"/>
 <wire x1="111.76" y1="93.98" x2="78.74" y2="93.98" width="0.1524" layer="91"/>
@@ -13541,46 +13863,25 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="78.74" y="93.98" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="S14" class="0">
-<segment>
-<pinref part="IC1" gate="G$1" pin="IO_L65P_INIT_B_2"/>
-<wire x1="147.32" y1="58.42" x2="147.32" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="147.32" y1="20.32" x2="149.86" y2="17.78" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="SD14" class="0">
 <segment>
-<pinref part="IC1" gate="G$1" pin="IO_L64N_D9_2"/>
-<wire x1="149.86" y1="58.42" x2="149.86" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="149.86" y1="20.32" x2="152.4" y2="17.78" width="0.1524" layer="91"/>
+<pinref part="IC1" gate="G$1" pin="IO_L1P_3"/>
+<wire x1="111.76" y1="91.44" x2="78.74" y2="91.44" width="0.1524" layer="91"/>
+<wire x1="78.74" y1="91.44" x2="76.2" y2="93.98" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="S15" class="0">
 <segment>
-<pinref part="IC1" gate="G$1" pin="IO_L64P_D8_2"/>
-<wire x1="152.4" y1="58.42" x2="152.4" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="152.4" y1="20.32" x2="154.94" y2="17.78" width="0.1524" layer="91"/>
+<pinref part="IC1" gate="G$1" pin="IO_L65P_INIT_B_2"/>
+<wire x1="147.32" y1="58.42" x2="147.32" y2="20.32" width="0.1524" layer="91"/>
+<wire x1="147.32" y1="20.32" x2="144.78" y2="17.78" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="SD15" class="0">
 <segment>
-<pinref part="IC1" gate="G$1" pin="IO_L62N_D6_2"/>
-<wire x1="157.48" y1="58.42" x2="157.48" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="157.48" y1="20.32" x2="160.02" y2="17.78" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="S16" class="0">
-<segment>
-<pinref part="IC1" gate="G$1" pin="IO_L62P_D5_2"/>
-<wire x1="160.02" y1="58.42" x2="160.02" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="160.02" y1="20.32" x2="162.56" y2="17.78" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="SD16" class="0">
-<segment>
-<pinref part="IC1" gate="G$1" pin="IO_L49N_D4_2"/>
-<wire x1="162.56" y1="58.42" x2="162.56" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="162.56" y1="20.32" x2="165.1" y2="17.78" width="0.1524" layer="91"/>
+<pinref part="IC1" gate="G$1" pin="IO_L64N_D9_2"/>
+<wire x1="149.86" y1="58.42" x2="149.86" y2="20.32" width="0.1524" layer="91"/>
+<wire x1="149.86" y1="20.32" x2="147.32" y2="17.78" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="M_PWREN" class="0">
@@ -13619,6 +13920,34 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="165.1" y1="58.42" x2="165.1" y2="20.32" width="0.1524" layer="91"/>
 <wire x1="165.1" y1="20.32" x2="167.64" y2="17.78" width="0.1524" layer="91"/>
 <label x="165.1" y="20.32" size="1.778" layer="95" rot="R90"/>
+</segment>
+</net>
+<net name="S16" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L64P_D8_2"/>
+<wire x1="152.4" y1="58.42" x2="152.4" y2="20.32" width="0.1524" layer="91"/>
+<wire x1="152.4" y1="20.32" x2="149.86" y2="17.78" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="SD16" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L62N_D6_2"/>
+<wire x1="157.48" y1="58.42" x2="157.48" y2="20.32" width="0.1524" layer="91"/>
+<wire x1="157.48" y1="20.32" x2="154.94" y2="17.78" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="VIO33" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L62P_D5_2"/>
+<wire x1="160.02" y1="58.42" x2="160.02" y2="38.1" width="0.1524" layer="91"/>
+<label x="160.02" y="38.1" size="1.778" layer="95" rot="R270" xref="yes"/>
+</segment>
+</net>
+<net name="VIO50" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L49N_D4_2"/>
+<wire x1="162.56" y1="58.42" x2="162.56" y2="55.88" width="0.1524" layer="91"/>
+<label x="162.56" y="55.88" size="1.778" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 </nets>
