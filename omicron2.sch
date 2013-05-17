@@ -8,20 +8,20 @@
 </settings>
 <grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="yes" active="no"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="no"/>
-<layer number="17" name="Pads" color="2" fill="1" visible="yes" active="no"/>
-<layer number="18" name="Vias" color="2" fill="1" visible="yes" active="no"/>
-<layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="no"/>
-<layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="no"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="no"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="no"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="no"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="no"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="no"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="no"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="no"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="no"/>
+<layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
+<layer number="17" name="Pads" color="2" fill="1" visible="no" active="no"/>
+<layer number="18" name="Vias" color="2" fill="1" visible="no" active="no"/>
+<layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="no"/>
+<layer number="20" name="Dimension" color="15" fill="1" visible="no" active="no"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="no"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="no"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="no"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="no"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="no" active="no"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="no" active="no"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="no" active="no"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="no" active="no"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="no"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="no" active="no"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="no"/>
@@ -30,8 +30,8 @@
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="no"/>
 <layer number="35" name="tGlue" color="7" fill="4" visible="no" active="no"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="no"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="no"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="no"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="no" active="no"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="no" active="no"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="no"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="no"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="no"/>
@@ -39,13 +39,13 @@
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="no"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="no"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="no"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="no"/>
-<layer number="47" name="Measures" color="7" fill="1" visible="yes" active="no"/>
-<layer number="48" name="Document" color="7" fill="1" visible="yes" active="no"/>
-<layer number="49" name="Reference" color="7" fill="1" visible="yes" active="no"/>
-<layer number="50" name="dxf" color="7" fill="1" visible="yes" active="no"/>
-<layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="no"/>
-<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="no"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="no" active="no"/>
+<layer number="47" name="Measures" color="7" fill="1" visible="no" active="no"/>
+<layer number="48" name="Document" color="7" fill="1" visible="no" active="no"/>
+<layer number="49" name="Reference" color="7" fill="1" visible="no" active="no"/>
+<layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
+<layer number="51" name="tDocu" color="7" fill="1" visible="no" active="no"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="no" active="no"/>
 <layer number="91" name="Nets" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="92" name="Busses" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="93" name="Pins" color="2" fill="1" visible="no" active="yes"/>
@@ -10360,6 +10360,64 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 </deviceset>
 </devicesets>
 </library>
+<library name="pic10f320">
+<packages>
+<package name="SOT23">
+<smd name="5" x="0" y="1.4" dx="1.1" dy="0.6" layer="1" rot="R90"/>
+<smd name="4" x="0.95" y="1.4" dx="1.1" dy="0.6" layer="1" rot="R90"/>
+<smd name="3" x="0.95" y="-1.4" dx="1.1" dy="0.6" layer="1" rot="R90"/>
+<smd name="2" x="0" y="-1.4" dx="1.1" dy="0.6" layer="1" rot="R90"/>
+<smd name="1" x="-0.95" y="-1.4" dx="1.1" dy="0.6" layer="1" rot="R90"/>
+<smd name="6" x="-0.95" y="1.4" dx="1.1" dy="0.6" layer="1" rot="R90"/>
+<wire x1="-1.27" y1="0.7" x2="1.27" y2="0.7" width="0.127" layer="21"/>
+<wire x1="1.27" y1="0.7" x2="1.27" y2="-0.7" width="0.127" layer="21"/>
+<wire x1="1.27" y1="-0.7" x2="-1.27" y2="-0.7" width="0.127" layer="21"/>
+<wire x1="-1.27" y1="-0.7" x2="-1.27" y2="0.7" width="0.127" layer="21"/>
+<circle x="-1.6" y="-1.7" radius="0.1" width="0.2" layer="21"/>
+</package>
+</packages>
+<symbols>
+<symbol name="PIC10F32X">
+<wire x1="-15.24" y1="5.08" x2="15.24" y2="5.08" width="0.254" layer="94"/>
+<wire x1="15.24" y1="5.08" x2="15.24" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="15.24" y1="-7.62" x2="-15.24" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="-15.24" y1="-7.62" x2="-15.24" y2="5.08" width="0.254" layer="94"/>
+<pin name="MCLRB/VPP/RA3" x="20.32" y="-5.08" length="middle" direction="in" rot="R180"/>
+<pin name="VCC" x="-20.32" y="2.54" length="middle" direction="pas"/>
+<pin name="GND" x="-20.32" y="0" length="middle" direction="pas"/>
+<pin name="ICSPDAT/RA0" x="20.32" y="2.54" length="middle" rot="R180"/>
+<pin name="ICSPCLK/RA1" x="20.32" y="0" length="middle" rot="R180"/>
+<pin name="RA2" x="20.32" y="-2.54" length="middle" rot="R180"/>
+<text x="-15.24" y="5.588" size="1.524" layer="95">&gt;NAME</text>
+<text x="-15.24" y="-9.652" size="1.524" layer="96">&gt;VALUE</text>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="PIC10*">
+<gates>
+<gate name="G$1" symbol="PIC10F32X" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="SOT23">
+<connects>
+<connect gate="G$1" pin="GND" pad="2"/>
+<connect gate="G$1" pin="ICSPCLK/RA1" pad="3"/>
+<connect gate="G$1" pin="ICSPDAT/RA0" pad="1"/>
+<connect gate="G$1" pin="MCLRB/VPP/RA3" pad="6"/>
+<connect gate="G$1" pin="RA2" pad="4"/>
+<connect gate="G$1" pin="VCC" pad="5"/>
+</connects>
+<technologies>
+<technology name="F320"/>
+<technology name="F322"/>
+<technology name="LF320"/>
+<technology name="LF322"/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -10715,6 +10773,19 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="C32" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
 <part name="GND94" library="supply1" deviceset="GND" device=""/>
 <part name="GND101" library="supply1" deviceset="GND" device=""/>
+<part name="U$1" library="pic10f320" deviceset="PIC10*" device="" technology="F320"/>
+<part name="+3V22" library="supply1" deviceset="+3V3" device=""/>
+<part name="GND102" library="supply1" deviceset="GND" device=""/>
+<part name="C38" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
+<part name="+3V29" library="supply1" deviceset="+3V3" device=""/>
+<part name="GND103" library="supply1" deviceset="GND" device=""/>
+<part name="R62" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R63" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="GND104" library="supply1" deviceset="GND" device=""/>
+<part name="C39" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
+<part name="GND105" library="supply1" deviceset="GND" device=""/>
+<part name="C40" library="rcl" deviceset="C-EU" device="C0603" value="2.2uF"/>
+<part name="GND106" library="supply1" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -10748,6 +10819,17 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <instance part="Q4" gate="G$1" x="134.62" y="160.02"/>
 <instance part="GND48" gate="1" x="111.76" y="144.78"/>
 <instance part="+3V6" gate="G$1" x="137.16" y="170.18"/>
+<instance part="U$1" gate="G$1" x="187.96" y="53.34"/>
+<instance part="+3V22" gate="G$1" x="165.1" y="55.88" rot="R90"/>
+<instance part="GND102" gate="1" x="165.1" y="53.34" rot="R270"/>
+<instance part="C38" gate="G$1" x="149.86" y="53.34"/>
+<instance part="+3V29" gate="G$1" x="149.86" y="58.42"/>
+<instance part="GND103" gate="1" x="149.86" y="45.72"/>
+<instance part="R62" gate="G$1" x="205.74" y="35.56"/>
+<instance part="R63" gate="G$1" x="220.98" y="35.56" rot="R180"/>
+<instance part="GND104" gate="1" x="198.12" y="35.56" rot="R270"/>
+<instance part="C39" gate="G$1" x="208.28" y="30.48" rot="R270"/>
+<instance part="GND105" gate="1" x="200.66" y="30.48" rot="R270"/>
 </instances>
 <busses>
 </busses>
@@ -10775,6 +10857,22 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="Q3" gate="G$1" pin="E"/>
 <pinref part="GND48" gate="1" pin="GND"/>
 </segment>
+<segment>
+<pinref part="U$1" gate="G$1" pin="GND"/>
+<pinref part="GND102" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="C38" gate="G$1" pin="2"/>
+<pinref part="GND103" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="R62" gate="G$1" pin="1"/>
+<pinref part="GND104" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="C39" gate="G$1" pin="2"/>
+<pinref part="GND105" gate="1" pin="GND"/>
+</segment>
 </net>
 <net name="+3V3" class="0">
 <segment>
@@ -10801,6 +10899,14 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="Q4" gate="G$1" pin="E"/>
 <wire x1="137.16" y1="167.64" x2="137.16" y2="165.1" width="0.1524" layer="91"/>
 <pinref part="+3V6" gate="G$1" pin="+3V3"/>
+</segment>
+<segment>
+<pinref part="U$1" gate="G$1" pin="VCC"/>
+<pinref part="+3V22" gate="G$1" pin="+3V3"/>
+</segment>
+<segment>
+<pinref part="C38" gate="G$1" pin="1"/>
+<pinref part="+3V29" gate="G$1" pin="+3V3"/>
 </segment>
 </net>
 <net name="FLASH_SO" class="0">
@@ -11172,6 +11278,11 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="137.16" y1="154.94" x2="137.16" y2="149.86" width="0.1524" layer="91"/>
 <label x="137.16" y="149.86" size="1.778" layer="95" rot="R270" xref="yes"/>
 </segment>
+<segment>
+<label x="231.14" y="35.56" size="1.778" layer="95" xref="yes"/>
+<pinref part="R63" gate="G$1" pin="1"/>
+<wire x1="226.06" y1="35.56" x2="231.14" y2="35.56" width="0.1524" layer="91"/>
+</segment>
 </net>
 <net name="N$25" class="0">
 <segment>
@@ -11195,6 +11306,42 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="45.72" y="127" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
+<net name="AD_RA0" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="ICSPDAT/RA0"/>
+<wire x1="208.28" y1="55.88" x2="210.82" y2="55.88" width="0.1524" layer="91"/>
+<label x="210.82" y="55.88" size="1.778" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="AD_RA1" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="ICSPCLK/RA1"/>
+<wire x1="208.28" y1="53.34" x2="231.14" y2="53.34" width="0.1524" layer="91"/>
+<label x="231.14" y="53.34" size="1.778" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="AD_RA3" class="0">
+<segment>
+<pinref part="U$1" gate="G$1" pin="MCLRB/VPP/RA3"/>
+<wire x1="208.28" y1="48.26" x2="231.14" y2="48.26" width="0.1524" layer="91"/>
+<label x="231.14" y="48.26" size="1.778" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="N$27" class="0">
+<segment>
+<pinref part="R63" gate="G$1" pin="2"/>
+<pinref part="R62" gate="G$1" pin="2"/>
+<wire x1="210.82" y1="35.56" x2="213.36" y2="35.56" width="0.1524" layer="91"/>
+<pinref part="U$1" gate="G$1" pin="RA2"/>
+<wire x1="213.36" y1="35.56" x2="215.9" y2="35.56" width="0.1524" layer="91"/>
+<wire x1="208.28" y1="50.8" x2="213.36" y2="50.8" width="0.1524" layer="91"/>
+<wire x1="213.36" y1="50.8" x2="213.36" y2="35.56" width="0.1524" layer="91"/>
+<junction x="213.36" y="35.56"/>
+<pinref part="C39" gate="G$1" pin="1"/>
+<wire x1="213.36" y1="35.56" x2="213.36" y2="30.48" width="0.1524" layer="91"/>
+<wire x1="213.36" y1="30.48" x2="210.82" y2="30.48" width="0.1524" layer="91"/>
+</segment>
+</net>
 </nets>
 </sheet>
 <sheet>
@@ -11212,7 +11359,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <instance part="GND19" gate="1" x="55.88" y="144.78"/>
 <instance part="C5" gate="G$1" x="76.2" y="152.4"/>
 <instance part="GND21" gate="1" x="76.2" y="144.78"/>
-<instance part="P+4" gate="1" x="15.24" y="157.48" rot="R90"/>
+<instance part="P+4" gate="1" x="10.16" y="157.48" rot="R90"/>
 <instance part="C6" gate="G$1" x="22.86" y="152.4"/>
 <instance part="GND22" gate="1" x="22.86" y="144.78"/>
 <instance part="C3" gate="G$1" x="157.48" y="124.46"/>
@@ -11293,6 +11440,8 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 </instance>
 <instance part="GND99" gate="1" x="35.56" y="63.5"/>
 <instance part="GND100" gate="1" x="96.52" y="25.4"/>
+<instance part="C40" gate="G$1" x="15.24" y="152.4"/>
+<instance part="GND106" gate="1" x="15.24" y="144.78"/>
 </instances>
 <busses>
 </busses>
@@ -11472,6 +11621,10 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC4" gate="P" pin="VSS@2"/>
 <pinref part="IC4" gate="P" pin="VSS@3"/>
 </segment>
+<segment>
+<pinref part="C40" gate="G$1" pin="2"/>
+<pinref part="GND106" gate="1" pin="GND"/>
+</segment>
 </net>
 <net name="VCCINT" class="0">
 <segment>
@@ -11575,8 +11728,9 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <net name="+5V" class="0">
 <segment>
 <pinref part="P+4" gate="1" pin="+5V"/>
-<wire x1="17.78" y1="157.48" x2="22.86" y2="157.48" width="0.1524" layer="91"/>
+<wire x1="12.7" y1="157.48" x2="15.24" y2="157.48" width="0.1524" layer="91"/>
 <pinref part="C6" gate="G$1" pin="1"/>
+<wire x1="15.24" y1="157.48" x2="22.86" y2="157.48" width="0.1524" layer="91"/>
 <wire x1="22.86" y1="154.94" x2="22.86" y2="157.48" width="0.1524" layer="91"/>
 <junction x="22.86" y="157.48"/>
 <pinref part="IC3" gate="G$1" pin="IN"/>
@@ -11602,6 +11756,9 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="30.48" y1="129.54" x2="30.48" y2="83.82" width="0.1524" layer="91"/>
 <wire x1="30.48" y1="83.82" x2="40.64" y2="83.82" width="0.1524" layer="91"/>
 <junction x="30.48" y="129.54"/>
+<pinref part="C40" gate="G$1" pin="1"/>
+<wire x1="15.24" y1="157.48" x2="15.24" y2="154.94" width="0.1524" layer="91"/>
+<junction x="15.24" y="157.48"/>
 </segment>
 </net>
 <net name="N$1" class="0">
@@ -13898,30 +14055,6 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <label x="218.44" y="38.1" size="1.778" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
-<net name="LED1" class="0">
-<segment>
-<pinref part="IC1" gate="G$1" pin="IO_L48P_D7_2"/>
-<wire x1="170.18" y1="58.42" x2="170.18" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="170.18" y1="20.32" x2="172.72" y2="17.78" width="0.1524" layer="91"/>
-<label x="170.18" y="20.32" size="1.778" layer="95" rot="R90"/>
-</segment>
-</net>
-<net name="LED2" class="0">
-<segment>
-<pinref part="IC1" gate="G$1" pin="IO_L48N_RDWR_B_VREF_2"/>
-<wire x1="167.64" y1="58.42" x2="167.64" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="167.64" y1="20.32" x2="170.18" y2="17.78" width="0.1524" layer="91"/>
-<label x="167.64" y="20.32" size="1.778" layer="95" rot="R90"/>
-</segment>
-</net>
-<net name="LED3" class="0">
-<segment>
-<pinref part="IC1" gate="G$1" pin="IO_L49P_D3_2"/>
-<wire x1="165.1" y1="58.42" x2="165.1" y2="20.32" width="0.1524" layer="91"/>
-<wire x1="165.1" y1="20.32" x2="167.64" y2="17.78" width="0.1524" layer="91"/>
-<label x="165.1" y="20.32" size="1.778" layer="95" rot="R90"/>
-</segment>
-</net>
 <net name="S16" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L64P_D8_2"/>
@@ -13939,8 +14072,8 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <net name="VIO33" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L62P_D5_2"/>
-<wire x1="160.02" y1="58.42" x2="160.02" y2="38.1" width="0.1524" layer="91"/>
-<label x="160.02" y="38.1" size="1.778" layer="95" rot="R270" xref="yes"/>
+<wire x1="160.02" y1="58.42" x2="160.02" y2="35.56" width="0.1524" layer="91"/>
+<label x="160.02" y="35.56" size="1.778" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="VIO50" class="0">
@@ -13948,6 +14081,50 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L49N_D4_2"/>
 <wire x1="162.56" y1="58.42" x2="162.56" y2="55.88" width="0.1524" layer="91"/>
 <label x="162.56" y="55.88" size="1.778" layer="95" rot="R270" xref="yes"/>
+</segment>
+</net>
+<net name="LED1" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L3N_0"/>
+<wire x1="154.94" y1="208.28" x2="154.94" y2="241.3" width="0.1524" layer="91"/>
+<wire x1="154.94" y1="241.3" x2="152.4" y2="243.84" width="0.1524" layer="91"/>
+<label x="154.94" y="233.68" size="1.778" layer="95" rot="R90"/>
+</segment>
+</net>
+<net name="LED2" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L4P_0"/>
+<wire x1="157.48" y1="208.28" x2="157.48" y2="241.3" width="0.1524" layer="91"/>
+<wire x1="157.48" y1="241.3" x2="154.94" y2="243.84" width="0.1524" layer="91"/>
+<label x="157.48" y="233.68" size="1.778" layer="95" rot="R90"/>
+</segment>
+</net>
+<net name="LED3" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L34N_GCLK18_0"/>
+<wire x1="170.18" y1="208.28" x2="170.18" y2="241.3" width="0.1524" layer="91"/>
+<wire x1="170.18" y1="241.3" x2="167.64" y2="243.84" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="AD_RA0" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L49P_D3_2"/>
+<wire x1="165.1" y1="58.42" x2="165.1" y2="35.56" width="0.1524" layer="91"/>
+<label x="165.1" y="35.56" size="1.778" layer="95" rot="R270" xref="yes"/>
+</segment>
+</net>
+<net name="AD_RA1" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L48N_RDWR_B_VREF_2"/>
+<wire x1="167.64" y1="58.42" x2="167.64" y2="55.88" width="0.1524" layer="91"/>
+<label x="167.64" y="55.88" size="1.778" layer="95" rot="R270" xref="yes"/>
+</segment>
+</net>
+<net name="AD_RA3" class="0">
+<segment>
+<pinref part="IC1" gate="G$1" pin="IO_L31P_GCLK31_D14_2"/>
+<wire x1="177.8" y1="58.42" x2="177.8" y2="55.88" width="0.1524" layer="91"/>
+<label x="177.8" y="55.88" size="1.778" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 </nets>
