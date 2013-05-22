@@ -1982,8 +1982,8 @@ design rules under a new name.</description>
 <element name="TP8" library="testpad" package="TP15R" value="TPTP15R" x="47.625" y="43.815" rot="MR0">
 <attribute name="TP_SIGNAL_NAME" value="" x="47.625" y="43.815" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
-<element name="TP9" library="testpad" package="TP15R" value="TPTP15R" x="42.545" y="43.815" rot="MR0">
-<attribute name="TP_SIGNAL_NAME" value="" x="42.545" y="43.815" size="1.778" layer="28" rot="MR0" display="off"/>
+<element name="TP9" library="testpad" package="TP15R" value="TPTP15R" x="42.545" y="44.45" rot="MR0">
+<attribute name="TP_SIGNAL_NAME" value="" x="42.545" y="44.45" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="TP10" library="testpad" package="TP15R" value="TPTP15R" x="71.12" y="34.925" rot="MR180">
 <attribute name="TP_SIGNAL_NAME" value="" x="71.12" y="34.925" size="1.778" layer="28" rot="MR180" display="off"/>
@@ -2137,6 +2137,9 @@ design rules under a new name.</description>
 <element name="R63" library="rcl" package="R0603" value="68" x="25.4" y="1.905"/>
 <element name="C39" library="rcl" package="C0603" value="470nF" x="36.83" y="3.81"/>
 <element name="C40" library="rcl" package="C0603" value="2.2uF" x="66.675" y="34.925" rot="MR0"/>
+<element name="C41" library="rcl" package="C0603" value="470nF" x="57.785" y="31.115" rot="MR270"/>
+<element name="C42" library="rcl" package="C0603" value="470nF" x="55.245" y="35.56" rot="MR90"/>
+<element name="C43" library="rcl" package="C0603" value="470nF" x="50.8" y="32.385" rot="MR0"/>
 </elements>
 <signals>
 <signal name="GND">
@@ -2711,6 +2714,9 @@ design rules under a new name.</description>
 <wire x1="22.86" y1="6.335" x2="22.86" y2="11.43" width="0.254" layer="16"/>
 <wire x1="26.935" y1="3.16" x2="28.56" y2="3.16" width="0.254" layer="16"/>
 <wire x1="28.56" y1="3.16" x2="29.845" y2="4.445" width="0.254" layer="16"/>
+<contactref element="C43" pad="2"/>
+<contactref element="C42" pad="2"/>
+<contactref element="C41" pad="2"/>
 </signal>
 <signal name="VCCINT">
 <contactref element="IC1" pad="19"/>
@@ -3073,8 +3079,8 @@ design rules under a new name.</description>
 <wire x1="42.23" y1="46.96" x2="42.23" y2="45.505" width="0.254" layer="16"/>
 <wire x1="42.23" y1="45.505" x2="40.64" y2="45.505" width="0.254" layer="16"/>
 <wire x1="42.545" y1="42.225" x2="40.64" y2="42.225" width="0.254" layer="16"/>
-<wire x1="42.545" y1="42.225" x2="42.545" y2="43.815" width="0.254" layer="16"/>
-<wire x1="42.545" y1="43.815" x2="42.545" y2="45.19" width="0.254" layer="16"/>
+<wire x1="42.545" y1="42.225" x2="42.545" y2="44.45" width="0.254" layer="16"/>
+<wire x1="42.545" y1="44.45" x2="42.545" y2="45.19" width="0.254" layer="16"/>
 <wire x1="42.545" y1="45.19" x2="42.23" y2="45.505" width="0.254" layer="16"/>
 </signal>
 <signal name="VCCIO">
@@ -4486,6 +4492,15 @@ design rules under a new name.</description>
 <wire x1="59.36" y1="37.135" x2="58.42" y2="36.195" width="0.254" layer="1"/>
 <via x="58.42" y="36.195" extent="1-16" drill="0.5"/>
 <wire x1="55.245" y1="36.195" x2="58.42" y2="36.195" width="0.254" layer="1"/>
+<contactref element="C41" pad="1"/>
+<contactref element="C42" pad="1"/>
+<contactref element="C43" pad="1"/>
+<wire x1="57.785" y1="31.965" x2="57.785" y2="33.335" width="0.254" layer="16"/>
+<wire x1="57.785" y1="33.335" x2="60.325" y2="33.335" width="0.254" layer="16"/>
+<wire x1="55.245" y1="34.71" x2="55.245" y2="33.335" width="0.254" layer="16"/>
+<wire x1="55.245" y1="33.335" x2="57.785" y2="33.335" width="0.254" layer="16"/>
+<wire x1="51.65" y1="32.385" x2="54.295" y2="32.385" width="0.254" layer="16"/>
+<wire x1="54.295" y1="32.385" x2="55.245" y2="33.335" width="0.254" layer="16"/>
 </signal>
 <signal name="N$7">
 <contactref element="R60" pad="1"/>

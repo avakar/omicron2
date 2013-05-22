@@ -10786,6 +10786,12 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="GND105" library="supply1" deviceset="GND" device=""/>
 <part name="C40" library="rcl" deviceset="C-EU" device="C0603" value="2.2uF"/>
 <part name="GND106" library="supply1" deviceset="GND" device=""/>
+<part name="C41" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
+<part name="C42" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
+<part name="C43" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
+<part name="GND107" library="supply1" deviceset="GND" device=""/>
+<part name="GND108" library="supply1" deviceset="GND" device=""/>
+<part name="GND109" library="supply1" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -11442,6 +11448,12 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <instance part="GND100" gate="1" x="96.52" y="25.4"/>
 <instance part="C40" gate="G$1" x="15.24" y="152.4"/>
 <instance part="GND106" gate="1" x="15.24" y="144.78"/>
+<instance part="C41" gate="G$1" x="88.9" y="53.34"/>
+<instance part="C42" gate="G$1" x="81.28" y="53.34"/>
+<instance part="C43" gate="G$1" x="73.66" y="53.34"/>
+<instance part="GND107" gate="1" x="73.66" y="45.72"/>
+<instance part="GND108" gate="1" x="81.28" y="45.72"/>
+<instance part="GND109" gate="1" x="88.9" y="45.72"/>
 </instances>
 <busses>
 </busses>
@@ -11624,6 +11636,18 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <segment>
 <pinref part="C40" gate="G$1" pin="2"/>
 <pinref part="GND106" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="C43" gate="G$1" pin="2"/>
+<pinref part="GND107" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="C42" gate="G$1" pin="2"/>
+<pinref part="GND108" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="C41" gate="G$1" pin="2"/>
+<pinref part="GND109" gate="1" pin="GND"/>
 </segment>
 </net>
 <net name="VCCINT" class="0">
@@ -11893,6 +11917,15 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC4" gate="P" pin="VDD@1"/>
 <pinref part="IC4" gate="P" pin="VDD@2"/>
 <pinref part="IC4" gate="P" pin="VDD@3"/>
+<pinref part="C41" gate="G$1" pin="1"/>
+<wire x1="88.9" y1="55.88" x2="88.9" y2="58.42" width="0.1524" layer="91"/>
+<wire x1="88.9" y1="58.42" x2="96.52" y2="58.42" width="0.1524" layer="91"/>
+<pinref part="C42" gate="G$1" pin="1"/>
+<wire x1="81.28" y1="55.88" x2="81.28" y2="58.42" width="0.1524" layer="91"/>
+<wire x1="81.28" y1="58.42" x2="88.9" y2="58.42" width="0.1524" layer="91"/>
+<pinref part="C43" gate="G$1" pin="1"/>
+<wire x1="73.66" y1="55.88" x2="73.66" y2="58.42" width="0.1524" layer="91"/>
+<wire x1="73.66" y1="58.42" x2="81.28" y2="58.42" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
