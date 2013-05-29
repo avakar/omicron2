@@ -10428,7 +10428,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 </class>
 </classes>
 <parts>
-<part name="IC1" library="xilinx" deviceset="XC6SLX4*" device="TQG144" technology="-2"/>
+<part name="IC1" library="xilinx" deviceset="XC6SLX4*" device="TQG144" technology="-2" value="XC6SLX4-1876221"/>
 <part name="GND1" library="supply1" deviceset="GND" device=""/>
 <part name="GND2" library="supply1" deviceset="GND" device=""/>
 <part name="GND3" library="supply1" deviceset="GND" device=""/>
@@ -10522,39 +10522,39 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="JP126" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
 <part name="JP127" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
 <part name="JP128" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
-<part name="R11" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R12" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R13" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R14" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R15" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R16" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R17" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R18" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R19" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R20" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R21" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R22" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R23" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R24" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R25" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R26" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R27" library="rcl" deviceset="R-EU_" device="R0603"/>
+<part name="R11" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R12" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R13" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R14" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R15" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R16" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R17" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R18" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R19" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R20" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R21" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R22" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R23" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R24" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R25" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R26" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R27" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
 <part name="GND62" library="supply1" deviceset="GND" device=""/>
-<part name="R28" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R29" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R30" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R31" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R32" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R33" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R34" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R35" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R36" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R37" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R38" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R39" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R40" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R41" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R42" library="rcl" deviceset="R-EU_" device="R0603"/>
+<part name="R28" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R29" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R30" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R31" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R32" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R33" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R34" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R35" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R36" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R37" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R38" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R39" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R40" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R41" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R42" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
 <part name="GND63" library="supply1" deviceset="GND" device=""/>
 <part name="GND64" library="supply1" deviceset="GND" device=""/>
 <part name="GND65" library="supply1" deviceset="GND" device=""/>
@@ -10574,38 +10574,38 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="JP2" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
 <part name="JP3" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
 <part name="JP4" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
-<part name="C34" library="rcl" deviceset="C-EU" device="C0603"/>
-<part name="C35" library="rcl" deviceset="C-EU" device="C0603"/>
+<part name="C34" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
+<part name="C35" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
 <part name="GND78" library="supply1" deviceset="GND" device=""/>
 <part name="GND79" library="supply1" deviceset="GND" device=""/>
 <part name="JP5" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
 <part name="JP6" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
 <part name="JP7" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
 <part name="JP8" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
-<part name="R43" library="rcl" deviceset="R-EU_" device="R0603"/>
+<part name="R43" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
 <part name="GND49" library="supply1" deviceset="GND" device=""/>
-<part name="R44" library="rcl" deviceset="R-EU_" device="R0603"/>
+<part name="R44" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
 <part name="GND59" library="supply1" deviceset="GND" device=""/>
-<part name="R45" library="rcl" deviceset="R-EU_" device="R0603"/>
+<part name="R45" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
 <part name="GND80" library="supply1" deviceset="GND" device=""/>
-<part name="R46" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R47" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R48" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R49" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R50" library="rcl" deviceset="R-EU_" device="R0603"/>
+<part name="R46" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R47" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R48" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R49" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R50" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
 <part name="GND81" library="supply1" deviceset="GND" device=""/>
 <part name="GND82" library="supply1" deviceset="GND" device=""/>
 <part name="GND83" library="supply1" deviceset="GND" device=""/>
 <part name="GND84" library="supply1" deviceset="GND" device=""/>
 <part name="GND85" library="supply1" deviceset="GND" device=""/>
-<part name="R51" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R52" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R53" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R54" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R55" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R56" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R57" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R58" library="rcl" deviceset="R-EU_" device="R0603"/>
+<part name="R51" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R52" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R53" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R54" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R55" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R56" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R57" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
+<part name="R58" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
 <part name="GND86" library="supply1" deviceset="GND" device=""/>
 <part name="GND87" library="supply1" deviceset="GND" device=""/>
 <part name="GND88" library="supply1" deviceset="GND" device=""/>
@@ -10617,15 +10617,15 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="P+2" library="supply1" deviceset="+5V" device=""/>
 <part name="JP9" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
 <part name="JP10" library="pinhead_smd" deviceset="PINH1X01" device="SMD"/>
-<part name="IC2" library="tps73033" deviceset="TPS73033" device="DBV"/>
+<part name="IC2" library="tps73033" deviceset="TPS73033" device="DBV" value="TPS73033DBV-1135395"/>
 <part name="GND15" library="supply1" deviceset="GND" device=""/>
-<part name="C1" library="rcl" deviceset="C-EU" device="C0603" value="10uF"/>
+<part name="C1" library="rcl" deviceset="C-EU" device="C0603" value="10nF"/>
 <part name="C2" library="rcl" deviceset="C-EU" device="C0603" value="2.2uF"/>
 <part name="GND16" library="supply1" deviceset="GND" device=""/>
 <part name="GND17" library="supply1" deviceset="GND" device=""/>
-<part name="IC3" library="tps73033" deviceset="LD6806TD/12H" device=""/>
+<part name="IC3" library="tps73033" deviceset="LD6806TD/12H" device="" value="LD6806TD/12H-2095494"/>
 <part name="GND19" library="supply1" deviceset="GND" device=""/>
-<part name="C5" library="rcl" deviceset="C-EU" device="C0603" value="1uF"/>
+<part name="C5" library="rcl" deviceset="C-EU" device="C0603" value="2.2uF"/>
 <part name="GND21" library="supply1" deviceset="GND" device=""/>
 <part name="P+4" library="supply1" deviceset="+5V" device=""/>
 <part name="C6" library="rcl" deviceset="C-EU" device="C0603" value="2.2uF"/>
@@ -10687,9 +10687,9 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="GND45" library="supply1" deviceset="GND" device=""/>
 <part name="C30" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
 <part name="GND46" library="supply1" deviceset="GND" device=""/>
-<part name="L1" library="rcl" deviceset="R-US_" device="R0805"/>
-<part name="L2" library="rcl" deviceset="R-US_" device="R0805"/>
-<part name="L3" library="rcl" deviceset="R-US_" device="R0805"/>
+<part name="L1" library="rcl" deviceset="R-US_" device="R0805" value="100nH"/>
+<part name="L2" library="rcl" deviceset="R-US_" device="R0805" value="100nH"/>
+<part name="L3" library="rcl" deviceset="R-US_" device="R0805" value="100nH"/>
 <part name="VCC6" library="supply1" deviceset="VCCIO" device=""/>
 <part name="TP8" library="testpad" deviceset="TP" device="TP15R" value="TPTP15R">
 <attribute name="TP_SIGNAL_NAME" value=""/>
@@ -10703,7 +10703,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="IC5" library="flash_memory" deviceset="FLASH" device="" value="M25P40-2253716"/>
 <part name="+3V16" library="supply1" deviceset="+3V3" device=""/>
 <part name="GND51" library="supply1" deviceset="GND" device=""/>
-<part name="R5" library="rcl" deviceset="R-EU_" device="R0603" value="47k"/>
+<part name="R5" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
 <part name="+3V17" library="supply1" deviceset="+3V3" device=""/>
 <part name="+3V18" library="supply1" deviceset="+3V3" device=""/>
 <part name="+3V19" library="supply1" deviceset="+3V3" device=""/>
@@ -10721,8 +10721,8 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="X1" library="usb" deviceset="USB" device="-MICRO-B-BOTTOM"/>
 <part name="GND14" library="supply1" deviceset="GND" device=""/>
 <part name="P+1" library="supply1" deviceset="+5V" device=""/>
-<part name="R1" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R2" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R1" library="rcl" deviceset="R-EU_" device="R0603" value="27 1%"/>
+<part name="R2" library="rcl" deviceset="R-EU_" device="R0603" value="27 1%"/>
 <part name="R3" library="rcl" deviceset="R-EU_" device="R0603" value="1k5"/>
 <part name="LED1" library="led" deviceset="LED" device="CHIPLED_0603" value="ORANGE-1710526"/>
 <part name="R4" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
@@ -10742,13 +10742,13 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="FRAME4" library="frames" deviceset="A4L-LOC" device=""/>
 <part name="FRAME5" library="frames" deviceset="A4L-LOC" device=""/>
 <part name="FRAME7" library="frames" deviceset="A3L-LOC" device=""/>
-<part name="IC4" library="memory-micron" deviceset="MT48LC64M4A2" device=""/>
-<part name="LED5" library="led" deviceset="LED" device="CHIPLED_0603" value="RED"/>
+<part name="IC4" library="memory-micron" deviceset="MT48LC64M4A2" device="" value="H57V2562GTR-75C-1907383"/>
+<part name="LED5" library="led" deviceset="LED" device="CHIPLED_0603" value="RED-2099221"/>
 <part name="R59" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
 <part name="GND95" library="supply1" deviceset="GND" device=""/>
 <part name="+3V20" library="supply1" deviceset="+3V3" device=""/>
-<part name="IC6" library="tps73033" deviceset="TPS73033" device="DBV"/>
-<part name="C36" library="rcl" deviceset="C-EU" device="C0603" value="10uF"/>
+<part name="IC6" library="tps73033" deviceset="TPS73033" device="DBV" value="TPS73033DBV-1135395"/>
+<part name="C36" library="rcl" deviceset="C-EU" device="C0603" value="10nF"/>
 <part name="GND96" library="supply1" deviceset="GND" device=""/>
 <part name="C37" library="rcl" deviceset="C-EU" device="C0603" value="2.2uF"/>
 <part name="TP3" library="testpad" deviceset="TP" device="TP15R" value="TPTP15R">
@@ -10756,15 +10756,15 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 </part>
 <part name="GND97" library="supply1" deviceset="GND" device=""/>
 <part name="GND98" library="supply1" deviceset="GND" device=""/>
-<part name="R7" library="rcl" deviceset="R-EU_" device="R0603" value="47k"/>
+<part name="R7" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
 <part name="GND99" library="supply1" deviceset="GND" device=""/>
 <part name="GND100" library="supply1" deviceset="GND" device=""/>
-<part name="Q1" library="transistors" deviceset="NPN-BIAS" device="-SOT323-BEC"/>
+<part name="Q1" library="transistors" deviceset="NPN-BIAS" device="-SOT323-BEC" value="PDTC123-1757992"/>
 <part name="R60" library="rcl" deviceset="R-EU_" device="R0603" value="6k8 1%"/>
 <part name="Q2" library="transistor-pnp" deviceset="BC807*" device="W"/>
 <part name="GND47" library="supply1" deviceset="GND" device=""/>
 <part name="P+3" library="supply1" deviceset="+5V" device=""/>
-<part name="Q3" library="transistors" deviceset="NPN-BIAS" device="-SOT323-BEC"/>
+<part name="Q3" library="transistors" deviceset="NPN-BIAS" device="-SOT323-BEC" value="PDTC123-1757992"/>
 <part name="R61" library="rcl" deviceset="R-EU_" device="R0603" value="6k8 1%"/>
 <part name="Q4" library="transistor-pnp" deviceset="BC807*" device="W"/>
 <part name="GND48" library="supply1" deviceset="GND" device=""/>
@@ -10773,16 +10773,16 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <part name="C32" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
 <part name="GND94" library="supply1" deviceset="GND" device=""/>
 <part name="GND101" library="supply1" deviceset="GND" device=""/>
-<part name="U$1" library="pic10f320" deviceset="PIC10*" device="" technology="F320"/>
+<part name="U$1" library="pic10f320" deviceset="PIC10*" device="" technology="F320" value="PIC10F320-2074912"/>
 <part name="+3V22" library="supply1" deviceset="+3V3" device=""/>
 <part name="GND102" library="supply1" deviceset="GND" device=""/>
 <part name="C38" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
 <part name="+3V29" library="supply1" deviceset="+3V3" device=""/>
 <part name="GND103" library="supply1" deviceset="GND" device=""/>
-<part name="R62" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
-<part name="R63" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
+<part name="R62" library="rcl" deviceset="R-EU_" device="R0603" value="6k8 1%"/>
+<part name="R63" library="rcl" deviceset="R-EU_" device="R0603" value="4k7 1%"/>
 <part name="GND104" library="supply1" deviceset="GND" device=""/>
-<part name="C39" library="rcl" deviceset="C-EU" device="C0603" value="470nF"/>
+<part name="C39" library="rcl" deviceset="C-EU" device="C0603" value="10nF"/>
 <part name="GND105" library="supply1" deviceset="GND" device=""/>
 <part name="C40" library="rcl" deviceset="C-EU" device="C0603" value="2.2uF"/>
 <part name="GND106" library="supply1" deviceset="GND" device=""/>
