@@ -42,12 +42,11 @@ spiviajtag spiviajtag0(
     .miso(flash_so)
 );
 
-reg[7:0] tx_buf;
+/*reg[7:0] tx_buf;
 reg tx_buf_valid;
 wire tx_buf_ready;
 wire[7:0] rx_buf;
 wire rx_buf_valid;
-wire txd, rxd;
 uart uart0(
     .rst(1'b0),
     .clk_48(clk_48),
@@ -72,7 +71,31 @@ always @(posedge clk_48) begin
         tx_buf <= rx_buf + 1'b1;
         tx_buf_valid <= 1'b1;
     end
-end
+end*/
+
+wire[31:0] io_addr;
+wire[31:0] io_read_data = 1'b0;
+wire[31:0] io_write_data;
+wire io_ready = 1'b0;
+wire io_write_strobe, io_read_strobe, io_addr_strobe;
+
+wire txd, rxd;
+cpu cpu0(
+  .Clk(clk_48),
+  .Reset(1'b0),
+
+  .IO_Addr_Strobe(io_addr_strobe),
+  .IO_Read_Strobe(io_read_strobe),
+  .IO_Write_Strobe(io_write_strobe),
+  .IO_Address(io_addr),
+  .IO_Byte_Enable(),
+  .IO_Write_Data(io_write_data),
+  .IO_Read_Data(io_read_data),
+  .IO_Ready(io_ready),
+
+  .UART_Rx(rxd),
+  .UART_Tx(txd)
+);
 
 assign s  = { 8'bzzzzzzzz, txd, 7'bzzzzzzz };
 assign sd = 16'b0000000010000000;
