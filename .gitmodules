@@ -1,0 +1,3 @@
+[submodule "common/usb"]
+	path = common/usb
+	url = git@github.com:avakar/usbcorev.git

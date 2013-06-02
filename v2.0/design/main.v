@@ -1,67 +1,88 @@
 module main(
-    input clk_in,
-    output reg[2:0] led,
-    inout[16:1] s,
-    output[16:1] sd,
+    input clk_33,
+    output[2:0] led,
+    inout[15:0] s,
+    output[15:0] sd,
 
-    output reg flash_cs,
-    output reg flash_si,
-    output reg flash_clk,
+    output vio_33,
+    output vio_50,
+
+    output flash_cs,
+    output flash_si,
+    output flash_clk,
     input flash_so
     );
-    
-reg[24:0] counter;
+
+wire clk_48;
+clock_controller clkctrl(
+    .rst(1'b0),
+    .clk_33(clk_33),
+    .clk_48(clk_48)
+    );
+
+reg[25:0] counter;
 wire blink_strobe = (counter == 1'b0);
-always @(posedge clk_in) begin
+always @(posedge clk_48) begin
     if (counter == 1'b0)
-        counter <= 25'd33333333;
+        counter <= 26'd48000000;
     else
         counter <= counter - 1'b1;
 end
 
-always @(posedge clk_in) begin
+reg[2:0] debug_snake;
+always @(posedge clk_48) begin
     if (blink_strobe)
-        led <= { led[1], led[0], !led[2] };
+        debug_snake <= { debug_snake[1], debug_snake[0], !debug_snake[2] };
 end
 
-wire jtag1_sel, jtag1_reset, jtag1_tdi, jtag1_capture, jtag1_update, jtag1_shift, jtag_tck;
+spiviajtag spiviajtag0(
+    .clk(flash_clk),
+    .cs_n(flash_cs),
+    .mosi(flash_si),
+    .miso(flash_so)
+);
 
-BSCAN_SPARTAN6 #(
-    .JTAG_CHAIN(1)
-)
-jtag1(
-    .SEL(jtag1_sel),
-    .RESET(jtag1_reset),
-    .TDI(jtag1_tdi),
-    .DRCK(),
-    .CAPTURE(jtag1_capture),
-    .UPDATE(jtag1_update),
-    .SHIFT(jtag1_shift),
-    .RUNTEST(),
-    .TCK(jtag_tck),
-    .TMS(),
-    .TDO(flash_so)
+reg[7:0] tx_buf;
+reg tx_buf_valid;
+wire tx_buf_ready;
+wire[7:0] rx_buf;
+wire rx_buf_valid;
+wire txd, rxd;
+uart uart0(
+    .rst(1'b0),
+    .clk_48(clk_48),
+
+    .rxd(rxd),
+    .txd(txd),
+
+    .tx_data(tx_buf),
+    .tx_data_valid(tx_buf_valid),
+    .tx_data_ready(tx_buf_ready),
+
+    .rx_data(rx_buf),
+    .rx_data_valid(rx_buf_valid),
+    .rx_overflow_error(),
+    .rx_frame_error(),
+    .rx_data_ready(1'b1)
     );
 
-always @(posedge jtag_tck or posedge jtag1_reset) begin
-    if (jtag1_reset) begin
-        flash_cs <= 1'b1;
-        flash_clk <= 1'b1;
-    end else if (jtag1_sel) begin
-        flash_clk <= 1'b1;
-        if (jtag1_capture) begin
-            flash_cs <= 1'b0;
-        end else if (jtag1_update) begin
-            flash_cs <= 1'b1;
-        end else if (jtag1_shift) begin
-            if (flash_clk)
-                flash_si <= jtag1_tdi;
-            flash_clk <= !flash_clk;
-        end
+always @(posedge clk_48) begin
+    if (tx_buf_ready)
+        tx_buf_valid <= 1'b0;
+
+    if (rx_buf_valid) begin
+        tx_buf <= rx_buf + 1'b1;
+        tx_buf_valid <= 1'b1;
     end
 end
 
-assign s = 16'sbz;
-assign sd = 16'sb0;
+assign s  = { 8'bzzzzzzzz, txd, 7'bzzzzzzz };
+assign sd = 16'b0000000010000000;
+assign rxd = s[6];
+
+assign vio_33 = 1'b1;
+assign vio_50 = 1'b0;
+
+assign led = debug_snake;
 
 endmodule

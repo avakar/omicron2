@@ -15,13 +15,13 @@ CONFIG PROHIBIT = P144;
 NET "led[2]" IOSTANDARD = LVCMOS33;
 NET "led[1]" IOSTANDARD = LVCMOS33;
 NET "led[0]" IOSTANDARD = LVCMOS33;
-NET "clk_in" IOSTANDARD = LVCMOS33;
+NET "clk_33" IOSTANDARD = LVCMOS33;
 
 
 NET "led[0]" LOC = P139;
 NET "led[1]" LOC = P138;
 NET "led[2]" LOC = P133;
-NET "clk_in" LOC = P134;
+NET "clk_33" LOC = P134;
 
 
 NET "flash_clk" LOC = P70;
@@ -29,47 +29,44 @@ NET "flash_cs" LOC = P38;
 NET "flash_si" LOC = P64;
 NET "flash_so" LOC = P65;
 
-# PlanAhead Generated physical constraints 
 
-NET "s[1]" LOC = P140;
-NET "s[2]" LOC = P142;
-NET "s[3]" LOC = P2;
-NET "s[4]" LOC = P6;
-NET "s[5]" LOC = P8;
-NET "s[6]" LOC = P10;
-NET "s[7]" LOC = P12;
-NET "s[8]" LOC = P15;
-NET "s[9]" LOC = P21;
-NET "s[10]" LOC = P23;
-NET "s[11]" LOC = P26;
-NET "s[12]" LOC = P29;
-NET "s[13]" LOC = P32;
-NET "s[14]" LOC = P34;
-NET "s[15]" LOC = P39;
-NET "s[16]" LOC = P41;
-NET "sd[1]" LOC = P141;
-NET "sd[2]" LOC = P143;
-NET "sd[3]" LOC = P5;
-NET "sd[4]" LOC = P7;
-NET "sd[5]" LOC = P9;
-NET "sd[6]" LOC = P11;
-NET "sd[7]" LOC = P14;
-NET "sd[8]" LOC = P16;
-NET "sd[9]" LOC = P22;
-NET "sd[10]" LOC = P24;
-NET "sd[11]" LOC = P27;
-NET "sd[12]" LOC = P30;
-NET "sd[13]" LOC = P33;
-NET "sd[14]" LOC = P35;
-NET "sd[15]" LOC = P40;
-NET "sd[16]" LOC = P43;
+NET "s[0]" LOC = P140;
+NET "s[1]" LOC = P142;
+NET "s[2]" LOC = P2;
+NET "s[3]" LOC = P6;
+NET "s[4]" LOC = P8;
+NET "s[5]" LOC = P10;
+NET "s[6]" LOC = P12;
+NET "s[7]" LOC = P15;
+NET "s[8]" LOC = P21;
+NET "s[9]" LOC = P23;
+NET "s[10]" LOC = P26;
+NET "s[11]" LOC = P29;
+NET "s[12]" LOC = P32;
+NET "s[13]" LOC = P34;
+NET "s[14]" LOC = P39;
+NET "s[15]" LOC = P41;
+NET "sd[0]" LOC = P141;
+NET "sd[1]" LOC = P143;
+NET "sd[2]" LOC = P5;
+NET "sd[3]" LOC = P7;
+NET "sd[4]" LOC = P9;
+NET "sd[5]" LOC = P11;
+NET "sd[6]" LOC = P14;
+NET "sd[7]" LOC = P16;
+NET "sd[8]" LOC = P22;
+NET "sd[9]" LOC = P24;
+NET "sd[10]" LOC = P27;
+NET "sd[11]" LOC = P30;
+NET "sd[12]" LOC = P33;
+NET "sd[13]" LOC = P35;
+NET "sd[14]" LOC = P40;
+NET "sd[15]" LOC = P43;
 
-# PlanAhead Generated IO constraints 
 
 NET "led[2]" DRIVE = 12;
 NET "led[1]" DRIVE = 12;
 NET "led[0]" DRIVE = 12;
-NET "s[16]" DRIVE = 12;
 NET "s[15]" DRIVE = 12;
 NET "s[14]" DRIVE = 12;
 NET "s[13]" DRIVE = 12;
@@ -85,7 +82,7 @@ NET "s[4]" DRIVE = 12;
 NET "s[3]" DRIVE = 12;
 NET "s[2]" DRIVE = 12;
 NET "s[1]" DRIVE = 12;
-NET "sd[16]" DRIVE = 12;
+NET "s[0]" DRIVE = 12;
 NET "sd[15]" DRIVE = 12;
 NET "sd[14]" DRIVE = 12;
 NET "sd[13]" DRIVE = 12;
@@ -101,11 +98,11 @@ NET "sd[4]" DRIVE = 12;
 NET "sd[3]" DRIVE = 12;
 NET "sd[2]" DRIVE = 12;
 NET "sd[1]" DRIVE = 12;
-NET "clk_in" DRIVE = 12;
+NET "sd[0]" DRIVE = 12;
+NET "clk_33" DRIVE = 12;
 NET "led[2]" SLEW = SLOW;
 NET "led[1]" SLEW = SLOW;
 NET "led[0]" SLEW = SLOW;
-NET "s[16]" SLEW = SLOW;
 NET "s[15]" SLEW = SLOW;
 NET "s[14]" SLEW = SLOW;
 NET "s[13]" SLEW = SLOW;
@@ -121,7 +118,7 @@ NET "s[4]" SLEW = SLOW;
 NET "s[3]" SLEW = SLOW;
 NET "s[2]" SLEW = SLOW;
 NET "s[1]" SLEW = SLOW;
-NET "sd[16]" SLEW = SLOW;
+NET "s[0]" SLEW = SLOW;
 NET "sd[15]" SLEW = SLOW;
 NET "sd[14]" SLEW = SLOW;
 NET "sd[13]" SLEW = SLOW;
@@ -137,8 +134,8 @@ NET "sd[4]" SLEW = SLOW;
 NET "sd[3]" SLEW = SLOW;
 NET "sd[2]" SLEW = SLOW;
 NET "sd[1]" SLEW = SLOW;
-NET "clk_in" SLEW = SLOW;
-NET "s[16]" IOSTANDARD = LVCMOS33;
+NET "sd[0]" SLEW = SLOW;
+NET "clk_33" SLEW = SLOW;
 NET "s[15]" IOSTANDARD = LVCMOS33;
 NET "s[14]" IOSTANDARD = LVCMOS33;
 NET "s[13]" IOSTANDARD = LVCMOS33;
@@ -154,7 +151,7 @@ NET "s[4]" IOSTANDARD = LVCMOS33;
 NET "s[3]" IOSTANDARD = LVCMOS33;
 NET "s[2]" IOSTANDARD = LVCMOS33;
 NET "s[1]" IOSTANDARD = LVCMOS33;
-NET "sd[16]" IOSTANDARD = LVCMOS33;
+NET "s[0]" IOSTANDARD = LVCMOS33;
 NET "sd[15]" IOSTANDARD = LVCMOS33;
 NET "sd[14]" IOSTANDARD = LVCMOS33;
 NET "sd[13]" IOSTANDARD = LVCMOS33;
@@ -170,6 +167,7 @@ NET "sd[4]" IOSTANDARD = LVCMOS33;
 NET "sd[3]" IOSTANDARD = LVCMOS33;
 NET "sd[2]" IOSTANDARD = LVCMOS33;
 NET "sd[1]" IOSTANDARD = LVCMOS33;
+NET "sd[0]" IOSTANDARD = LVCMOS33;
 NET "flash_clk" IOSTANDARD = LVCMOS33;
 NET "flash_cs" IOSTANDARD = LVCMOS33;
 NET "flash_si" IOSTANDARD = LVCMOS33;
@@ -182,3 +180,32 @@ NET "flash_clk" SLEW = SLOW;
 NET "flash_cs" SLEW = SLOW;
 NET "flash_si" SLEW = SLOW;
 NET "flash_so" SLEW = SLOW;
+
+
+NET "flash_so" PULLUP;
+NET "s[15]" KEEPER;
+NET "s[14]" KEEPER;
+NET "s[13]" KEEPER;
+NET "s[12]" KEEPER;
+NET "s[11]" KEEPER;
+NET "s[10]" KEEPER;
+NET "s[9]" KEEPER;
+NET "s[8]" KEEPER;
+//NET "s[7]" KEEPER;
+NET "s[6]" KEEPER;
+NET "s[5]" KEEPER;
+NET "s[4]" KEEPER;
+NET "s[3]" KEEPER;
+NET "s[2]" KEEPER;
+NET "s[1]" KEEPER;
+NET "s[0]" KEEPER;
+
+# PlanAhead Generated physical constraints 
+
+NET "vio_33" LOC = P44;
+NET "vio_50" LOC = P45;
+
+# PlanAhead Generated IO constraints 
+
+NET "vio_33" IOSTANDARD = LVCMOS33;
+NET "vio_50" IOSTANDARD = LVCMOS33;
