@@ -61,9 +61,7 @@ uart uart0(
 
     .rx_data(rx_buf),
     .rx_data_valid(rx_buf_valid),
-    .rx_overflow_error(),
-    .rx_frame_error(),
-    .rx_data_ready(1'b1)
+    .rx_frame_error()
     );
 
 always @(posedge clk_48) begin

@@ -11,9 +11,7 @@ module uart(
 
     output[7:0] rx_data,
     output rx_data_valid,
-    output rx_overflow_error,
-    output rx_frame_error,
-    input rx_data_ready
+    output rx_frame_error
     );
 
 reg[6:0] baud_cnt;
@@ -47,7 +45,7 @@ uart_rx uart_rx0(
     .rxd(rxd),
 
     .data(rx_data),
-    .overflow_error(rx_overflow_error),
+    .overflow_error(),
     .frame_error(rx_frame_error),
     .valid(rx_data_valid),
     .ready(1'b1)
