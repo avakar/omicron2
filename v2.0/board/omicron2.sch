@@ -13579,6 +13579,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L74N_DOUT_BUSY_1"/>
 <wire x1="261.62" y1="91.44" x2="299.72" y2="91.44" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="91.44" x2="302.26" y2="93.98" width="0.1524" layer="91"/>
+<label x="299.72" y="91.44" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_A2" class="0">
@@ -13586,6 +13587,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L74P_AWAKE_1"/>
 <wire x1="261.62" y1="93.98" x2="299.72" y2="93.98" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="93.98" x2="302.26" y2="96.52" width="0.1524" layer="91"/>
+<label x="299.72" y="93.98" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_A1" class="0">
@@ -13593,6 +13595,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L47N_1"/>
 <wire x1="261.62" y1="101.6" x2="299.72" y2="101.6" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="101.6" x2="302.26" y2="104.14" width="0.1524" layer="91"/>
+<label x="299.72" y="101.6" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_A0" class="0">
@@ -13600,6 +13603,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L47P_1"/>
 <wire x1="261.62" y1="104.14" x2="299.72" y2="104.14" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="104.14" x2="302.26" y2="106.68" width="0.1524" layer="91"/>
+<label x="299.72" y="104.14" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_A10" class="0">
@@ -13607,6 +13611,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L46N_1"/>
 <wire x1="261.62" y1="106.68" x2="299.72" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="106.68" x2="302.26" y2="109.22" width="0.1524" layer="91"/>
+<label x="299.72" y="106.68" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_BA1" class="0">
@@ -13614,6 +13619,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L46P_1"/>
 <wire x1="261.62" y1="109.22" x2="299.72" y2="109.22" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="109.22" x2="302.26" y2="111.76" width="0.1524" layer="91"/>
+<label x="299.72" y="109.22" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_BA0" class="0">
@@ -13621,6 +13627,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L45N_1"/>
 <wire x1="261.62" y1="111.76" x2="299.72" y2="111.76" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="111.76" x2="302.26" y2="114.3" width="0.1524" layer="91"/>
+<label x="299.72" y="111.76" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_CS" class="0">
@@ -13628,6 +13635,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L45P_1"/>
 <wire x1="261.62" y1="114.3" x2="299.72" y2="114.3" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="114.3" x2="302.26" y2="116.84" width="0.1524" layer="91"/>
+<label x="299.72" y="114.3" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_RAS" class="0">
@@ -13635,6 +13643,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L43N_GCLK4_1"/>
 <wire x1="261.62" y1="116.84" x2="299.72" y2="116.84" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="116.84" x2="302.26" y2="119.38" width="0.1524" layer="91"/>
+<label x="299.72" y="116.84" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_CAS" class="0">
@@ -13650,6 +13659,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L41N_GCLK8_1"/>
 <wire x1="261.62" y1="137.16" x2="299.72" y2="137.16" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="137.16" x2="302.26" y2="139.7" width="0.1524" layer="91"/>
+<label x="299.72" y="137.16" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_DQ1" class="0">
@@ -13657,6 +13667,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L41P_GCLK9_IRDY1_1"/>
 <wire x1="261.62" y1="139.7" x2="299.72" y2="139.7" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="139.7" x2="302.26" y2="142.24" width="0.1524" layer="91"/>
+<label x="299.72" y="139.7" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_DQ2" class="0">
@@ -13664,6 +13675,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L40N_GCLK10_1"/>
 <wire x1="261.62" y1="142.24" x2="299.72" y2="142.24" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="142.24" x2="302.26" y2="144.78" width="0.1524" layer="91"/>
+<label x="299.72" y="142.24" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_DQ3" class="0">
@@ -13679,6 +13691,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L34N_1"/>
 <wire x1="261.62" y1="149.86" x2="299.72" y2="149.86" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="149.86" x2="302.26" y2="152.4" width="0.1524" layer="91"/>
+<label x="299.72" y="149.86" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_DQ5" class="0">
@@ -13686,6 +13699,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L34P_1"/>
 <wire x1="261.62" y1="152.4" x2="299.72" y2="152.4" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="152.4" x2="302.26" y2="154.94" width="0.1524" layer="91"/>
+<label x="299.72" y="152.4" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_DQ6" class="0">
@@ -13693,6 +13707,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L33N_1"/>
 <wire x1="261.62" y1="154.94" x2="299.72" y2="154.94" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="154.94" x2="302.26" y2="157.48" width="0.1524" layer="91"/>
+<label x="299.72" y="154.94" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_DQ7" class="0">
@@ -13700,6 +13715,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L33P_1"/>
 <wire x1="261.62" y1="157.48" x2="299.72" y2="157.48" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="157.48" x2="302.26" y2="160.02" width="0.1524" layer="91"/>
+<label x="299.72" y="157.48" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_WE" class="0">
@@ -13707,13 +13723,15 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L42N_GCLK6_TRDY1_1"/>
 <wire x1="261.62" y1="124.46" x2="299.72" y2="124.46" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="124.46" x2="302.26" y2="127" width="0.1524" layer="91"/>
+<label x="299.72" y="124.46" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_DQML" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L42P_GCLK7_1"/>
 <wire x1="261.62" y1="127" x2="299.72" y2="127" width="0.1524" layer="91"/>
-<label x="292.1" y="127" size="1.778" layer="95"/>
+<label x="299.72" y="127" size="1.778" layer="95" rot="MR0"/>
+<wire x1="299.72" y1="127" x2="302.26" y2="129.54" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="M_A4" class="0">
@@ -13721,6 +13739,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L35P_GCLK17_0"/>
 <wire x1="172.72" y1="208.28" x2="172.72" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="172.72" y1="241.3" x2="170.18" y2="243.84" width="0.1524" layer="91"/>
+<label x="172.72" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_A5" class="0">
@@ -13728,6 +13747,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L32P_1"/>
 <wire x1="261.62" y1="162.56" x2="299.72" y2="162.56" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="162.56" x2="302.26" y2="165.1" width="0.1524" layer="91"/>
+<label x="299.72" y="162.56" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_A6" class="0">
@@ -13735,6 +13755,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L1N_VREF_1"/>
 <wire x1="261.62" y1="167.64" x2="299.72" y2="167.64" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="167.64" x2="302.26" y2="170.18" width="0.1524" layer="91"/>
+<label x="299.72" y="167.64" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_DQ15" class="0">
@@ -13742,6 +13763,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L66N_SCP0_0"/>
 <wire x1="226.06" y1="208.28" x2="226.06" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="226.06" y1="241.3" x2="223.52" y2="243.84" width="0.1524" layer="91"/>
+<label x="226.06" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_DQ14" class="0">
@@ -13749,6 +13771,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L66P_SCP1_0"/>
 <wire x1="223.52" y1="208.28" x2="223.52" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="223.52" y1="241.3" x2="220.98" y2="243.84" width="0.1524" layer="91"/>
+<label x="223.52" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_DQ13" class="0">
@@ -13756,6 +13779,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L65N_SCP2_0"/>
 <wire x1="218.44" y1="208.28" x2="218.44" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="218.44" y1="241.3" x2="215.9" y2="243.84" width="0.1524" layer="91"/>
+<label x="218.44" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_DQ12" class="0">
@@ -13763,6 +13787,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L65P_SCP3_0"/>
 <wire x1="215.9" y1="208.28" x2="215.9" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="215.9" y1="241.3" x2="213.36" y2="243.84" width="0.1524" layer="91"/>
+<label x="215.9" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_DQ11" class="0">
@@ -13770,6 +13795,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L64N_SCP4_0"/>
 <wire x1="213.36" y1="208.28" x2="213.36" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="213.36" y1="241.3" x2="210.82" y2="243.84" width="0.1524" layer="91"/>
+<label x="213.36" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_DQ10" class="0">
@@ -13777,6 +13803,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L64P_SCP5_0"/>
 <wire x1="210.82" y1="208.28" x2="210.82" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="210.82" y1="241.3" x2="208.28" y2="243.84" width="0.1524" layer="91"/>
+<label x="210.82" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_DQ9" class="0">
@@ -13784,6 +13811,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L63N_SCP6_0"/>
 <wire x1="208.28" y1="208.28" x2="208.28" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="208.28" y1="241.3" x2="205.74" y2="243.84" width="0.1524" layer="91"/>
+<label x="208.28" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_DQ8" class="0">
@@ -13791,13 +13819,15 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L63P_SCP7_0"/>
 <wire x1="205.74" y1="208.28" x2="205.74" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="205.74" y1="241.3" x2="203.2" y2="243.84" width="0.1524" layer="91"/>
+<label x="205.74" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_DQMH" class="0">
 <segment>
 <pinref part="IC1" gate="G$1" pin="IO_L62N_VREF_0"/>
-<wire x1="203.2" y1="208.28" x2="203.2" y2="238.76" width="0.1524" layer="91"/>
-<label x="203.2" y="231.14" size="1.778" layer="95" rot="R90"/>
+<wire x1="203.2" y1="208.28" x2="203.2" y2="241.3" width="0.1524" layer="91"/>
+<label x="203.2" y="241.3" size="1.778" layer="95" rot="MR270"/>
+<wire x1="203.2" y1="241.3" x2="200.66" y2="243.84" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="M_CLK" class="0">
@@ -13805,7 +13835,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L1P_1"/>
 <wire x1="261.62" y1="170.18" x2="299.72" y2="170.18" width="0.1524" layer="91"/>
 <wire x1="299.72" y1="170.18" x2="302.26" y2="172.72" width="0.1524" layer="91"/>
-<label x="287.02" y="170.18" size="1.778" layer="95"/>
+<label x="299.72" y="170.18" size="1.778" layer="95" rot="MR0"/>
 </segment>
 </net>
 <net name="M_CKE" class="0">
@@ -13813,6 +13843,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="200.66" y1="241.3" x2="198.12" y2="243.84" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="G$1" pin="IO_L62P_0"/>
 <wire x1="200.66" y1="241.3" x2="200.66" y2="208.28" width="0.1524" layer="91"/>
+<label x="200.66" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_A12" class="0">
@@ -13820,6 +13851,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="195.58" y1="241.3" x2="193.04" y2="243.84" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="G$1" pin="IO_L37N_GCLK12_0"/>
 <wire x1="195.58" y1="241.3" x2="195.58" y2="208.28" width="0.1524" layer="91"/>
+<label x="195.58" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_A11" class="0">
@@ -13827,6 +13859,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="193.04" y1="241.3" x2="190.5" y2="243.84" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="G$1" pin="IO_L37P_GCLK13_0"/>
 <wire x1="193.04" y1="241.3" x2="193.04" y2="208.28" width="0.1524" layer="91"/>
+<label x="193.04" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_A9" class="0">
@@ -13834,6 +13867,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="187.96" y1="241.3" x2="185.42" y2="243.84" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="G$1" pin="IO_L36N_GCLK14_0"/>
 <wire x1="187.96" y1="241.3" x2="187.96" y2="208.28" width="0.1524" layer="91"/>
+<label x="187.96" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_A8" class="0">
@@ -13841,6 +13875,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <wire x1="185.42" y1="241.3" x2="182.88" y2="243.84" width="0.1524" layer="91"/>
 <pinref part="IC1" gate="G$1" pin="IO_L36P_GCLK15_0"/>
 <wire x1="185.42" y1="241.3" x2="185.42" y2="208.28" width="0.1524" layer="91"/>
+<label x="185.42" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="M_A7" class="0">
@@ -13848,7 +13883,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L35N_GCLK16_0"/>
 <wire x1="175.26" y1="208.28" x2="175.26" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="175.26" y1="241.3" x2="172.72" y2="243.84" width="0.1524" layer="91"/>
-<label x="175.26" y="233.68" size="1.778" layer="95" rot="R90"/>
+<label x="175.26" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="S3" class="0">
@@ -13856,7 +13891,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L83P_3"/>
 <wire x1="111.76" y1="175.26" x2="78.74" y2="175.26" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="175.26" x2="76.2" y2="177.8" width="0.1524" layer="91"/>
-<label x="81.28" y="175.26" size="1.778" layer="95"/>
+<label x="78.74" y="175.26" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="SD3" class="0">
@@ -13864,6 +13899,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L52N_3"/>
 <wire x1="111.76" y1="167.64" x2="78.74" y2="167.64" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="167.64" x2="76.2" y2="170.18" width="0.1524" layer="91"/>
+<label x="78.74" y="167.64" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="SD8" class="0">
@@ -13887,6 +13923,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L44N_GCLK20_3"/>
 <wire x1="111.76" y1="144.78" x2="78.74" y2="144.78" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="144.78" x2="76.2" y2="147.32" width="0.1524" layer="91"/>
+<label x="78.74" y="144.78" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="S7" class="0">
@@ -13894,6 +13931,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L49P_3"/>
 <wire x1="111.76" y1="149.86" x2="78.74" y2="149.86" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="149.86" x2="76.2" y2="152.4" width="0.1524" layer="91"/>
+<label x="78.74" y="149.86" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="SD6" class="0">
@@ -13901,6 +13939,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L49N_3"/>
 <wire x1="111.76" y1="152.4" x2="78.74" y2="152.4" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="152.4" x2="76.2" y2="154.94" width="0.1524" layer="91"/>
+<label x="78.74" y="152.4" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="S6" class="0">
@@ -13908,6 +13947,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L50P_3"/>
 <wire x1="111.76" y1="154.94" x2="78.74" y2="154.94" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="154.94" x2="76.2" y2="157.48" width="0.1524" layer="91"/>
+<label x="78.74" y="154.94" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="SD5" class="0">
@@ -13915,6 +13955,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L50N_3"/>
 <wire x1="111.76" y1="157.48" x2="78.74" y2="157.48" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="157.48" x2="76.2" y2="160.02" width="0.1524" layer="91"/>
+<label x="78.74" y="157.48" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="S5" class="0">
@@ -13922,6 +13963,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L51P_3"/>
 <wire x1="111.76" y1="160.02" x2="78.74" y2="160.02" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="160.02" x2="76.2" y2="162.56" width="0.1524" layer="91"/>
+<label x="78.74" y="160.02" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="SD4" class="0">
@@ -13929,6 +13971,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L51N_3"/>
 <wire x1="111.76" y1="162.56" x2="78.74" y2="162.56" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="162.56" x2="76.2" y2="165.1" width="0.1524" layer="91"/>
+<label x="78.74" y="162.56" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="S4" class="0">
@@ -13936,6 +13979,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L52P_3"/>
 <wire x1="111.76" y1="165.1" x2="78.74" y2="165.1" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="165.1" x2="76.2" y2="167.64" width="0.1524" layer="91"/>
+<label x="78.74" y="165.1" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="SD2" class="0">
@@ -13943,6 +13987,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L1N_VREF_0"/>
 <wire x1="144.78" y1="208.28" x2="144.78" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="144.78" y1="241.3" x2="142.24" y2="243.84" width="0.1524" layer="91"/>
+<label x="144.78" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="S2" class="0">
@@ -13950,6 +13995,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L2P_0"/>
 <wire x1="147.32" y1="208.28" x2="147.32" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="147.32" y1="241.3" x2="144.78" y2="243.84" width="0.1524" layer="91"/>
+<label x="147.32" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="SD1" class="0">
@@ -13957,6 +14003,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L2N_0"/>
 <wire x1="149.86" y1="208.28" x2="149.86" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="149.86" y1="241.3" x2="147.32" y2="243.84" width="0.1524" layer="91"/>
+<label x="149.86" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="S1" class="0">
@@ -13964,6 +14011,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L3P_0"/>
 <wire x1="152.4" y1="208.28" x2="152.4" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="152.4" y1="241.3" x2="149.86" y2="243.84" width="0.1524" layer="91"/>
+<label x="152.4" y="241.3" size="1.778" layer="95" rot="MR270"/>
 </segment>
 </net>
 <net name="S9" class="0">
@@ -14043,6 +14091,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L2P_3"/>
 <wire x1="111.76" y1="96.52" x2="78.74" y2="96.52" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="96.52" x2="76.2" y2="99.06" width="0.1524" layer="91"/>
+<label x="78.74" y="96.52" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="S14" class="0">
@@ -14058,6 +14107,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L1P_3"/>
 <wire x1="111.76" y1="91.44" x2="78.74" y2="91.44" width="0.1524" layer="91"/>
 <wire x1="78.74" y1="91.44" x2="76.2" y2="93.98" width="0.1524" layer="91"/>
+<label x="78.74" y="91.44" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="S15" class="0">
@@ -14065,6 +14115,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L65P_INIT_B_2"/>
 <wire x1="147.32" y1="58.42" x2="147.32" y2="20.32" width="0.1524" layer="91"/>
 <wire x1="147.32" y1="20.32" x2="144.78" y2="17.78" width="0.1524" layer="91"/>
+<label x="147.32" y="38.1" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
 <net name="SD15" class="0">
@@ -14072,6 +14123,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L64N_D9_2"/>
 <wire x1="149.86" y1="58.42" x2="149.86" y2="20.32" width="0.1524" layer="91"/>
 <wire x1="149.86" y1="20.32" x2="147.32" y2="17.78" width="0.1524" layer="91"/>
+<label x="149.86" y="38.1" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
 <net name="M_PWREN" class="0">
@@ -14093,6 +14145,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L64P_D8_2"/>
 <wire x1="152.4" y1="58.42" x2="152.4" y2="20.32" width="0.1524" layer="91"/>
 <wire x1="152.4" y1="20.32" x2="149.86" y2="17.78" width="0.1524" layer="91"/>
+<label x="152.4" y="38.1" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
 <net name="SD16" class="0">
@@ -14100,6 +14153,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L62N_D6_2"/>
 <wire x1="157.48" y1="58.42" x2="157.48" y2="20.32" width="0.1524" layer="91"/>
 <wire x1="157.48" y1="20.32" x2="154.94" y2="17.78" width="0.1524" layer="91"/>
+<label x="157.48" y="38.1" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
 <net name="VIO33" class="0">
@@ -14137,6 +14191,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 <pinref part="IC1" gate="G$1" pin="IO_L34N_GCLK18_0"/>
 <wire x1="170.18" y1="208.28" x2="170.18" y2="241.3" width="0.1524" layer="91"/>
 <wire x1="170.18" y1="241.3" x2="167.64" y2="243.84" width="0.1524" layer="91"/>
+<label x="170.18" y="213.36" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
 <net name="AD_RA0" class="0">
