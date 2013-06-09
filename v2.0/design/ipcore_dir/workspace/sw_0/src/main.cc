@@ -48,6 +48,7 @@
 #define USB_EP3_OUT ((uint8_t volatile *)0xC1000300)
 #define USB_EP3_IN  ((uint8_t volatile *)0xC1000380)
 
+#if 0
 static void sendch(char ch)
 {
 	while (UART_STATUS & UART_TX_USED_bm)
@@ -56,6 +57,98 @@ static void sendch(char ch)
 
 	UART_TX = ch;
 }
+
+static bool rx_ready()
+{
+	return UART_STATUS & UART_RX_VALID_bm;
+}
+
+static uint8_t getch()
+{
+	return UART_RX;
+}
+#else
+
+static int const buf_size = 128;
+static uint8_t tx_buf[buf_size];
+static uint8_t tx_wr_ptr = 0;
+static uint8_t tx_rd_ptr = 0;
+static uint8_t rx_buf[buf_size];
+static uint8_t rx_wr_ptr = 0;
+static uint8_t rx_rd_ptr = 0;
+
+static uint8_t buf_next(uint8_t p)
+{
+	return (p + 1) & (buf_size - 1);
+}
+
+static uint8_t buf_diff(uint8_t a, uint8_t b)
+{
+	return uint8_t(a - b) & (buf_size - 1);
+}
+
+static void usb_poll()
+{
+	if ((USB_EP1_OUT_CTRL & USB_EP_FULL) != 0
+			&& buf_size - 1 - buf_diff(rx_wr_ptr, rx_rd_ptr) >= USB_EP_OUT_CNT(USB_EP1_OUT_CTRL))
+	{
+		uint8_t cnt = USB_EP_OUT_CNT(USB_EP1_OUT_CTRL);
+		for (uint8_t i = 0; i < cnt; ++i)
+		{
+			rx_buf[rx_wr_ptr] = USB_EP1_OUT[i];
+			rx_wr_ptr = buf_next(rx_wr_ptr);
+		}
+		USB_EP1_OUT_CTRL = USB_EP_FULL_CLR;
+	}
+
+	if ((USB_EP1_IN_CTRL & USB_EP_FULL) == 0
+			&& tx_rd_ptr != tx_wr_ptr)
+	{
+		uint8_t cnt = buf_diff(tx_wr_ptr, tx_rd_ptr);
+		if (cnt > 64)
+			cnt = 64;
+		for (uint8_t i = 0; i < cnt; ++i)
+		{
+			USB_EP1_IN[i] = tx_buf[tx_rd_ptr];
+			tx_rd_ptr = buf_next(tx_rd_ptr);
+		}
+		USB_EP1_IN_CTRL = USB_EP_IN_CNT(cnt) | USB_EP_FULL;
+	}
+}
+
+static void sendch(char ch)
+{
+	for (;;)
+	{
+		uint8_t tx_next = buf_next(tx_wr_ptr);
+		if (tx_next == tx_rd_ptr)
+		{
+			usb_poll();
+			continue;
+		}
+
+		tx_buf[tx_wr_ptr] = ch;
+		tx_wr_ptr = tx_next;
+		break;
+	}
+}
+
+static bool rx_ready()
+{
+	return rx_wr_ptr != rx_rd_ptr;
+}
+
+static uint8_t getch()
+{
+	while (!rx_ready())
+		usb_poll();
+
+	uint8_t res = rx_buf[rx_rd_ptr];
+	rx_rd_ptr = buf_next(rx_rd_ptr);
+	return res;
+}
+
+#endif
 
 static void send(char const * s)
 {
@@ -84,6 +177,8 @@ static void sendh(uint16_t s)
 
 int main()
 {
+	USB_CTRL = USB_ATTACH;
+
 	enum { ia_none, ia_set_address } action = ia_none;
 	uint8_t new_address = 0;
 	uint8_t config = 0;
@@ -91,7 +186,7 @@ int main()
 	{
 		if (USB_CTRL & USB_RESET_IF)
 		{
-			send("RESET\n");
+			//send("RESET\n");
 			USB_ADDRESS = 0;
 			USB_CTRL |= USB_RESET_CLR;
 			USB_EP0_IN_CTRL = USB_EP_STALL | USB_EP_FULL_CLR;
@@ -109,22 +204,13 @@ int main()
 			case ia_none:
 				break;
 			case ia_set_address:
-				send("SET_ADDRESS ");
-				sendh(new_address);
-				sendch('\n');
 				USB_ADDRESS = new_address;
 				action = ia_none;
 				break;
 			}
 		}
 
-		if (USB_EP1_OUT_CTRL & USB_EP_FULL)
-		{
-			uint8_t cnt = USB_EP_OUT_CNT(USB_EP1_OUT_CTRL);
-			for (uint8_t i = 0; i < cnt; ++i)
-				sendch(USB_EP1_OUT[i]);
-			USB_EP1_OUT_CTRL = USB_EP_FULL_CLR;
-		}
+		usb_poll();
 
 		if (USB_EP0_OUT_CTRL & USB_EP_SETUP)
 		{
@@ -134,10 +220,10 @@ int main()
 
 			uint16_t cmd = (USB_EP0_OUT[0] << 8) | USB_EP0_OUT[1];
 			uint16_t wValue = (USB_EP0_OUT[3] << 8) | USB_EP0_OUT[2];
-			uint16_t wIndex = (USB_EP0_OUT[5] << 8) | USB_EP0_OUT[4];
+			//uint16_t wIndex = (USB_EP0_OUT[5] << 8) | USB_EP0_OUT[4];
 			uint16_t wLength = (USB_EP0_OUT[7] << 8) | USB_EP0_OUT[6];
 
-			send("SETUP ");
+			/*send("SETUP ");
 			sendh(cmd);
 			sendch(':');
 			sendh(wValue);
@@ -145,7 +231,7 @@ int main()
 			sendh(wIndex);
 			sendch(':');
 			sendh(wLength);
-			sendch('\n');
+			sendch('\n');*/
 
 			switch (cmd)
 			{
@@ -194,9 +280,6 @@ int main()
 				}
 				else
 				{
-					send("SET_CONFIG ");
-					sendh((uint8_t)wValue);
-					sendch('\n');
 					config = (uint8_t)wValue;
 
 					if (config)
@@ -220,9 +303,9 @@ int main()
 			}
 		}
 
-		if (UART_STATUS & UART_RX_VALID_bm)
+		if (rx_ready())
 		{
-			char ch = UART_RX;
+			char ch = getch();
 			switch (ch)
 			{
 			case '?':
@@ -235,32 +318,6 @@ int main()
 				sendh((uint16_t)USB_EP1_IN_CTRL);
 				sendch(':');
 				sendh((uint16_t)USB_EP1_OUT_CTRL);
-				sendch('\n');
-				break;
-			case 'q':
-				USB_EP1_OUT_CTRL = USB_EP_TOGGLE_SET;
-				break;
-			case 'Q':
-				USB_EP1_OUT_CTRL = USB_EP_TOGGLE_CLR;
-				break;
-			case 'm':
-				USB_EP1_IN[0] = 'e';
-				USB_EP1_IN_CTRL = USB_EP_IN_CNT(1) | USB_EP_FULL;
-				break;
-			case 'u':
-				USB_CTRL = USB_ATTACH;
-				break;
-			case 'U':
-				USB_CTRL = 0;
-				break;
-			case 't':
-				for (int i = 0; i < 64; ++i)
-					sendh(USB_EP0_OUT[i]);
-				sendch('\n');
-				break;
-			case 'T':
-				for (int i = 0; i < 64; ++i)
-					USB_EP0_OUT[i] += i;
 				sendch('\n');
 				break;
 			default:
