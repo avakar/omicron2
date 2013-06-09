@@ -48,6 +48,9 @@
 #define USB_EP3_OUT ((uint8_t volatile *)0xC1000300)
 #define USB_EP3_IN  ((uint8_t volatile *)0xC1000380)
 
+#define DNA_DATA    *((uint64_t volatile *)0xC2000000)
+
+
 #if 0
 static void sendch(char ch)
 {
@@ -169,11 +172,17 @@ static void sendh(uint16_t s)
 	sendh((uint8_t)s);
 }
 
-/*static void sendh(uint32_t s)
+static void sendh(uint32_t s)
 {
 	sendh((uint16_t)(s >> 16));
 	sendh((uint16_t)s);
-}*/
+}
+
+static void sendh(uint64_t s)
+{
+	sendh((uint32_t)(s >> 32));
+	sendh((uint32_t)s);
+}
 
 int main()
 {
@@ -236,6 +245,26 @@ int main()
 			switch (cmd)
 			{
 			case 0x8006: // get_descriptor
+				if (wValue == 0x302)
+				{
+					uint8_t volatile * p = USB_EP0_IN;
+					*p++ = 34;
+					*p++ = 3;
+
+					uint64_t dna = DNA_DATA;
+					for (int i = 0; i < 16; ++i)
+					{
+						static char const digits[] = "0123456789abcdef";
+						*p++ = digits[dna & 0xf];
+						*p++ = 0;
+						dna = dna >> 4;
+					}
+
+					uint8_t size = wLength > 34? 34: wLength;
+					USB_EP0_IN_CTRL = USB_EP_IN_CNT(size) | USB_EP_FULL;
+					USB_EP0_OUT_CTRL = USB_EP_FULL_CLR;
+				}
+				else
 				{
 					usb_descriptor_entry_t const * selected = 0;
 					for (size_t i = 0; !selected && i < sizeof usb_descriptor_map / sizeof usb_descriptor_map[0]; ++i)
@@ -318,6 +347,10 @@ int main()
 				sendh((uint16_t)USB_EP1_IN_CTRL);
 				sendch(':');
 				sendh((uint16_t)USB_EP1_OUT_CTRL);
+				sendch('\n');
+				break;
+			case 'd':
+				sendh(DNA_DATA);
 				sendch('\n');
 				break;
 			default:

@@ -49,37 +49,6 @@ spiviajtag spiviajtag0(
     .miso(flash_so)
 );
 
-/*reg[7:0] tx_buf;
-reg tx_buf_valid;
-wire tx_buf_ready;
-wire[7:0] rx_buf;
-wire rx_buf_valid;
-uart uart0(
-    .rst(1'b0),
-    .clk_48(clk_48),
-
-    .rxd(rxd),
-    .txd(txd),
-
-    .tx_data(tx_buf),
-    .tx_data_valid(tx_buf_valid),
-    .tx_data_ready(tx_buf_ready),
-
-    .rx_data(rx_buf),
-    .rx_data_valid(rx_buf_valid),
-    .rx_frame_error()
-    );
-
-always @(posedge clk_48) begin
-    if (tx_buf_ready)
-        tx_buf_valid <= 1'b0;
-
-    if (rx_buf_valid) begin
-        tx_buf <= rx_buf + 1'b1;
-        tx_buf_valid <= 1'b1;
-    end
-end*/
-
 wire[31:0] io_addr;
 reg[31:0] io_read_data;
 wire[31:0] io_write_data;
@@ -254,6 +223,15 @@ always @(*) begin
     endcase
 end
 
+wire[56:0] dna;
+wire dna_ready;
+dnareader dna0(
+    .rst(!rst_n),
+    .clk_48(clk_48),
+    .dna(dna),
+    .ready(dna_ready)
+    );
+
 always @(*) begin
     casez (io_addr)
         32'hC0000000:
@@ -266,6 +244,10 @@ always @(*) begin
             io_read_data = usb_ep1_ctrl_rd_data;
         32'hC100????:
             io_read_data = usb_read_data_b;
+        32'hC2000000:
+            io_read_data = dna[31:0];
+        32'hC2000004:
+            io_read_data = { dna_ready, 6'b0, dna[56:32] };
         default:
             io_read_data = 32'sbx;
     endcase
@@ -281,7 +263,6 @@ always @(posedge clk_48 or negedge rst_n) begin
         usb_addr_ptr <= 1'b0;
     end else begin
         usb_reset_prev <= usb_reset;
-
         if (usb_reset && !usb_reset_prev)
             usb_reset_flag <= 1'b1;
 

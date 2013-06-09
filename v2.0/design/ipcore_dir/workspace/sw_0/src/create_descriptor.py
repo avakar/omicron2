@@ -45,7 +45,6 @@ usb_desc = {
         ),
     0x300: LangidsDescriptor([0x409]),
     0x301: StringDescriptor('omicron'),
-    0x302: StringDescriptor('S/N none'),
     0x303: StringDescriptor('debug'),
     }
 
