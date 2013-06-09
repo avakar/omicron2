@@ -200,12 +200,39 @@ NET "s[2]" KEEPER;
 NET "s[1]" KEEPER;
 NET "s[0]" KEEPER;
 
-# PlanAhead Generated physical constraints 
 
 NET "vio_33" LOC = P44;
 NET "vio_50" LOC = P45;
 
-# PlanAhead Generated IO constraints 
 
 NET "vio_33" IOSTANDARD = LVCMOS33;
 NET "vio_50" IOSTANDARD = LVCMOS33;
+
+# PlanAhead Generated physical constraints 
+
+NET "rst_n" LOC = P62;
+
+# PlanAhead Generated IO constraints 
+
+NET "rst_n" IOSTANDARD = LVCMOS33;
+NET "rst_n" PULLUP;
+
+# PlanAhead Generated physical constraints 
+
+NET "usb_sp" LOC = P58;
+
+# PlanAhead Generated IO constraints 
+
+NET "usb_sp" IOSTANDARD = LVDS_33;
+
+# PlanAhead Generated physical constraints 
+
+NET "usb_pup" LOC = P67;
+NET "usb_dp" LOC = P59;
+NET "usb_dn" LOC = P56;
+
+# PlanAhead Generated IO constraints 
+
+NET "usb_dn" IOSTANDARD = LVCMOS33;
+NET "usb_dp" IOSTANDARD = LVCMOS33;
+NET "usb_pup" IOSTANDARD = LVCMOS33;
