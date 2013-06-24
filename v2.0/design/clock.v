@@ -1,11 +1,15 @@
 module clock_controller(
     input rst,
     input clk_33,
-    output clk_48
+    output clk_48,
+    output clk_dram,
+    output clk_dram_n,
+    output locked
     );
 
 wire pll_fb;
 wire clk_100;
+wire pll_locked;
 PLL_BASE #(
     .CLKIN_PERIOD(30),
     .COMPENSATION("PLL2DCM"),
@@ -24,25 +28,26 @@ PLL_BASE #(
     .CLKOUT4(),
     .CLKOUT5(),
     .CLKFBOUT(pll_fb),
-    .LOCKED()
+    .LOCKED(pll_locked)
     );
 
-wire dcm_clk0;
+wire dcm_48_clkfx;
+wire dcm_48_locked0;
+wire dcm_48_fb;
 DCM_SP #(
-    .CLKIN_PERIOD(10),
     .CLK_FEEDBACK("1X"),
     .CLKFX_MULTIPLY(12),
     .CLKFX_DIVIDE(25)
     )
     dcm_48 (
     .CLKIN(clk_100),
-    .CLKFB(dcm_clk0),
-    .RST(rst),
+    .CLKFB(dcm_48_fb),
+    .RST(rst || !pll_locked),
     .PSEN(1'b0),
-    .CLK0(dcm_clk0),
-    .CLKFX(clk_48),
+    .CLK0(dcm_48_fb),
+    .CLKFX(dcm_48_clkfx),
     .CLKFX180(),
-    .LOCKED(),
+    .LOCKED(dcm_48_locked0),
     .CLKDV(),
     .CLK90(),
     .CLK180(),
@@ -51,9 +56,64 @@ DCM_SP #(
     .CLK2X180(),
     .PSDONE(),
     .STATUS(),
-    .DSSEN(),
-    .PSCLK(),
-    .PSINCDEC()
+    .DSSEN(1'b0),
+    .PSCLK(1'b0),
+    .PSINCDEC(1'b0)
+    );
+
+BUFG clk_48_bufg(
+    .I(dcm_48_clkfx),
+    .O(clk_48)
+    );
+
+reg dcm_48_locked1;
+reg dcm_48_locked;
+always @(posedge clk_48 or negedge dcm_48_locked0) begin
+    if (!dcm_48_locked0) begin
+        dcm_48_locked1 <= 1'b0;
+        dcm_48_locked <= 1'b0;
+    end else begin
+        dcm_48_locked1 <= 1'b1;
+        dcm_48_locked <= dcm_48_locked1;
+    end
+end
+
+wire dcm_dram_clk0, dcm_dram_clk180;
+DCM_SP #(
+    .CLK_FEEDBACK("1X"),
+    .CLKOUT_PHASE_SHIFT("FIXED"),
+    .PHASE_SHIFT(-49)
+    )
+    dcm_dram (
+    .CLKIN(clk_48),
+    .CLKFB(clk_dram),
+    .RST(rst || !dcm_48_locked),
+    .PSEN(1'b0),
+    .CLK0(dcm_dram_clk0),
+    .CLKFX(),
+    .CLKFX180(),
+    .LOCKED(locked),
+    .CLKDV(),
+    .CLK90(),
+    .CLK180(dcm_dram_clk180),
+    .CLK270(),
+    .CLK2X(),
+    .CLK2X180(),
+    .PSDONE(),
+    .STATUS(),
+    .DSSEN(1'b0),
+    .PSCLK(1'b0),
+    .PSINCDEC(1'b0)
+    );
+
+BUFG clk_dram_bufg(
+    .I(dcm_dram_clk0),
+    .O(clk_dram)
+    );
+
+BUFG clk_dram_n_bufg(
+    .I(dcm_dram_clk180),
+    .O(clk_dram_n)
     );
 
 endmodule

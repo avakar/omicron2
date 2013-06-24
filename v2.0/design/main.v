@@ -17,15 +17,34 @@ module main(
     input usb_sp,
     input usb_sn,
     inout usb_dp,
-    inout usb_dn
+    inout usb_dn,
+
+    output m_pwren,
+    output m_clk,
+    output m_cs_n,
+    (* IOB = "FORCE" *) output m_cke,
+    (* IOB = "FORCE" *) output[12:0] m_a,
+    (* IOB = "FORCE" *) output[1:0] m_ba,
+    (* IOB = "FORCE" *) output m_ras_n,
+    (* IOB = "FORCE" *) output m_cas_n,
+    (* IOB = "FORCE" *) output m_we_n,
+    output m_ldqm,
+    output m_udqm,
+    inout[15:0] m_dq
     );
 
-wire clk_48;
+wire clk_48, clk_dram, clk_dram_n;
+wire clk_locked;
 clock_controller clkctrl(
-    .rst(1'b0),
+    .rst(!rst_n),
     .clk_33(clk_33),
-    .clk_48(clk_48)
+    .clk_48(clk_48),
+    .clk_dram(clk_dram),
+    .clk_dram_n(clk_dram_n),
+    .locked(clk_locked)
     );
+
+wire irst = !rst_n || !clk_locked;
 
 reg[25:0] counter;
 wire blink_strobe = (counter == 1'b0);
@@ -56,10 +75,17 @@ reg io_ready;
 wire io_write_strobe, io_read_strobe, io_addr_strobe;
 wire[3:0] io_byte_enable;
 
+reg[23:0] sdram0_addr_latch;
+reg[15:0] sdram0_wdata_latch;
+reg sdram0_wvalid, sdram0_arvalid;
+wire sdram0_wready, sdram0_arready;
+wire[15:0] sdram0_rdata;
+wire sdram0_rvalid;
+
 wire txd, rxd;
 cpu cpu0(
   .Clk(clk_48),
-  .Reset(!rst_n),
+  .Reset(irst),
 
   .IO_Addr_Strobe(io_addr_strobe),
   .IO_Read_Strobe(io_read_strobe),
@@ -68,7 +94,7 @@ cpu cpu0(
   .IO_Byte_Enable(io_byte_enable),
   .IO_Write_Data(io_write_data),
   .IO_Read_Data(io_read_data),
-  .IO_Ready(io_ready),
+  .IO_Ready(io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wready)),
 
   .UART_Rx(rxd),
   .UART_Tx(txd)
@@ -96,7 +122,7 @@ wire usb_success;
 reg usb_data_toggle;
 reg usb_in_data_valid;
 usb usb0(
-    .rst_n(rst_n),
+    .rst_n(!irst),
     .clk_48(clk_48),
 
     .dp_in(usb_sp),
@@ -133,7 +159,7 @@ reg usb_bank;
 reg[6:0] usb_addr_ptr;
 usb_ram usb_ram0(
     .clka(clk_48),
-    .wea(usb_data_strobe && !usb_addr_ptr[6]),
+    .wea(usb_data_strobe && !usb_addr_ptr[6] && !usb_direction_in),
     .addra({usb_endpoint[1:0], usb_direction_in, usb_bank, usb_addr_ptr[5:0]}),
     .dina(usb_data_out),
     .douta(usb_data_in),
@@ -226,11 +252,70 @@ end
 wire[56:0] dna;
 wire dna_ready;
 dnareader dna0(
-    .rst(!rst_n),
+    .rst(irst),
     .clk_48(clk_48),
     .dna(dna),
     .ready(dna_ready)
     );
+
+reg sdram_enable;
+wire m_clk_oe;
+ODDR2 m_clk_buf(
+    .D0(1'b1),
+    .D1(1'b0),
+    .C0(clk_dram),
+    .C1(clk_dram_n),
+    .CE(m_clk_oe),
+    .R(!sdram_enable),
+    .S(1'b0),
+    .Q(m_clk)
+    );
+
+assign m_cs_n = 1'b0;
+sdram sdram0(
+    .rst(!sdram_enable),
+    .clk(clk_48),
+
+    .awaddr(sdram0_addr_latch),
+    .wdata(sdram0_wdata_latch),
+    .wvalid(sdram0_wvalid),
+    .wready(sdram0_wready),
+
+    .araddr(sdram0_addr_latch),
+    .arready(sdram0_arready),
+    .arvalid(sdram0_arvalid),
+    .rdata(sdram0_rdata),
+    .rvalid(sdram0_rvalid),
+
+    .m_clk_oe(m_clk_oe),
+    .m_cke(m_cke),
+    .m_ras(m_ras_n),
+    .m_cas(m_cas_n),
+    .m_we(m_we_n),
+    .m_ba(m_ba),
+    .m_a(m_a),
+    .m_dqm({m_udqm, m_ldqm}),
+    .m_dq(m_dq)
+    );
+
+always @(posedge clk_48) begin
+    if (io_addr_strobe && (io_write_strobe || io_read_strobe))
+        sdram0_addr_latch <= io_addr[25:2];
+
+    if (sdram0_wvalid && sdram0_wready)
+        sdram0_wvalid <= 1'b0;
+
+    if (sdram0_arvalid && sdram0_arready)
+        sdram0_arvalid <= 1'b0;
+
+    if (io_addr_strobe && io_read_strobe && io_addr[31:28] == 4'hD)
+        sdram0_arvalid <= 1'b1;
+
+    if (io_addr_strobe && io_write_strobe && io_addr[31:28] == 4'hD) begin
+        sdram0_wdata_latch <= io_write_data[15:0];
+        sdram0_wvalid <= 1'b1;
+    end
+end
 
 always @(*) begin
     casez (io_addr)
@@ -238,6 +323,8 @@ always @(*) begin
             io_read_data = { usb_addr_ptr, 6'b0, usb_reset_flag, usb_attach };
         32'hC0000004:
             io_read_data = usb_address;
+        32'hC0000008:
+            io_read_data = sdram_enable;
         32'hC000010?:
             io_read_data = usb_ep0_ctrl_rd_data;
         32'hC000011?:
@@ -248,13 +335,16 @@ always @(*) begin
             io_read_data = dna[31:0];
         32'hC2000004:
             io_read_data = { dna_ready, 6'b0, dna[56:32] };
+        32'hD???????:
+            io_read_data = sdram0_rdata;
         default:
             io_read_data = 32'sbx;
     endcase
 end
 
-always @(posedge clk_48 or negedge rst_n) begin
-    if (!rst_n) begin
+always @(posedge clk_48 or posedge irst) begin
+    if (irst) begin
+        sdram_enable <= 1'b0;
         io_ready <= 1'b0;
         usb_attach <= 1'b0;
         usb_address <= 6'b0;
@@ -273,7 +363,7 @@ always @(posedge clk_48 or negedge rst_n) begin
                 usb_addr_ptr <= usb_addr_ptr + 1'b1;
         end
 
-        io_ready <= io_addr_strobe && (io_write_strobe || io_read_strobe);
+        io_ready <= io_addr_strobe && io_addr[31:28] != 4'hD && (io_write_strobe || io_read_strobe);
         if (io_addr_strobe && io_write_strobe) begin
             casez (io_addr)
                 32'hC0000000: begin
@@ -283,6 +373,9 @@ always @(posedge clk_48 or negedge rst_n) begin
                 end
                 32'hC0000004: begin
                     usb_address <= io_write_data[6:0];
+                end
+                32'hC0000008: begin
+                    sdram_enable <= io_write_data[0];
                 end
             endcase
         end
@@ -295,6 +388,7 @@ assign rxd = s[6];
 
 assign vio_33 = 1'b1;
 assign vio_50 = 1'b0;
+assign m_pwren = sdram_enable;
 
 assign led = debug_snake;
 

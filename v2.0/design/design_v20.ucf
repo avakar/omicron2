@@ -6,12 +6,9 @@ CONFIG PROHIBIT = P60;
 CONFIG PROHIBIT = P69;
 //CONFIG PROHIBIT = P65;
 //CONFIG PROHIBIT = P70;
-CONFIG PROHIBIT = P74;
 CONFIG PROHIBIT = P144;
 //CONFIG PROHIBIT = P39;
 //CONFIG PROHIBIT = P38;
-
-
 NET "led[2]" IOSTANDARD = LVCMOS33;
 NET "led[1]" IOSTANDARD = LVCMOS33;
 NET "led[0]" IOSTANDARD = LVCMOS33;
@@ -181,6 +178,7 @@ NET "flash_cs" SLEW = SLOW;
 NET "flash_si" SLEW = SLOW;
 NET "flash_so" SLEW = SLOW;
 
+#NET "m_fakeclk" LOC = P55 |IOSTANDARD = LVCMOS33;
 
 NET "flash_so" PULLUP;
 NET "s[15]" KEEPER;
@@ -208,31 +206,201 @@ NET "vio_50" LOC = P45;
 NET "vio_33" IOSTANDARD = LVCMOS33;
 NET "vio_50" IOSTANDARD = LVCMOS33;
 
-# PlanAhead Generated physical constraints 
 
 NET "rst_n" LOC = P62;
 
-# PlanAhead Generated IO constraints 
 
 NET "rst_n" IOSTANDARD = LVCMOS33;
 NET "rst_n" PULLUP;
 
-# PlanAhead Generated physical constraints 
 
 NET "usb_sp" LOC = P58;
 
-# PlanAhead Generated IO constraints 
 
 NET "usb_sp" IOSTANDARD = LVDS_33;
 
-# PlanAhead Generated physical constraints 
 
 NET "usb_pup" LOC = P67;
 NET "usb_dp" LOC = P59;
 NET "usb_dn" LOC = P56;
 
-# PlanAhead Generated IO constraints 
 
 NET "usb_dn" IOSTANDARD = LVCMOS33;
 NET "usb_dp" IOSTANDARD = LVCMOS33;
 NET "usb_pup" IOSTANDARD = LVCMOS33;
+
+
+NET "m_clk" LOC = P105;
+NET "m_cs_n" LOC = P83;
+NET "m_cke" LOC = P121;
+NET "m_cas_n" LOC = P85;
+NET "m_ras_n" LOC = P84;
+NET "m_we_n" LOC = P87;
+
+
+NET "m_cas_n" IOSTANDARD = LVCMOS33;
+NET "m_cke" IOSTANDARD = LVCMOS33;
+NET "m_clk" IOSTANDARD = LVCMOS33;
+NET "m_cs_n" IOSTANDARD = LVCMOS33;
+NET "m_ldqm" IOSTANDARD = LVCMOS33;
+NET "m_ras_n" IOSTANDARD = LVCMOS33;
+NET "m_udqm" IOSTANDARD = LVCMOS33;
+NET "m_we_n" IOSTANDARD = LVCMOS33;
+
+
+NET "m_a[0]" LOC = P79;
+NET "m_a[1]" LOC = P78;
+NET "m_a[2]" LOC = P75;
+NET "m_a[3]" LOC = P74;
+NET "m_a[4]" LOC = P132;
+NET "m_a[5]" LOC = P102;
+NET "m_a[6]" LOC = P104;
+NET "m_a[7]" LOC = P131;
+NET "m_a[8]" LOC = P127;
+NET "m_a[9]" LOC = P126;
+NET "m_a[10]" LOC = P80;
+NET "m_a[11]" LOC = P124;
+NET "m_a[12]" LOC = P123;
+
+
+NET "m_a[12]" IOSTANDARD = LVCMOS33;
+NET "m_a[11]" IOSTANDARD = LVCMOS33;
+NET "m_a[10]" IOSTANDARD = LVCMOS33;
+NET "m_a[9]" IOSTANDARD = LVCMOS33;
+NET "m_a[8]" IOSTANDARD = LVCMOS33;
+NET "m_a[7]" IOSTANDARD = LVCMOS33;
+NET "m_a[6]" IOSTANDARD = LVCMOS33;
+NET "m_a[5]" IOSTANDARD = LVCMOS33;
+NET "m_a[4]" IOSTANDARD = LVCMOS33;
+NET "m_a[3]" IOSTANDARD = LVCMOS33;
+NET "m_a[2]" IOSTANDARD = LVCMOS33;
+NET "m_a[1]" IOSTANDARD = LVCMOS33;
+NET "m_a[0]" IOSTANDARD = LVCMOS33;
+NET "m_ba[1]" IOSTANDARD = LVCMOS33;
+NET "m_ba[0]" IOSTANDARD = LVCMOS33;
+NET "m_dq[15]" IOSTANDARD = LVCMOS33;
+NET "m_dq[14]" IOSTANDARD = LVCMOS33;
+NET "m_dq[13]" IOSTANDARD = LVCMOS33;
+NET "m_dq[12]" IOSTANDARD = LVCMOS33;
+NET "m_dq[11]" IOSTANDARD = LVCMOS33;
+NET "m_dq[10]" IOSTANDARD = LVCMOS33;
+NET "m_dq[9]" IOSTANDARD = LVCMOS33;
+NET "m_dq[8]" IOSTANDARD = LVCMOS33;
+NET "m_dq[7]" IOSTANDARD = LVCMOS33;
+NET "m_dq[6]" IOSTANDARD = LVCMOS33;
+NET "m_dq[5]" IOSTANDARD = LVCMOS33;
+NET "m_dq[4]" IOSTANDARD = LVCMOS33;
+NET "m_dq[3]" IOSTANDARD = LVCMOS33;
+NET "m_dq[2]" IOSTANDARD = LVCMOS33;
+NET "m_dq[1]" IOSTANDARD = LVCMOS33;
+NET "m_dq[0]" IOSTANDARD = LVCMOS33;
+
+
+NET "m_ba[0]" LOC = P82;
+NET "m_ba[1]" LOC = P81;
+NET "m_dq[0]" LOC = P92;
+NET "m_dq[1]" LOC = P93;
+NET "m_dq[2]" LOC = P94;
+NET "m_dq[3]" LOC = P95;
+NET "m_dq[4]" LOC = P97;
+NET "m_dq[5]" LOC = P98;
+NET "m_dq[6]" LOC = P99;
+NET "m_dq[7]" LOC = P100;
+NET "m_dq[8]" LOC = P119;
+NET "m_dq[9]" LOC = P118;
+NET "m_dq[10]" LOC = P117;
+NET "m_dq[11]" LOC = P116;
+NET "m_dq[12]" LOC = P115;
+NET "m_dq[13]" LOC = P114;
+NET "m_dq[14]" LOC = P112;
+NET "m_dq[15]" LOC = P111;
+NET "m_ldqm" LOC = P88;
+NET "m_udqm" LOC = P120;
+
+# PlanAhead Generated physical constraints 
+NET "m_pwren" LOC = P101;
+
+# PlanAhead Generated IO constraints 
+NET "m_pwren" IOSTANDARD = LVCMOS33;
+NET "m_dq[15]" KEEPER;
+NET "m_dq[14]" KEEPER;
+NET "m_dq[13]" KEEPER;
+NET "m_dq[12]" KEEPER;
+NET "m_dq[11]" KEEPER;
+NET "m_dq[10]" KEEPER;
+NET "m_dq[9]" KEEPER;
+NET "m_dq[8]" KEEPER;
+NET "m_dq[7]" KEEPER;
+NET "m_dq[6]" KEEPER;
+NET "m_dq[5]" KEEPER;
+NET "m_dq[4]" KEEPER;
+NET "m_dq[3]" KEEPER;
+NET "m_dq[2]" KEEPER;
+NET "m_dq[1]" KEEPER;
+NET "m_dq[0]" KEEPER;
+#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/06/09
+NET "clk_33" TNM_NET = clk_33;
+TIMESPEC TS_clk_33 = PERIOD "clk_33" 30 ns HIGH 50%;
+#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/06/22
+#NET "m_fakeclk" TNM_NET = m_fakeclk;
+#TIMESPEC TS_m_fakeclk = PERIOD "m_fakeclk" 48 MHz HIGH 50%;
+#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/06/22
+INST "m_dq<0>" TNM = m_dq_grp;
+INST "m_dq<1>" TNM = m_dq_grp;
+INST "m_dq<2>" TNM = m_dq_grp;
+INST "m_dq<3>" TNM = m_dq_grp;
+INST "m_dq<4>" TNM = m_dq_grp;
+INST "m_dq<5>" TNM = m_dq_grp;
+INST "m_dq<6>" TNM = m_dq_grp;
+INST "m_dq<7>" TNM = m_dq_grp;
+INST "m_dq<8>" TNM = m_dq_grp;
+INST "m_dq<9>" TNM = m_dq_grp;
+INST "m_dq<10>" TNM = m_dq_grp;
+INST "m_dq<11>" TNM = m_dq_grp;
+INST "m_dq<12>" TNM = m_dq_grp;
+INST "m_dq<13>" TNM = m_dq_grp;
+INST "m_dq<14>" TNM = m_dq_grp;
+INST "m_dq<15>" TNM = m_dq_grp;
+#TIMEGRP "m_dq_grp" OFFSET = IN 14 ns VALID 16 ns BEFORE "m_fakeclk" RISING;
+#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/06/22
+INST "m_dq<0>" TNM = m_out_grp;
+INST "m_dq<1>" TNM = m_out_grp;
+INST "m_dq<2>" TNM = m_out_grp;
+INST "m_dq<3>" TNM = m_out_grp;
+INST "m_dq<4>" TNM = m_out_grp;
+INST "m_dq<5>" TNM = m_out_grp;
+INST "m_dq<6>" TNM = m_out_grp;
+INST "m_dq<7>" TNM = m_out_grp;
+INST "m_dq<8>" TNM = m_out_grp;
+INST "m_dq<9>" TNM = m_out_grp;
+INST "m_dq<10>" TNM = m_out_grp;
+INST "m_dq<11>" TNM = m_out_grp;
+INST "m_dq<12>" TNM = m_out_grp;
+INST "m_dq<13>" TNM = m_out_grp;
+INST "m_dq<14>" TNM = m_out_grp;
+INST "m_dq<15>" TNM = m_out_grp;
+INST "m_a<0>" TNM = m_out_grp;
+INST "m_a<1>" TNM = m_out_grp;
+INST "m_a<2>" TNM = m_out_grp;
+INST "m_a<3>" TNM = m_out_grp;
+INST "m_a<4>" TNM = m_out_grp;
+INST "m_a<5>" TNM = m_out_grp;
+INST "m_a<6>" TNM = m_out_grp;
+INST "m_a<7>" TNM = m_out_grp;
+INST "m_a<8>" TNM = m_out_grp;
+INST "m_a<9>" TNM = m_out_grp;
+INST "m_a<10>" TNM = m_out_grp;
+INST "m_a<11>" TNM = m_out_grp;
+INST "m_a<12>" TNM = m_out_grp;
+INST "m_we_n" TNM = m_out_grp;
+INST "m_ba<0>" TNM = m_out_grp;
+INST "m_ba<1>" TNM = m_out_grp;
+INST "m_cas_n" TNM = m_out_grp;
+INST "m_cke" TNM = m_out_grp;
+INST "m_clk" TNM = m_out_grp;
+INST "m_cs_n" TNM = m_out_grp;
+INST "m_ldqm" TNM = m_out_grp;
+INST "m_pwren" TNM = m_out_grp;
+INST "m_ras_n" TNM = m_out_grp;
+INST "m_udqm" TNM = m_out_grp;
+#TIMEGRP "m_out_grp" OFFSET = OUT 17 ns AFTER "m_fakeclk";

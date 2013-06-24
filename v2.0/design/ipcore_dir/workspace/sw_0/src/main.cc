@@ -50,6 +50,10 @@
 
 #define DNA_DATA    *((uint64_t volatile *)0xC2000000)
 
+#define DRAM_CTRL   *((uint32_t volatile *)0xC0000008)
+#define DRAM_ENABLE (1<<0)
+
+#define DRAM16      ((uint32_t volatile *)0xD0000000)
 
 #if 0
 static void sendch(char ch)
@@ -191,6 +195,9 @@ int main()
 	enum { ia_none, ia_set_address } action = ia_none;
 	uint8_t new_address = 0;
 	uint8_t config = 0;
+	uint8_t read_addr = 0;
+	uint8_t write_addr = 0;
+	uint8_t dram_data = 0;
 	for (;;)
 	{
 		if (USB_CTRL & USB_RESET_IF)
@@ -352,6 +359,55 @@ int main()
 			case 'd':
 				sendh(DNA_DATA);
 				sendch('\n');
+				break;
+			case 'm':
+				DRAM_CTRL = DRAM_ENABLE;
+				break;
+			case 'M':
+				DRAM_CTRL = 0;
+				break;
+			case 'R':
+				read_addr = 0;
+				break;
+			case 'r':
+				{
+					uint16_t v = DRAM16[read_addr];
+
+					send("r:");
+					sendh(read_addr);
+					sendch(':');
+					sendh(v);
+					sendch('\n');
+
+					++read_addr;
+				}
+				break;
+			case 'W':
+				write_addr = 0;
+				break;
+			case 'w':
+				send("w:");
+				sendh(write_addr);
+				sendch(':');
+				sendh(dram_data);
+				sendch('\n');
+				DRAM16[write_addr++] = dram_data++;
+				break;
+			case 'z':
+				send("r:0d:000d\n");
+				break;
+			case 'Z':
+				USB_EP1_IN[0] = 'r';
+				USB_EP1_IN[1] = ':';
+				USB_EP1_IN[2] = '0';
+				USB_EP1_IN[3] = 'd';
+				USB_EP1_IN[4] = ':';
+				USB_EP1_IN[5] = '0';
+				USB_EP1_IN[6] = '0';
+				USB_EP1_IN[7] = '0';
+				USB_EP1_IN[8] = 'd';
+				USB_EP1_IN[9] = '\n';
+				USB_EP1_IN_CTRL = USB_EP_IN_CNT(10) | USB_EP_FULL;
 				break;
 			default:
 				send("unknown command\n");
