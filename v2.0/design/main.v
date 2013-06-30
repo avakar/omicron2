@@ -2,7 +2,7 @@ module main(
     input rst_n,
     input clk_33,
     output[2:0] led,
-    inout[15:0] s,
+    input[15:0] s,
     output[15:0] sd,
 
     output vio_33,
@@ -33,12 +33,13 @@ module main(
     inout[15:0] m_dq
     );
 
-wire clk_48, clk_dram, clk_dram_n;
+wire clk_48, clk_sampler, clk_dram, clk_dram_n;
 wire clk_locked;
 clock_controller clkctrl(
     .rst(!rst_n),
     .clk_33(clk_33),
     .clk_48(clk_48),
+    .clk_sampler(clk_sampler),
     .clk_dram(clk_dram),
     .clk_dram_n(clk_dram_n),
     .locked(clk_locked)
@@ -46,26 +47,41 @@ clock_controller clkctrl(
 
 wire irst = !rst_n || !clk_locked;
 
-reg[25:0] counter;
-wire blink_strobe = (counter == 1'b0);
-always @(posedge clk_48) begin
-    if (counter == 1'b0)
-        counter <= 26'd48000000;
-    else
-        counter <= counter - 1'b1;
-end
-
-reg[2:0] debug_snake;
-always @(posedge clk_48) begin
-    if (blink_strobe)
-        debug_snake <= { debug_snake[1], debug_snake[0], !debug_snake[2] };
-end
-
 spiviajtag spiviajtag0(
     .clk(flash_clk),
     .cs_n(flash_cs),
     .mosi(flash_si),
     .miso(flash_so)
+);
+
+wire[15:0] ss;
+synch #(
+    .w(16),
+    .d(2)
+    ) s_synch0(
+    .clk(clk_sampler),
+    .i(s),
+    .o(ss)
+    );
+
+wire[15:0] s0_data;
+wire s0_strobe;
+
+wire[15:0] s0_fifo_rd_data;
+wire s0_fifo_empty;
+reg s0_fifo_rd;
+sample_fifo s0_fifo(
+  .rst(irst),
+  .wr_clk(clk_sampler),
+  .rd_clk(clk_48),
+  .din(s0_data),
+  .wr_en(s0_strobe),
+
+  .rd_en(s0_fifo_rd),
+  .dout(s0_fifo_rd_data),
+  .full(),
+  .overflow(),
+  .empty(s0_fifo_empty)
 );
 
 wire[31:0] io_addr;
@@ -82,7 +98,6 @@ wire sdram0_wready, sdram0_arready;
 wire[15:0] sdram0_rdata;
 wire sdram0_rvalid;
 
-wire txd, rxd;
 cpu cpu0(
   .Clk(clk_48),
   .Reset(irst),
@@ -94,10 +109,7 @@ cpu cpu0(
   .IO_Byte_Enable(io_byte_enable),
   .IO_Write_Data(io_write_data),
   .IO_Read_Data(io_read_data),
-  .IO_Ready(io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wready)),
-
-  .UART_Rx(rxd),
-  .UART_Tx(txd)
+  .IO_Ready(io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wready))
 );
 
 localparam
@@ -272,6 +284,7 @@ ODDR2 m_clk_buf(
     );
 
 assign m_cs_n = 1'b0;
+reg[23:0] s0dma_waddr;
 sdram sdram0(
     .rst(!sdram_enable),
     .clk(clk_48),
@@ -296,6 +309,23 @@ sdram sdram0(
     .m_a(m_a),
     .m_dqm({m_udqm, m_ldqm}),
     .m_dq(m_dq)
+    );
+
+wire compressor_overflow_error;
+sampler s0(
+    .clk(clk_sampler),
+    .rst_n(!irst),
+
+    .s(ss),
+
+    .out_data(s0_data),
+    .out_valid(s0_strobe),
+
+    .compressor_overflow_error(compressor_overflow_error),
+
+    .waddr(io_addr[4:0]),
+    .wdata(io_write_data),
+    .wvalid(io_addr_strobe && io_write_strobe && (io_addr[31:8] == 24'hC20001))
     );
 
 always @(posedge clk_48) begin
@@ -335,6 +365,10 @@ always @(*) begin
             io_read_data = dna[31:0];
         32'hC2000004:
             io_read_data = { dna_ready, 6'b0, dna[56:32] };
+        32'hC2000010:
+            io_read_data = { !s0_fifo_empty };
+        32'hC2000014:
+            io_read_data = s0_fifo_rd_data;
         32'hD???????:
             io_read_data = sdram0_rdata;
         default:
@@ -351,7 +385,10 @@ always @(posedge clk_48 or posedge irst) begin
         usb_reset_flag <= 1'b0;
         usb_reset_prev <= 1'b0;
         usb_addr_ptr <= 1'b0;
+        s0_fifo_rd <= 1'b0;
     end else begin
+        s0_fifo_rd <= 1'b0;
+
         usb_reset_prev <= usb_reset;
         if (usb_reset && !usb_reset_prev)
             usb_reset_flag <= 1'b1;
@@ -377,19 +414,21 @@ always @(posedge clk_48 or posedge irst) begin
                 32'hC0000008: begin
                     sdram_enable <= io_write_data[0];
                 end
+                32'hC2000010: begin
+                    if (io_write_data[0])
+                        s0_fifo_rd <= 1'b1;
+                end
             endcase
         end
     end
 end
 
-assign s  = { 8'bzzzzzzzz, txd, 7'bzzzzzzz };
 assign sd = 16'b0000000010000000;
-assign rxd = s[6];
 
 assign vio_33 = 1'b1;
 assign vio_50 = 1'b0;
 assign m_pwren = sdram_enable;
 
-assign led = debug_snake;
+assign led = { compressor_overflow_error, 1'b0, 1'b1 };
 
 endmodule

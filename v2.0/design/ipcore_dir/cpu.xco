@@ -1,7 +1,7 @@
 ##############################################################
 #
 # Xilinx Core Generator version 14.4
-# Date: Wed Jun 05 19:44:46 2013
+# Date: Sun Jun 30 19:41:35 2013
 #
 ##############################################################
 #
@@ -71,7 +71,7 @@ CSET intc_level_edge=0x0000
 CSET intc_positive=0xFFFF
 CSET intc_use_ext_intr=false
 CSET jtag_chain=USER2
-CSET memsize=16KB
+CSET memsize=8KB
 CSET microblaze_instance=microblaze_mcs_v1_3
 CSET path=cpu0
 CSET pit1_interrupt=false
@@ -91,7 +91,7 @@ CSET pit4_prescaler=None
 CSET pit4_readable=true
 CSET pit4_size=32
 CSET trace=false
-CSET uart_baudrate=38400
+CSET uart_baudrate=9600
 CSET uart_data_bits=8
 CSET uart_error_interrupt=false
 CSET uart_odd_parity=Even
@@ -116,11 +116,11 @@ CSET use_pit1=false
 CSET use_pit2=false
 CSET use_pit3=false
 CSET use_pit4=false
-CSET use_uart_rx=true
-CSET use_uart_tx=true
+CSET use_uart_rx=false
+CSET use_uart_tx=false
 # END Parameters
 # BEGIN Extra information
 MISC pkg_timestamp=2012-11-01T10:40:41Z
 # END Extra information
 GENERATE
-# CRC: 50a8cf0f
+# CRC: cd662d05

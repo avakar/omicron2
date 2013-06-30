@@ -2,6 +2,7 @@ module clock_controller(
     input rst,
     input clk_33,
     output clk_48,
+    output clk_sampler,
     output clk_dram,
     output clk_dram_n,
     output locked
@@ -65,6 +66,8 @@ BUFG clk_48_bufg(
     .I(dcm_48_clkfx),
     .O(clk_48)
     );
+
+assign clk_sampler = clk_48;
 
 reg dcm_48_locked1;
 reg dcm_48_locked;

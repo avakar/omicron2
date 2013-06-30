@@ -53,6 +53,18 @@
 #define DRAM_CTRL   *((uint32_t volatile *)0xC0000008)
 #define DRAM_ENABLE (1<<0)
 
+#define SAMPLER_FIFO_CTRL *((uint32_t volatile *)0xC2000010)
+#define SAMPLER_FIFO_DATA *((uint16_t volatile *)0xC2000014)
+#define SAMPLER_CTRL      *((uint32_t volatile *)0xC2000100)
+#define SAMPLER_PERIOD    *((uint32_t volatile *)0xC2000104)
+#define SAMPLER_EDGE      *((uint32_t volatile *)0xC2000108)
+#define SAMPLER_MUXL      *((uint32_t volatile *)0xC2000110)
+#define SAMPLER_MUXH      *((uint32_t volatile *)0xC2000114)
+
+#define SAMPLER_FIFO_RDY  (1<<0)
+#define SAMPLER_ENABLE    (1<<0)
+#define SAMPLER_RESET     (1<<1)
+
 #define DRAM16      ((uint32_t volatile *)0xD0000000)
 
 #if 0
@@ -339,6 +351,14 @@ int main()
 			}
 		}
 
+		if (SAMPLER_FIFO_CTRL & SAMPLER_FIFO_RDY)
+		{
+			send("s:");
+			sendh(SAMPLER_FIFO_DATA);
+			sendch('\n');
+			SAMPLER_FIFO_CTRL = SAMPLER_FIFO_RDY;
+		}
+
 		if (rx_ready())
 		{
 			char ch = getch();
@@ -393,21 +413,12 @@ int main()
 				sendch('\n');
 				DRAM16[write_addr++] = dram_data++;
 				break;
-			case 'z':
-				send("r:0d:000d\n");
+			case 's':
+				SAMPLER_PERIOD = 47000;
+				SAMPLER_CTRL = SAMPLER_ENABLE;
 				break;
-			case 'Z':
-				USB_EP1_IN[0] = 'r';
-				USB_EP1_IN[1] = ':';
-				USB_EP1_IN[2] = '0';
-				USB_EP1_IN[3] = 'd';
-				USB_EP1_IN[4] = ':';
-				USB_EP1_IN[5] = '0';
-				USB_EP1_IN[6] = '0';
-				USB_EP1_IN[7] = '0';
-				USB_EP1_IN[8] = 'd';
-				USB_EP1_IN[9] = '\n';
-				USB_EP1_IN_CTRL = USB_EP_IN_CNT(10) | USB_EP_FULL;
+			case 'S':
+				SAMPLER_CTRL = 0;
 				break;
 			default:
 				send("unknown command\n");
