@@ -312,6 +312,10 @@ sdram sdram0(
     );
 
 wire compressor_overflow_error;
+
+wire s0_wvalid;
+wire[4:0] s0_waddr;
+wire[31:0] s0_wdata;
 sampler s0(
     .clk(clk_sampler),
     .rst_n(!irst),
@@ -325,8 +329,29 @@ sampler s0(
 
     .waddr(io_addr[4:0]),
     .wdata(io_write_data),
-    .wvalid(io_addr_strobe && io_write_strobe && (io_addr[31:8] == 24'hC20001))
+    .wvalid(io_addr_strobe && io_write_strobe && (io_addr[31:8] == 24'hC20001)),
+    
+    .araddr(5'b0),
+    .arvalid(1'b0),
+    .rdata(),
+    .rvalid()
     );
+
+/*axi_async_w #(.aw(5)) axi_async_w_sampler(
+    .rst_n(!irst),
+
+    .clka(clk_48),
+    .wvalida(axi_async_w_sampler_wvalid),
+    .wreadya(axi_async_w_sampler_wready),
+    .waddra(io_addr[4:0]),
+    .wdataa(io_write_data),
+
+    .clkb(clk_sampler),
+    .wvalidb(s0_wvalid),
+    .wreadyb(1'b1),
+    .waddrb(s0_waddr),
+    .wdatab(s0_wdata)
+    );*/
 
 always @(posedge clk_48) begin
     if (io_addr_strobe && (io_write_strobe || io_read_strobe))

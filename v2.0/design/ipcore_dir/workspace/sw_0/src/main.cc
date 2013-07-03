@@ -63,7 +63,9 @@
 
 #define SAMPLER_FIFO_RDY  (1<<0)
 #define SAMPLER_ENABLE    (1<<0)
-#define SAMPLER_RESET     (1<<1)
+#define SAMPLER_CLEAR_TIMER (1<<1)
+#define SAMPLER_CLEAR_PIPELINE     (1<<2)
+#define SAMPLER_LOG_CHANNELS_gp (4)
 
 #define DRAM16      ((uint32_t volatile *)0xD0000000)
 
@@ -414,8 +416,8 @@ int main()
 				DRAM16[write_addr++] = dram_data++;
 				break;
 			case 's':
-				SAMPLER_PERIOD = 47000;
-				SAMPLER_CTRL = SAMPLER_ENABLE;
+				SAMPLER_PERIOD = 4700;
+				SAMPLER_CTRL = SAMPLER_ENABLE | SAMPLER_CLEAR_PIPELINE | (4<<SAMPLER_LOG_CHANNELS_gp);
 				break;
 			case 'S':
 				SAMPLER_CTRL = 0;

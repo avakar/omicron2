@@ -122,18 +122,17 @@ module sample_strober(
     input[15:0] s,
     output sample_strobe,
 
-    input[3:0] waddr,
-    input[31:0] wdata,
-    input wvalid
+    input enable,
+    input clear_timer,
+
+    input[31:0] period,
+    input[15:0] rising_edge_mask,
+    input[15:0] falling_edge_mask
     );
 
-reg enable;
-reg[31:0] period;
 reg[31:0] cntr;
 wire cntr_strobe = (cntr == period);
 
-reg[15:0] rising_edge_mask;
-reg[15:0] falling_edge_mask;
 reg[15:0] last_s;
 
 wire[15:0] rising_edges = ~last_s & s & rising_edge_mask;
@@ -145,10 +144,6 @@ assign sample_strobe = (enable && cntr_strobe) || edge_strobe;
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         cntr <= 1'b0;
-        period <= 1'b0;
-        enable <= 1'b0;
-        rising_edge_mask <= 1'b0;
-        falling_edge_mask <= 1'b0;
     end else begin
         last_s <= s;
 
@@ -159,19 +154,64 @@ always @(posedge clk or negedge rst_n) begin
                 cntr <= cntr + 1'b1;
         end
 
-        if (wvalid) begin
-            case (waddr)
-                4'h0: begin
-                    enable <= wdata[0];
-                    if (wdata[1])
-                        cntr <= 1'b0;
+        if (clear_timer)
+            cntr <= 1'b0;
+    end
+end
+
+endmodule
+
+module sample_serializer(
+    input clk,
+    input rst_n,
+
+    input[15:0] in_data,
+    input in_strobe,
+    output reg[15:0] out_data,
+    output reg out_strobe,
+    output reg[63:0] sample_index,
+
+    input[2:0] log_channels
+    );
+
+always @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+        out_strobe <= 1'b0;
+        sample_index <= 1'b0;
+    end else begin
+        if (out_strobe)
+            out_strobe <= 1'b0;
+
+        if (in_strobe) begin
+            case (log_channels)
+                3'd0: begin
+                    out_data <= { out_data[14:0], in_data[0] };
+                    if (sample_index[3:0] == 4'd15)
+                        out_strobe <= 1'b1;
+                    sample_index <= sample_index + 4'd1;
                 end
-                4'h4: begin
-                    period <= wdata;
+                3'd1: begin
+                    out_data <= { out_data[13:0], in_data[1:0] };
+                    if (sample_index[3:0] == 4'd14)
+                        out_strobe <= 1'b1;
+                    sample_index <= sample_index + 4'd2;
                 end
-                4'h8: begin
-                    rising_edge_mask <= wdata[15:0];
-                    falling_edge_mask <= wdata[31:16];
+                3'd2: begin
+                    out_data <= { out_data[11:0], in_data[3:0] };
+                    if (sample_index[3:0] == 4'd12)
+                        out_strobe <= 1'b1;
+                    sample_index <= sample_index + 4'd4;
+                end
+                3'd3: begin
+                    out_data <= { out_data[7:0], in_data[7:0] };
+                    if (sample_index[3:0] == 4'd8)
+                        out_strobe <= 1'b1;
+                    sample_index <= sample_index + 4'd8;
+                end
+                default: begin
+                    out_data <= in_data;
+                    out_strobe <= 1'b1;
+                    sample_index <= sample_index + 5'd16;
                 end
             endcase
         end
@@ -195,7 +235,12 @@ module sampler(
 
     input[4:0] waddr,
     input[31:0] wdata,
-    input wvalid
+    input wvalid,
+
+    input[4:0] araddr,
+    input arvalid,
+    output reg[31:0] rdata,
+    output reg rvalid
     );
 
 wire[15:0] s_muxed;
@@ -206,37 +251,99 @@ sample_mux #(.w(16)) mux0(
     .s(in_mux)
     );
 
+reg enable_timer;
+reg clear_timer;
+
+reg[31:0] period;
+reg[15:0] rising_edge_mask;
+reg[15:0] falling_edge_mask;
+
+reg clear_pipeline;
+
 wire sample_strobe;
 sample_strober strober0(
     .clk(clk),
-    .rst_n(rst_n),
+    .rst_n(rst_n && !clear_pipeline),
+
+    .enable(enable_timer),
+    .clear_timer(clear_timer),
 
     .s(s_muxed),
     .sample_strobe(sample_strobe),
 
-    .waddr(waddr[3:0]),
-    .wdata(wdata),
-    .wvalid(wvalid && (waddr[4] == 0))
+    .period(period),
+    .rising_edge_mask(rising_edge_mask),
+    .falling_edge_mask(falling_edge_mask)
+    );
+
+reg[2:0] log_channels;
+
+wire ser_strobe;
+wire[15:0] ser_data;
+wire[63:0] sample_index;
+
+sample_serializer ser0(
+    .clk(clk),
+    .rst_n(rst_n && !clear_pipeline),
+
+    .in_data(s_muxed),
+    .in_strobe(sample_strobe),
+    .out_data(ser_data),
+    .out_strobe(ser_strobe),
+    .sample_index(sample_index),
+
+    .log_channels(log_channels)
     );
 
 sample_compressor compressor0(
     .clk(clk),
-    .rst_n(rst_n),
+    .rst_n(rst_n && !clear_pipeline),
 
-    .in_data(s_muxed),
-    .in_strobe(sample_strobe),
+    .in_data(ser_data),
+    .in_strobe(ser_strobe),
     .out_data(out_data),
     .out_strobe(out_valid),
 
     .overflow_error(compressor_overflow_error)
     );
 
+reg[31:0] temp;
+
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         in_mux <= 64'hFEDCBA9876543210;
+        enable_timer <= 1'b0;
+        clear_timer <= 1'b0;
+        log_channels <= 3'd4;
+        clear_pipeline <= 1'b0;
+        rvalid <= 1'b0;
+        period <= 1'b0;
+        rising_edge_mask <= 1'b0;
+        falling_edge_mask <= 1'b0;
+        temp <= 1'bx;
     end else begin
+        clear_timer <= 1'b0;
+        clear_pipeline <= 1'b0;
+        rvalid <= 1'b0;
+        rdata <= 1'sbx;
+
         if (wvalid) begin
             case (waddr)
+                5'h0: begin
+                    enable_timer <= wdata[0];
+                    if (wdata[1])
+                        clear_timer <= 1'b1;
+                    if (wdata[2])
+                        clear_pipeline <= 1'b1;
+                    log_channels <= wdata[6:4];
+                end
+                5'h4: begin
+                    period <= wdata;
+                end
+                5'h8: begin
+                    falling_edge_mask <= wdata[15:0];
+                    rising_edge_mask <= wdata[31:16];
+                end
                 5'h10: begin
                     in_mux[31:0] <= wdata;
                 end
@@ -244,6 +351,24 @@ always @(posedge clk or negedge rst_n) begin
                     in_mux[63:32] <= wdata;
                 end
             endcase
+        end
+
+        if (arvalid) begin
+            case (araddr)
+                5'h0: rdata <= { 1'b0, log_channels, 3'b0, enable_timer };
+                5'h4: rdata <= period;
+                5'h8: rdata <= { rising_edge_mask, falling_edge_mask };
+                5'hC: rdata <= { ser_data, sample_index[15:0] };
+                5'h10: rdata <= in_mux[31:0];
+                5'h14: rdata <= in_mux[63:32];
+                5'h18: begin
+                    rdata <= sample_index[31:0];
+                    temp <= sample_index[63:32];
+                end
+                5'h1C: rdata <= temp;
+                default: rdata <= 1'sbx;
+            endcase
+            rvalid <= 1'b1;
         end
     end
 end

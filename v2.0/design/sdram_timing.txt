@@ -1,0 +1,25 @@
+BPAD(\m_dq<0>) -> m_dq[0]
+    -> BUF(\sdram0/[0].dq_obuf/IBUF) -> \sdram0/m_dq_in [0] (672:1338:1338)
+    -> BUF(\ProtoComp122.IMUX) -> \sdram0/m_dq_in<0>_0 (73:177:177)
+    -> BUF(\NlwBufferBlock_ProtoComp132.D2OFFBYP_SRC/INA) -> \NlwBufferSignal_ProtoComp132.D2OFFBYP_SRC/INA (94:94:171)
+    -> MUX2(\ProtoComp132.D2OFFBYP_SRC) -> \ProtoComp132.D2OFFBYP_SRC.OUT (494:1191:1191)(174:432:432)
+    -> FF(\sdram0/rdata_0)
+
+pad->ff.i (1507:3232:3309)
+clk->ff.clk (83:200:200)
+(SETUPHOLD(posedge I) (posedge CLK) (130:288:288)(-50))
+setup 
+
+FF(\sdram0/m_dq_out_0) -> \sdram0/m_dq_out [0] (0:150:150)(336:930:930)
+    -> BUF(\NlwBufferBlock_sdram0/[0].dq_obuf/OBUFT/I) -> \NlwBufferSignal_sdram0/[0].dq_obuf/OBUFT/I (190:190:309)
+    -> OBUFT(\sdram0/[0].dq_obuf/OBUFT) -> m_dq[0] (1396:2722:2722)
+    -> BPAD(\m_dq<0>)
+
+clk->pad (1922:3992:4111)
+
+ODDR2(m_clk_buf) -> m_clk_OBUF_12089 (0:150:150)(419:1008:1008)
+    -> BUF(\NlwBufferBlock_m_clk_OBUF/I) -> \NlwBufferSignal_m_clk_OBUF/I (190:190:309)
+    -> OBUF(m_clk_OBUF) -> m_clk (1396:2722:2722)
+    -> OPAD(m_clk_618)
+
+clk_dram -> pad (2005:4070:4189)
