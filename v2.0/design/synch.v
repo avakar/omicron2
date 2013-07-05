@@ -1,5 +1,5 @@
 module synch #(
-    parameter w = 16,
+    parameter w = 1,
     parameter d = 2
     )(
     input clk,

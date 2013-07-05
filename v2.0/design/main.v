@@ -1,5 +1,5 @@
 module main(
-    input rst_n,
+    input extrst_n,
     input clk_33,
     output[2:0] led,
     input[15:0] s,
@@ -33,10 +33,13 @@ module main(
     inout[15:0] m_dq
     );
 
+//---------------------------------------------------------------------
+// Clocks and reset
+
 wire clk_48, clk_sampler, clk_dram, clk_dram_n;
 wire clk_locked;
 clock_controller clkctrl(
-    .rst(!rst_n),
+    .rst(!extrst_n),
     .clk_33(clk_33),
     .clk_48(clk_48),
     .clk_sampler(clk_sampler),
@@ -45,7 +48,22 @@ clock_controller clkctrl(
     .locked(clk_locked)
     );
 
-wire irst = !rst_n || !clk_locked;
+wire irst = !extrst_n || !clk_locked;
+
+//---------------------------------------------------------------------
+// Input/output conditioning
+
+wire usb_rx_j_presync, usb_rx_j, usb_rx_se0;
+IBUFDS usb_j_buf(.I(usb_sp), .IB(usb_sn), .O(usb_rx_j_presync));
+synch usb_j_synch(clk_48, usb_rx_j_presync, usb_rx_j);
+synch usb_se0_synch(clk_48, !usb_dp && !usb_dn, usb_rx_se0);
+
+wire usb_tx_en, usb_tx_j, usb_tx_se0;
+assign usb_dp = usb_tx_en? (usb_tx_se0? 1'b0: usb_tx_j): 1'bz;
+assign usb_dn = usb_tx_en? (usb_tx_se0? 1'b0: !usb_tx_j): 1'bz;
+
+//---------------------------------------------------------------------
+// Clocks and reset
 
 spiviajtag spiviajtag0(
     .clk(flash_clk),
@@ -118,7 +136,6 @@ localparam
     hs_nak = 2'b10,
     hs_stall = 2'b11;
 
-wire usb_dp_out, usb_dn_out, usb_dir_out;
 reg[6:0] usb_address;
 wire usb_reset;
 
@@ -137,14 +154,12 @@ usb usb0(
     .rst_n(!irst),
     .clk_48(clk_48),
 
-    .dp_in(usb_sp),
-    .dn_in(usb_sn),
-    .d0p_in(usb_dp),
-    .d0n_in(usb_dn),
+    .rx_j(usb_rx_j),
+    .rx_se0(usb_rx_se0),
 
-    .dp_out(usb_dp_out),
-    .dn_out(usb_dn_out),
-    .d_dir_out(usb_dir_out),
+    .tx_en(usb_tx_en),
+    .tx_j(usb_tx_j),
+    .tx_se0(usb_tx_se0),
 
     .usb_address(usb_address),
 
@@ -182,9 +197,6 @@ usb_ram usb_ram0(
     .dinb(io_write_data),
     .doutb(usb_read_data_b)
     );
-
-assign usb_dp = usb_dir_out? usb_dp_out: 1'bz;
-assign usb_dn = usb_dir_out? usb_dn_out: 1'bz;
 
 reg usb_reset_prev, usb_reset_flag;
 reg usb_attach;

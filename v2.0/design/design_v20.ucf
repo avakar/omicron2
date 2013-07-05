@@ -207,11 +207,11 @@ NET "vio_33" IOSTANDARD = LVCMOS33;
 NET "vio_50" IOSTANDARD = LVCMOS33;
 
 
-NET "rst_n" LOC = P62;
+NET "extrst_n" LOC = P62;
 
 
-NET "rst_n" IOSTANDARD = LVCMOS33;
-NET "rst_n" PULLUP;
+NET "extrst_n" IOSTANDARD = LVCMOS33;
+NET "extrst_n" PULLUP;
 
 
 NET "usb_sp" LOC = P58;
