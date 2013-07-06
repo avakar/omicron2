@@ -2,37 +2,6 @@ module axi_cpu(
     input rst_n,
     input clk,
 
-    output io_addr_strobe,
-    output io_read_strobe,
-    output io_write_strobe,
-
-    output[31:0] io_addr,
-    output[3:0] io_byte_enable,
-    output[31:0] io_write_data,
-    input[31:0] io_read_data,
-    input io_ready
-    );
-
-cpu cpu0(
-    .Clk(clk),
-    .Reset(!rst_n),
-
-    .IO_Addr_Strobe(io_addr_strobe),
-    .IO_Read_Strobe(io_read_strobe),
-    .IO_Write_Strobe(io_write_strobe),
-    .IO_Address(io_addr),
-    .IO_Byte_Enable(io_byte_enable),
-    .IO_Write_Data(io_write_data),
-    .IO_Read_Data(io_read_data),
-    .IO_Ready(io_ready)
-);
-
-endmodule
-
-/*module axi_cpu(
-    input rst_n,
-    input clk,
-
     output reg wvalid,
     input wready,
     output[31:0] awaddr,
@@ -99,4 +68,3 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 endmodule
-*/

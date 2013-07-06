@@ -94,6 +94,7 @@ class AxiBus:
         self.slaves = slaves
         self.data_width = data_width
         self.addr_width = addr_width
+        self.extern = False
 
 class AxiConnection:
     def __init__(self, inst, addr=None):
@@ -150,7 +151,11 @@ class AxiSpecsFormatError(RuntimeError):
 def parse_axi_specs(fin, name):
     def _params(toks):
         for tok in toks:
-            yield tok.split('=')
+            s = tok.split('=', 1)
+            if len(s) == 1:
+                yield s[0], ''
+            else:
+                yield s
 
     bus = None
     busses = []
@@ -181,6 +186,8 @@ def parse_axi_specs(fin, name):
                     bus.data_width = int(v)
                 elif k == 'addr_width':
                     bus.addr_width = int(v)
+                elif k == 'extern':
+                    bus.extern = v
                 else:
                     raise AxiSpecsFormatError('''Unknown attribute for a bus: %r''' % k)
         elif toks[0] == 'master':
@@ -266,7 +273,15 @@ def _gen_interconnect(mods, specs):
         for port_name, port in axi_port.ports.iteritems():
             if not port:
                 continue
-            wires.append('wire%s %s_%s;' % (port.format_range(), bus.name, port.name))
+            if bus.extern is not None:
+                prefix = '%s_' % bus.extern if bus.extern else ''
+                top_ports.append(Port(port.dir, '%s%s' % (prefix, port.name), port.upper, port.lower))
+                if port.dir == Port.Out:
+                    processes.append('assign %s%s = %s_%s;' % (prefix, port.name, bus.name, port.name))
+                else:
+                    print port
+            else:
+                wires.append('wire%s %s_%s;' % (port.format_range(), bus.name, port.name))
             master_inst.port_map[port.name] = '%s_%s' % (bus.name, port.name)
 
         wredies = []
