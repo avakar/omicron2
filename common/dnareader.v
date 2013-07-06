@@ -51,6 +51,47 @@ always @(posedge clk_48 or posedge rst) begin
     end
 end
 
+endmodule
 
+module axi_dna(
+    input rst_n,
+    input clk_48,
+
+    input arvalid,
+    input[2:2] araddr,
+
+    output reg rvalid,
+    output reg[31:0] rdata
+    );
+
+wire[56:0] dna;
+wire dna_ready;
+dnareader dna0(
+    .rst(!rst_n),
+    .clk_48(clk_48),
+    .dna(dna),
+    .ready(dna_ready)
+    );
+
+reg addr_sel;
+
+always @(*) begin
+    case (addr_sel)
+        1'd0: rdata = dna[31:0];
+        1'd1: rdata = { dna_ready, 6'b0, dna[56:32] };
+    endcase
+end
+
+always @(posedge clk_48 or negedge rst_n) begin
+    if (!rst_n) begin
+        rvalid <= 1'b0;
+    end else begin
+        rvalid <= 1'b0;
+        if (arvalid) begin
+            addr_sel <= araddr;
+            rvalid <= 1'b1;
+        end
+    end
+end
 
 endmodule

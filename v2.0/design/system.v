@@ -104,19 +104,20 @@ axi_cpu cpu0(
     .rdata(axi0_rdata)
     );
 
+reg io0_rsel, io0_wsel;
 wire io0_bvalid, io0_rvalid, io0_wready, io0_arready;
 wire[31:0] io0_rdata;
 axi_to_io io0(
     .rst_n(rst_n),
     .clk(clk_48),
 
-    .wvalid(axi0_wvalid),
+    .wvalid(axi0_wvalid && io0_wsel),
     .wready(io0_wready),
     .awaddr(axi0_awaddr),
     .wdata(axi0_wdata),
     .wstrb(axi0_wstrb),
     .bvalid(io0_bvalid),
-    .arvalid(axi0_arvalid),
+    .arvalid(axi0_arvalid && io0_rsel),
     .arready(io0_arready),
     .araddr(axi0_araddr),
     .rvalid(io0_rvalid),
@@ -132,9 +133,23 @@ axi_to_io io0(
     .io_ready(io_ready)
     );
 
+reg dna0_rsel;
+wire dna0_rvalid;
+wire[31:0] dna0_rdata;
+axi_dna dna0(
+    .rst_n(rst_n),
+    .clk_48(clk_48),
+
+    .arvalid(axi0_arvalid && dna0_rsel),
+    .araddr(axi0_araddr[2]),
+
+    .rvalid(dna0_rvalid),
+    .rdata(dna0_rdata)
+    );
+
 //---------------------------------------------------------------------
 
-assign axi0_rvalid = io0_rvalid;
+assign axi0_rvalid = io0_rvalid | dna0_rvalid;
 
 assign axi0_bvalid = io0_bvalid;
 
@@ -143,8 +158,31 @@ always @(*) begin
 end
 
 always @(*) begin
-    axi0_arready = io0_arready;
-    axi0_rdata = io0_rdata;
+    if (dna0_rvalid) begin
+        axi0_rdata = dna0_rdata;
+    end else begin
+        axi0_rdata = io0_rdata;
+    end
+end
+
+always @(*) begin
+    if (dna0_rsel) begin
+        axi0_arready = 1'b1;
+    end else begin
+        axi0_arready = io0_arready;
+    end
+end
+
+always @(*) begin
+    io0_wsel = 1'b1;
+
+    dna0_rsel = 1'b0;
+    io0_rsel = 1'b0;
+
+    if (axi0_araddr[31:3] == (32'hC2000000 >> 3))
+        dna0_rsel = 1'b1;
+    else
+        io0_rsel = 1'b1;
 end
 
 //---------------------------------------------------------------------

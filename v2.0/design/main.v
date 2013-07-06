@@ -277,15 +277,6 @@ always @(*) begin
     endcase
 end
 
-wire[56:0] dna;
-wire dna_ready;
-dnareader dna0(
-    .rst(irst),
-    .clk_48(clk_48),
-    .dna(dna),
-    .ready(dna_ready)
-    );
-
 reg sdram_enable;
 wire m_clk_oe;
 ODDR2 m_clk_buf(
@@ -386,10 +377,6 @@ always @(*) begin
             io_read_data = usb_ep1_ctrl_rd_data;
         32'hC100????:
             io_read_data = usb_read_data_b;
-        32'hC2000000:
-            io_read_data = dna[31:0];
-        32'hC2000004:
-            io_read_data = { dna_ready, 6'b0, dna[56:32] };
         32'hC2000010:
             io_read_data = { !s0_fifo_empty };
         32'hC2000014:
