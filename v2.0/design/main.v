@@ -121,7 +121,7 @@ assign cpu_io_ready = io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wrea
 
 system sys0(
     .rst_n(!irst),
-    .clk(clk_48),
+    .clk_48(clk_48),
 
     .io_addr_strobe(io_addr_strobe),
     .io_read_strobe(io_read_strobe),
