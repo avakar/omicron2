@@ -108,6 +108,7 @@ wire[31:0] io_write_data;
 reg io_ready;
 wire io_write_strobe, io_read_strobe, io_addr_strobe;
 wire[3:0] io_byte_enable;
+wire cpu_io_ready;
 
 reg[23:0] sdram0_addr_latch;
 reg[15:0] sdram0_wdata_latch;
@@ -116,19 +117,22 @@ wire sdram0_wready, sdram0_arready;
 wire[15:0] sdram0_rdata;
 wire sdram0_rvalid;
 
-cpu cpu0(
-  .Clk(clk_48),
-  .Reset(irst),
+assign cpu_io_ready = io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wready);
 
-  .IO_Addr_Strobe(io_addr_strobe),
-  .IO_Read_Strobe(io_read_strobe),
-  .IO_Write_Strobe(io_write_strobe),
-  .IO_Address(io_addr),
-  .IO_Byte_Enable(io_byte_enable),
-  .IO_Write_Data(io_write_data),
-  .IO_Read_Data(io_read_data),
-  .IO_Ready(io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wready))
-);
+system sys0(
+    .rst_n(!irst),
+    .clk(clk_48),
+
+    .io_addr_strobe(io_addr_strobe),
+    .io_read_strobe(io_read_strobe),
+    .io_write_strobe(io_write_strobe),
+
+    .io_addr(io_addr),
+    .io_byte_enable(io_byte_enable),
+    .io_write_data(io_write_data),
+    .io_read_data(io_read_data),
+    .io_ready(cpu_io_ready)
+    );
 
 localparam
     hs_ack = 2'b00,
@@ -348,22 +352,6 @@ sampler s0(
     .rdata(),
     .rvalid()
     );
-
-/*axi_async_w #(.aw(5)) axi_async_w_sampler(
-    .rst_n(!irst),
-
-    .clka(clk_48),
-    .wvalida(axi_async_w_sampler_wvalid),
-    .wreadya(axi_async_w_sampler_wready),
-    .waddra(io_addr[4:0]),
-    .wdataa(io_write_data),
-
-    .clkb(clk_sampler),
-    .wvalidb(s0_wvalid),
-    .wreadyb(1'b1),
-    .waddrb(s0_waddr),
-    .wdatab(s0_wdata)
-    );*/
 
 always @(posedge clk_48) begin
     if (io_addr_strobe && (io_write_strobe || io_read_strobe))
