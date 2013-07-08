@@ -51,10 +51,12 @@ module system(
     input rst_n,
     input clk_48,
 
-    input usb0_mem_we,
-    input[9:0] usb0_mem_addr,
-    input[7:0] usb0_mem_write_data,
-    output[7:0] usb0_mem_read_data,
+    input rx_j,
+    input rx_se0,
+    output tx_en,
+    output tx_j,
+    output tx_se0,
+    output pup_en,
 
     output io_addr_strobe,
     output io_read_strobe,
@@ -131,6 +133,11 @@ axi_dna dna0(
     .bdata(dna0_bdata)
     );
 
+wire usb0_mem_we;
+wire[9:0] usb0_mem_addr;
+wire[7:0] usb0_mem_write_data;
+wire[7:0] usb0_mem_read_data;
+
 wire usb_mem0_sel;
 wire usb_mem0_bvalid;
 wire[31:0] usb_mem0_bdata;
@@ -152,19 +159,51 @@ axi_usb_mem usb_mem0(
     .mem_read_data(usb0_mem_read_data)
     );
 
+wire usb0_sel;
+wire usb0_aready;
+wire usb0_bvalid;
+wire[31:0] usb0_bdata;
+axi_usb usb0(
+    .rst_n(rst_n),
+    .clk_48(clk_48),
+
+    .avalid(avalid && usb0_sel),
+    .aready(usb0_aready),
+    .awe(awe),
+    .aaddr(aaddr[15:2]),
+    .adata(adata),
+    .bvalid(usb0_bvalid),
+    .bdata(usb0_bdata),
+
+    .rx_j(rx_j),
+    .rx_se0(rx_se0),
+    .tx_en(tx_en),
+    .tx_j(tx_j),
+    .tx_se0(tx_se0),
+    .pup_en(pup_en),
+
+    .mem_we(usb0_mem_we),
+    .mem_addr(usb0_mem_addr),
+    .mem_write_data(usb0_mem_write_data),
+    .mem_read_data(usb0_mem_read_data)
+    );
+
 //---------------------------------------------------------------------
 
 assign dna0_sel = aaddr[31:3] == (32'hC2000000 >> 3);
 assign usb_mem0_sel = aaddr[31:16] == 32'hC100;
-assign io0_sel = !dna0_sel && !usb_mem0_sel;
+assign usb0_sel = aaddr[31:16] == 32'hC000;
+assign io0_sel = !dna0_sel && !usb_mem0_sel && !usb0_sel;
 
-assign bvalid = io0_bvalid | dna0_bvalid | usb_mem0_bvalid;
+assign bvalid = io0_bvalid | dna0_bvalid | usb_mem0_bvalid | usb0_bvalid;
 
 always @(*) begin
     if (dna0_bvalid) begin
         bdata = dna0_bdata;
     end else if (usb_mem0_bvalid) begin
         bdata = usb_mem0_bdata;
+    end else if (usb0_bvalid) begin
+        bdata = usb0_bdata;
     end else begin
         bdata = io0_bdata;
     end
@@ -175,6 +214,8 @@ always @(*) begin
         aready = dna0_aready;
     end else if (usb_mem0_sel) begin
         aready = 1'b1;
+    end else if (usb0_sel) begin
+        aready = usb0_aready;
     end else begin
         aready = io0_aready;
     end
