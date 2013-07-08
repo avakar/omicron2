@@ -85,42 +85,16 @@ synch #(
     .o(ss)
     );
 
-wire[15:0] s0_data;
-wire s0_strobe;
-
-wire[15:0] s0_fifo_rd_data;
-wire s0_fifo_empty;
-reg s0_fifo_rd;
-sample_fifo s0_fifo(
-  .rst(irst),
-  .wr_clk(clk_sampler),
-  .rd_clk(clk_48),
-  .din(s0_data),
-  .wr_en(s0_strobe),
-
-  .rd_en(s0_fifo_rd),
-  .dout(s0_fifo_rd_data),
-  .full(),
-  .overflow(),
-  .empty(s0_fifo_empty)
-);
-
-wire[31:0] io_addr;
-reg[31:0] io_read_data;
-wire[31:0] io_write_data;
-reg io_ready;
-wire io_write_strobe, io_read_strobe, io_addr_strobe;
-wire cpu_io_ready;
-
-reg[23:0] sdram0_addr_latch;
+/*reg[23:0] sdram0_addr_latch;
 reg[15:0] sdram0_wdata_latch;
 reg sdram0_wvalid, sdram0_arvalid;
 wire sdram0_wready, sdram0_arready;
 wire[15:0] sdram0_rdata;
 wire sdram0_rvalid;
 
-assign cpu_io_ready = io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wready);
+assign cpu_io_ready = io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wready);*/
 
+wire compressor_overflow_error;
 system sys0(
     .rst_n(!irst),
     .clk_48(clk_48),
@@ -132,17 +106,11 @@ system sys0(
     .tx_se0(usb_tx_se0),
     .pup_en(usb_pup_en),
 
-    .io_addr_strobe(io_addr_strobe),
-    .io_read_strobe(io_read_strobe),
-    .io_write_strobe(io_write_strobe),
-    .io_addr(io_addr),
-    .io_byte_enable(),
-    .io_write_data(io_write_data),
-    .io_read_data(io_read_data),
-    .io_ready(cpu_io_ready)
+    .s0_in_data(ss),
+    .s0_compressor_overflow_error(compressor_overflow_error)
     );
 
-reg sdram_enable;
+/*reg sdram_enable;
 wire m_clk_oe;
 ODDR2 m_clk_buf(
     .D0(1'b1),
@@ -181,32 +149,6 @@ sdram sdram0(
     .m_a(m_a),
     .m_dqm({m_udqm, m_ldqm}),
     .m_dq(m_dq)
-    );
-
-wire compressor_overflow_error;
-
-wire s0_wvalid;
-wire[4:0] s0_waddr;
-wire[31:0] s0_wdata;
-sampler s0(
-    .clk(clk_sampler),
-    .rst_n(!irst),
-
-    .s(ss),
-
-    .out_data(s0_data),
-    .out_valid(s0_strobe),
-
-    .compressor_overflow_error(compressor_overflow_error),
-
-    .waddr(io_addr[4:0]),
-    .wdata(io_write_data),
-    .wvalid(io_addr_strobe && io_write_strobe && (io_addr[31:8] == 24'hC20001)),
-    
-    .araddr(5'b0),
-    .arvalid(1'b0),
-    .rdata(),
-    .rvalid()
     );
 
 always @(posedge clk_48) begin
@@ -264,14 +206,28 @@ always @(posedge clk_48 or posedge irst) begin
             endcase
         end
     end
-end
+end*/
 
 assign sd = 16'b0000000010000000;
 
 assign vio_33 = 1'b1;
 assign vio_50 = 1'b0;
-assign m_pwren = sdram_enable;
+//assign m_pwren = sdram_enable;
+assign m_pwren = 1'b0;
 
 assign led = { compressor_overflow_error, 1'b0, 1'b1 };
+
+assign m_clk = 1'b0;
+assign m_cs_n = 1'b0;
+//assign m_clk_oe = 1'b0;
+assign m_cke = 1'b0;
+assign m_ras_n = 1'b0;
+assign m_cas_n = 1'b0;
+assign m_we_n = 1'b0;
+assign m_ba = 1'b0;
+assign m_a = 1'b0;
+assign m_ldqm = 1'b0;
+assign m_udqm = 1'b0;
+assign m_dq = 1'b0;
 
 endmodule

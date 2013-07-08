@@ -233,14 +233,12 @@ module sampler(
 
     output compressor_overflow_error,
 
-    input[4:0] waddr,
-    input[31:0] wdata,
-    input wvalid,
-
-    input[4:0] araddr,
-    input arvalid,
-    output reg[31:0] rdata,
-    output reg rvalid
+    input avalid,
+    input awe,
+    input[4:2] aaddr,
+    input[31:0] adata,
+    output reg bvalid,
+    output reg[31:0] bdata
     );
 
 wire[15:0] s_muxed;
@@ -316,60 +314,62 @@ always @(posedge clk or negedge rst_n) begin
         clear_timer <= 1'b0;
         log_channels <= 3'd4;
         clear_pipeline <= 1'b0;
-        rvalid <= 1'b0;
         period <= 1'b0;
         rising_edge_mask <= 1'b0;
         falling_edge_mask <= 1'b0;
         temp <= 1'bx;
+
+        bvalid <= 1'b0;
     end else begin
         clear_timer <= 1'b0;
         clear_pipeline <= 1'b0;
-        rvalid <= 1'b0;
-        rdata <= 1'sbx;
 
-        if (wvalid) begin
-            case (waddr)
-                5'h0: begin
-                    enable_timer <= wdata[0];
-                    if (wdata[1])
+        bvalid <= 1'b0;
+        bdata <= 1'sbx;
+
+        if (avalid && awe) begin
+            case (aaddr)
+                3'h0: begin
+                    enable_timer <= adata[0];
+                    if (adata[1])
                         clear_timer <= 1'b1;
-                    if (wdata[2])
+                    if (adata[2])
                         clear_pipeline <= 1'b1;
-                    log_channels <= wdata[6:4];
+                    log_channels <= adata[6:4];
                 end
-                5'h4: begin
-                    period <= wdata;
+                3'h1: begin
+                    period <= adata;
                 end
-                5'h8: begin
-                    falling_edge_mask <= wdata[15:0];
-                    rising_edge_mask <= wdata[31:16];
+                3'h2: begin
+                    falling_edge_mask <= adata[15:0];
+                    rising_edge_mask <= adata[31:16];
                 end
-                5'h10: begin
-                    in_mux[31:0] <= wdata;
+                3'h4: begin
+                    in_mux[31:0] <= adata;
                 end
-                5'h14: begin
-                    in_mux[63:32] <= wdata;
+                3'h5: begin
+                    in_mux[63:32] <= adata;
                 end
             endcase
         end
 
-        if (arvalid) begin
-            case (araddr)
-                5'h0: rdata <= { 1'b0, log_channels, 3'b0, enable_timer };
-                5'h4: rdata <= period;
-                5'h8: rdata <= { rising_edge_mask, falling_edge_mask };
-                5'hC: rdata <= { ser_data, sample_index[15:0] };
-                5'h10: rdata <= in_mux[31:0];
-                5'h14: rdata <= in_mux[63:32];
-                5'h18: begin
-                    rdata <= sample_index[31:0];
+        if (avalid && !awe) begin
+            case (aaddr)
+                3'h0: bdata <= { 1'b0, log_channels, 3'b0, enable_timer };
+                3'h1: bdata <= period;
+                3'h2: bdata <= { rising_edge_mask, falling_edge_mask };
+                3'h3: bdata <= { ser_data, sample_index[15:0] };
+                3'h4: bdata <= in_mux[31:0];
+                3'h5: bdata <= in_mux[63:32];
+                3'h6: begin
+                    bdata <= sample_index[31:0];
                     temp <= sample_index[63:32];
                 end
-                5'h1C: rdata <= temp;
-                default: rdata <= 1'sbx;
+                3'h7: bdata <= temp;
             endcase
-            rvalid <= 1'b1;
         end
+
+        bvalid <= avalid;
     end
 end
 

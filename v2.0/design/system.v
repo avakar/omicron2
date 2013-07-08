@@ -1,49 +1,61 @@
-module axi_to_io(
+module axi_sampler_fifo(
     input rst_n,
     input clk,
+
+    input[15:0] in_data,
+    input in_strobe,
 
     input avalid,
     output aready,
     input awe,
-    input[31:2] aaddr,
+    input[2:2] aaddr,
     input[31:0] adata,
-    input[3:0] astrb,
-    output bvalid,
-    output[31:0] bdata,
-
-    output io_addr_strobe,
-    output io_read_strobe,
-    output io_write_strobe,
-    output[31:0] io_addr,
-    output[3:0] io_byte_enable,
-    output[31:0] io_write_data,
-    input[31:0] io_read_data,
-    input io_ready
+    output reg bvalid,
+    output reg[31:0] bdata
     );
 
-reg active;
+wire[15:0] fifo_rd_data;
+wire fifo_empty;
+reg fifo_rd;
+sample_fifo s0_fifo(
+    .rst(!rst_n),
 
-assign aready = rst_n && !active;
-assign bvalid = io_ready;
-assign bdata = io_read_data;
+    .wr_clk(clk),
+    .din(in_data),
+    .wr_en(in_strobe),
+
+    .rd_clk(clk),
+    .rd_en(fifo_rd),
+    .dout(fifo_rd_data),
+    .empty(fifo_empty),
+    .full(),
+    .overflow()
+);
+
+assign aready = bvalid;
+
+always @(*) begin
+    case (aaddr)
+        1'd0: bdata = !fifo_empty;
+        1'd1: bdata = fifo_rd_data;
+    endcase
+end
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-        active <= 1'b0;
+        fifo_rd <= 1'b0;
+        bvalid <= 1'b0;
     end else begin
-        if (avalid && aready)
-            active <= 1'b1;
-        if (bvalid)
-            active <= 1'b0;
+        fifo_rd <= 1'b0;
+
+        if (avalid && awe) begin
+            if (aaddr == 1'd0 && adata[0])
+                fifo_rd <= 1'b1;
+        end
+
+        bvalid <= avalid && !aready;
     end
 end
-
-assign io_addr_strobe = avalid && aready;
-assign io_read_strobe = avalid && aready && !awe;
-assign io_write_strobe = avalid && aready && awe;
-assign io_addr = { aaddr, 2'b00 };
-assign io_byte_enable = astrb;
-assign io_write_data = adata;
 
 endmodule
 
@@ -58,14 +70,8 @@ module system(
     output tx_se0,
     output pup_en,
 
-    output io_addr_strobe,
-    output io_read_strobe,
-    output io_write_strobe,
-    output[31:0] io_addr,
-    output[3:0] io_byte_enable,
-    output[31:0] io_write_data,
-    input[31:0] io_read_data,
-    input io_ready
+    input[15:0] s0_in_data,
+    output s0_compressor_overflow_error
     );
 
 wire avalid;
@@ -89,33 +95,6 @@ axi_cpu cpu0(
     .astrb(astrb),
     .bvalid(bvalid),
     .bdata(bdata)
-    );
-
-wire io0_sel;
-wire io0_aready;
-wire io0_bvalid;
-wire[31:0] io0_bdata;
-axi_to_io io0(
-    .rst_n(rst_n),
-    .clk(clk_48),
-
-    .avalid(avalid && io0_sel),
-    .aready(io0_aready),
-    .awe(awe),
-    .aaddr(aaddr),
-    .adata(adata),
-    .astrb(astrb),
-    .bvalid(io0_bvalid),
-    .bdata(io0_bdata),
-
-    .io_addr_strobe(io_addr_strobe),
-    .io_read_strobe(io_read_strobe),
-    .io_write_strobe(io_write_strobe),
-    .io_addr(io_addr),
-    .io_byte_enable(io_byte_enable),
-    .io_write_data(io_write_data),
-    .io_read_data(io_read_data),
-    .io_ready(io_ready)
     );
 
 wire dna0_sel;
@@ -188,14 +167,60 @@ axi_usb usb0(
     .mem_read_data(usb0_mem_read_data)
     );
 
+wire[15:0] s0_out_data;
+wire s0_out_strobe;
+
+wire s0_sel;
+wire s0_bvalid;
+wire[31:0] s0_bdata;
+sampler s0(
+    .clk(clk_48),
+    .rst_n(rst_n),
+
+    .s(s0_in_data),
+    .out_data(s0_out_data),
+    .out_valid(s0_out_strobe),
+    .compressor_overflow_error(s0_compressor_overflow_error),
+
+    .avalid(avalid && s0_sel),
+    .awe(awe),
+    .aaddr(aaddr[4:2]),
+    .adata(adata),
+    .bvalid(s0_bvalid),
+    .bdata(s0_bdata)
+    );
+
+wire s0_fifo_sel;
+wire s0_fifo_aready;
+wire s0_fifo_bvalid;
+wire[31:0] s0_fifo_bdata;
+axi_sampler_fifo s0_fifo(
+    .rst_n(rst_n),
+    .clk(clk_48),
+
+    .in_data(s0_out_data),
+    .in_strobe(s0_out_strobe),
+
+    .avalid(avalid && s0_fifo_sel),
+    .aready(s0_fifo_aready),
+    .awe(awe),
+    .aaddr(aaddr[2:2]),
+    .adata(adata),
+    .bvalid(s0_fifo_bvalid),
+    .bdata(s0_fifo_bdata)
+    );
+
 //---------------------------------------------------------------------
 
 assign dna0_sel = aaddr[31:3] == (32'hC2000000 >> 3);
 assign usb_mem0_sel = aaddr[31:16] == 32'hC100;
 assign usb0_sel = aaddr[31:16] == 32'hC000;
-assign io0_sel = !dna0_sel && !usb_mem0_sel && !usb0_sel;
+assign s0_sel = aaddr[31:8] == 24'hC20001;
+assign s0_fifo_sel = aaddr[31:3] == (32'hC2000010 >> 3);
+wire fallback_sel = !s0_fifo_sel && !s0_sel && !usb0_sel && !usb_mem0_sel && !dna0_sel;
 
-assign bvalid = io0_bvalid | dna0_bvalid | usb_mem0_bvalid | usb0_bvalid;
+reg fallback_bvalid;
+assign bvalid = fallback_bvalid || dna0_bvalid || usb_mem0_bvalid || usb0_bvalid || s0_bvalid || s0_fifo_bvalid;
 
 always @(*) begin
     if (dna0_bvalid) begin
@@ -204,20 +229,34 @@ always @(*) begin
         bdata = usb_mem0_bdata;
     end else if (usb0_bvalid) begin
         bdata = usb0_bdata;
+    end else if (s0_bvalid) begin
+        bdata = s0_bdata;
+    end else if (s0_fifo_bvalid) begin
+        bdata = s0_fifo_bdata;
     end else begin
-        bdata = io0_bdata;
+        bdata = 1'b0;
     end
 end
 
 always @(*) begin
     if (dna0_sel) begin
         aready = dna0_aready;
-    end else if (usb_mem0_sel) begin
+    end else if (usb_mem0_sel || s0_sel) begin
         aready = 1'b1;
     end else if (usb0_sel) begin
         aready = usb0_aready;
+    end else if (s0_fifo_sel) begin
+        aready = s0_fifo_aready;
     end else begin
-        aready = io0_aready;
+        aready = 1'b1;
+    end
+end
+
+always @(posedge clk_48 or negedge rst_n) begin
+    if (!rst_n) begin
+        fallback_bvalid <= 1'b0;
+    end else begin
+        fallback_bvalid <= avalid && fallback_sel;
     end
 end
 
