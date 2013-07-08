@@ -107,7 +107,6 @@ reg[31:0] io_read_data;
 wire[31:0] io_write_data;
 reg io_ready;
 wire io_write_strobe, io_read_strobe, io_addr_strobe;
-wire[3:0] io_byte_enable;
 wire cpu_io_ready;
 
 reg[23:0] sdram0_addr_latch;
@@ -119,16 +118,34 @@ wire sdram0_rvalid;
 
 assign cpu_io_ready = io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wready);
 
+wire usb_transaction_active;
+wire[3:0] usb_endpoint;
+wire usb_direction_in;
+wire usb_setup;
+reg[1:0] usb_handshake;
+wire[7:0] usb_data_out;
+wire[7:0] usb_data_in;
+wire usb_data_strobe;
+wire usb_success;
+reg usb_data_toggle;
+reg usb_in_data_valid;
+reg usb_bank;
+reg[6:0] usb_addr_ptr;
+
 system sys0(
     .rst_n(!irst),
     .clk_48(clk_48),
 
+    .usb0_mem_we(usb_data_strobe && !usb_addr_ptr[6] && !usb_direction_in),
+    .usb0_mem_addr({usb_endpoint[1:0], usb_direction_in, usb_bank, usb_addr_ptr[5:0]}),
+    .usb0_mem_write_data(usb_data_out),
+    .usb0_mem_read_data(usb_data_in),
+
     .io_addr_strobe(io_addr_strobe),
     .io_read_strobe(io_read_strobe),
     .io_write_strobe(io_write_strobe),
-
     .io_addr(io_addr),
-    .io_byte_enable(io_byte_enable),
+    .io_byte_enable(),
     .io_write_data(io_write_data),
     .io_read_data(io_read_data),
     .io_ready(cpu_io_ready)
@@ -143,17 +160,6 @@ localparam
 reg[6:0] usb_address;
 wire usb_reset;
 
-wire usb_transaction_active;
-wire[3:0] usb_endpoint;
-wire usb_direction_in;
-wire usb_setup;
-reg[1:0] usb_handshake;
-wire[7:0] usb_data_out;
-wire[7:0] usb_data_in;
-wire usb_data_strobe;
-wire usb_success;
-reg usb_data_toggle;
-reg usb_in_data_valid;
 usb usb0(
     .rst_n(!irst),
     .clk_48(clk_48),
@@ -182,24 +188,6 @@ usb usb0(
     .data_in_valid(usb_in_data_valid),
     .data_strobe(usb_data_strobe),
     .success(usb_success)
-    );
-
-wire[31:0] usb_read_data_b;
-
-reg usb_bank;
-reg[6:0] usb_addr_ptr;
-usb_ram usb_ram0(
-    .clka(clk_48),
-    .wea(usb_data_strobe && !usb_addr_ptr[6] && !usb_direction_in),
-    .addra({usb_endpoint[1:0], usb_direction_in, usb_bank, usb_addr_ptr[5:0]}),
-    .dina(usb_data_out),
-    .douta(usb_data_in),
-
-    .clkb(clk_48),
-    .web((io_addr_strobe && io_write_strobe && io_addr[31:16] == 16'hC100)? io_byte_enable: 1'b0),
-    .addrb(io_addr[9:2]),
-    .dinb(io_write_data),
-    .doutb(usb_read_data_b)
     );
 
 reg usb_reset_prev, usb_reset_flag;
@@ -375,8 +363,6 @@ always @(*) begin
             io_read_data = usb_ep0_ctrl_rd_data;
         32'hC000011?:
             io_read_data = usb_ep1_ctrl_rd_data;
-        32'hC100????:
-            io_read_data = usb_read_data_b;
         32'hC2000010:
             io_read_data = { !s0_fifo_empty };
         32'hC2000014:

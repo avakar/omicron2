@@ -51,6 +51,11 @@ module system(
     input rst_n,
     input clk_48,
 
+    input usb0_mem_we,
+    input[9:0] usb0_mem_addr,
+    input[7:0] usb0_mem_write_data,
+    output[7:0] usb0_mem_read_data,
+
     output io_addr_strobe,
     output io_read_strobe,
     output io_write_strobe,
@@ -126,16 +131,40 @@ axi_dna dna0(
     .bdata(dna0_bdata)
     );
 
+wire usb_mem0_sel;
+wire usb_mem0_bvalid;
+wire[31:0] usb_mem0_bdata;
+axi_usb_mem usb_mem0(
+    .rst_n(rst_n),
+    .clk(clk_48),
+
+    .avalid(avalid && usb_mem0_sel),
+    .awe(awe),
+    .aaddr(aaddr[9:2]),
+    .adata(adata),
+    .astrb(astrb),
+    .bvalid(usb_mem0_bvalid),
+    .bdata(usb_mem0_bdata),
+
+    .mem_we(usb0_mem_we),
+    .mem_addr(usb0_mem_addr),
+    .mem_write_data(usb0_mem_write_data),
+    .mem_read_data(usb0_mem_read_data)
+    );
+
 //---------------------------------------------------------------------
 
 assign dna0_sel = aaddr[31:3] == (32'hC2000000 >> 3);
-assign io0_sel = !dna0_sel;
+assign usb_mem0_sel = aaddr[31:16] == 32'hC100;
+assign io0_sel = !dna0_sel && !usb_mem0_sel;
 
-assign bvalid = io0_bvalid | dna0_bvalid;
+assign bvalid = io0_bvalid | dna0_bvalid | usb_mem0_bvalid;
 
 always @(*) begin
     if (dna0_bvalid) begin
         bdata = dna0_bdata;
+    end else if (usb_mem0_bvalid) begin
+        bdata = usb_mem0_bdata;
     end else begin
         bdata = io0_bdata;
     end
@@ -144,6 +173,8 @@ end
 always @(*) begin
     if (dna0_sel) begin
         aready = dna0_aready;
+    end else if (usb_mem0_sel) begin
+        aready = 1'b1;
     end else begin
         aready = io0_aready;
     end
