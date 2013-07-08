@@ -2,20 +2,14 @@ module axi_cpu(
     input rst_n,
     input clk,
 
-    output reg wvalid,
-    input wready,
-    output[31:0] awaddr,
-    output reg[31:0] wdata,
-    output reg[3:0] wstrb,
-
+    output avalid,
+    input aready,
+    output awe,
+    output[31:2] aaddr,
+    output[31:0] adata,
+    output[3:0] astrb,
     input bvalid,
-
-    output reg arvalid,
-    input arready,
-    output[31:0] araddr,
-
-    input rvalid,
-    input[31:0] rdata
+    input[31:0] bdata
     );
 
 wire io_addr_strobe, io_read_strobe, io_write_strobe;
@@ -31,39 +25,37 @@ cpu cpu0(
     .IO_Address(io_addr),
     .IO_Byte_Enable(io_byte_enable),
     .IO_Write_Data(io_write_data),
-    .IO_Read_Data(rdata),
-    .IO_Ready(bvalid || rvalid)
+    .IO_Read_Data(bdata),
+    .IO_Ready(bvalid)
 );
 
-reg[31:0] addr;
-assign awaddr = addr;
-assign araddr = addr;
+wire wr = io_addr_strobe && io_write_strobe;
+wire rd = io_addr_strobe && io_read_strobe;
+
+reg avalid_hold;
+reg awe_hold;
+reg[31:2] aaddr_hold;
+reg[31:0] adata_hold;
+reg[3:0] astrb_hold;
+
+assign avalid = rd || wr || avalid_hold;
+assign awe = wr || awe_hold;
+assign aaddr = avalid_hold? aaddr_hold: io_addr[31:2];
+assign adata = avalid_hold? adata_hold: io_write_data;
+assign astrb = avalid_hold? astrb_hold: io_byte_enable;
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-        wvalid <= 1'b0;
-        addr <= 1'sbx;
-        wdata <= 1'sbx;
-        wstrb <= 1'sbx;
-        arvalid <= 1'b0;
+        avalid_hold <= 1'b0;
     end else begin
-        if (wready)
-            wvalid <= 1'b0;
-
-        if (io_addr_strobe)
-            addr <= io_addr;
-
-        if (io_addr_strobe && io_write_strobe) begin
-            wvalid <= 1'b1;
-            wdata <= io_write_data;
-            wstrb <= io_byte_enable;
+        if (!avalid_hold) begin
+            awe_hold <= wr;
+            aaddr_hold <= io_addr[31:2];
+            adata_hold <= io_write_data;
+            astrb_hold <= io_byte_enable;
         end
 
-        if (arready)
-            arvalid <= 1'b0;
-
-        if (io_addr_strobe && io_read_strobe)
-            arvalid <= 1'b1;
+        avalid_hold <= avalid && !aready;
     end
 end
 

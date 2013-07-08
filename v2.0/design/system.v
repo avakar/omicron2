@@ -2,17 +2,14 @@ module axi_to_io(
     input rst_n,
     input clk,
 
-    input wvalid,
-    output wready,
-    input[31:0] awaddr,
-    input[31:0] wdata,
-    input[3:0] wstrb,
+    input avalid,
+    output aready,
+    input awe,
+    input[31:2] aaddr,
+    input[31:0] adata,
+    input[3:0] astrb,
     output bvalid,
-    input arvalid,
-    output arready,
-    input[31:0] araddr,
-    output rvalid,
-    output[31:0] rdata,
+    output[31:0] bdata,
 
     output io_addr_strobe,
     output io_read_strobe,
@@ -24,36 +21,29 @@ module axi_to_io(
     input io_ready
     );
 
-reg read_active, write_active;
+reg active;
 
-assign io_byte_enable = wstrb;
-assign io_write_data = wdata;
-assign io_addr = wvalid? awaddr: araddr;
-assign wready = !read_active && !write_active;
-assign arready = !read_active && !write_active && !wvalid;
-assign rdata = io_read_data;
-assign rvalid = read_active && io_ready;
-assign bvalid = write_active && io_ready;
-
-assign io_read_strobe = !read_active && !write_active && arvalid && !wvalid;
-assign io_write_strobe = !read_active && !write_active && wvalid;
-assign io_addr_strobe = io_read_strobe || io_write_strobe;
+assign aready = rst_n && !active;
+assign bvalid = io_ready;
+assign bdata = io_read_data;
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-        read_active <= 1'b0;
-        write_active <= 1'b0;
+        active <= 1'b0;
     end else begin
-        if (io_write_strobe)
-            write_active <= 1'b1;
-        if (io_read_strobe)
-            read_active <= 1'b1;
-        if (io_ready) begin
-            read_active <= 1'b0;
-            write_active <= 1'b0;
-        end
+        if (avalid && aready)
+            active <= 1'b1;
+        if (bvalid)
+            active <= 1'b0;
     end
 end
+
+assign io_addr_strobe = avalid && aready;
+assign io_read_strobe = avalid && aready && !awe;
+assign io_write_strobe = avalid && aready && awe;
+assign io_addr = { aaddr, 2'b00 };
+assign io_byte_enable = astrb;
+assign io_write_data = adata;
 
 endmodule
 
@@ -64,7 +54,6 @@ module system(
     output io_addr_strobe,
     output io_read_strobe,
     output io_write_strobe,
-
     output[31:0] io_addr,
     output[3:0] io_byte_enable,
     output[31:0] io_write_data,
@@ -72,56 +61,45 @@ module system(
     input io_ready
     );
 
-wire axi0_wvalid;
-reg axi0_wready;
-wire[31:0] axi0_awaddr;
-wire[31:0] axi0_wdata;
-wire[3:0] axi0_wstrb;
-wire axi0_bvalid;
-wire axi0_arvalid;
-reg axi0_arready;
-wire[31:0] axi0_araddr;
-wire axi0_rvalid;
-reg[31:0] axi0_rdata;
+wire avalid;
+reg aready;
+wire awe;
+wire[31:2] aaddr;
+wire[31:0] adata;
+wire[3:0] astrb;
+wire bvalid;
+reg[31:0] bdata;
 
 axi_cpu cpu0(
     .rst_n(rst_n),
     .clk(clk_48),
 
-    .wvalid(axi0_wvalid),
-    .wready(axi0_wready),
-    .awaddr(axi0_awaddr),
-    .wdata(axi0_wdata),
-    .wstrb(axi0_wstrb),
-
-    .bvalid(axi0_bvalid),
-
-    .arvalid(axi0_arvalid),
-    .arready(axi0_arready),
-    .araddr(axi0_araddr),
-
-    .rvalid(axi0_rvalid),
-    .rdata(axi0_rdata)
+    .avalid(avalid),
+    .aready(aready),
+    .awe(awe),
+    .aaddr(aaddr),
+    .adata(adata),
+    .astrb(astrb),
+    .bvalid(bvalid),
+    .bdata(bdata)
     );
 
-reg io0_rsel, io0_wsel;
-wire io0_bvalid, io0_rvalid, io0_wready, io0_arready;
-wire[31:0] io0_rdata;
+wire io0_sel;
+wire io0_aready;
+wire io0_bvalid;
+wire[31:0] io0_bdata;
 axi_to_io io0(
     .rst_n(rst_n),
     .clk(clk_48),
 
-    .wvalid(axi0_wvalid && io0_wsel),
-    .wready(io0_wready),
-    .awaddr(axi0_awaddr),
-    .wdata(axi0_wdata),
-    .wstrb(axi0_wstrb),
+    .avalid(avalid && io0_sel),
+    .aready(io0_aready),
+    .awe(awe),
+    .aaddr(aaddr),
+    .adata(adata),
+    .astrb(astrb),
     .bvalid(io0_bvalid),
-    .arvalid(axi0_arvalid && io0_rsel),
-    .arready(io0_arready),
-    .araddr(axi0_araddr),
-    .rvalid(io0_rvalid),
-    .rdata(io0_rdata),
+    .bdata(io0_bdata),
 
     .io_addr_strobe(io_addr_strobe),
     .io_read_strobe(io_read_strobe),
@@ -133,84 +111,42 @@ axi_to_io io0(
     .io_ready(io_ready)
     );
 
-reg dna0_rsel;
-wire dna0_rvalid;
-wire[31:0] dna0_rdata;
+wire dna0_sel;
+wire dna0_aready;
+wire dna0_bvalid;
+wire[31:0] dna0_bdata;
 axi_dna dna0(
     .rst_n(rst_n),
     .clk_48(clk_48),
 
-    .arvalid(axi0_arvalid && dna0_rsel),
-    .araddr(axi0_araddr[2]),
-
-    .rvalid(dna0_rvalid),
-    .rdata(dna0_rdata)
+    .avalid(avalid && dna0_sel),
+    .aready(dna0_aready),
+    .aaddr(aaddr[2:2]),
+    .bvalid(dna0_bvalid),
+    .bdata(dna0_bdata)
     );
 
 //---------------------------------------------------------------------
 
-assign axi0_rvalid = io0_rvalid | dna0_rvalid;
+assign dna0_sel = aaddr[31:3] == (32'hC2000000 >> 3);
+assign io0_sel = !dna0_sel;
 
-assign axi0_bvalid = io0_bvalid;
-
-always @(*) begin
-    axi0_wready = io0_wready;
-end
+assign bvalid = io0_bvalid | dna0_bvalid;
 
 always @(*) begin
-    if (dna0_rvalid) begin
-        axi0_rdata = dna0_rdata;
+    if (dna0_bvalid) begin
+        bdata = dna0_bdata;
     end else begin
-        axi0_rdata = io0_rdata;
+        bdata = io0_bdata;
     end
 end
 
 always @(*) begin
-    if (dna0_rsel) begin
-        axi0_arready = 1'b1;
+    if (dna0_sel) begin
+        aready = dna0_aready;
     end else begin
-        axi0_arready = io0_arready;
+        aready = io0_aready;
     end
 end
-
-always @(*) begin
-    io0_wsel = 1'b1;
-
-    dna0_rsel = 1'b0;
-    io0_rsel = 1'b0;
-
-    if (axi0_araddr[31:3] == (32'hC2000000 >> 3))
-        dna0_rsel = 1'b1;
-    else
-        io0_rsel = 1'b1;
-end
-
-//---------------------------------------------------------------------
-
-/*wire usb0_wready;
-wire usb0_arready;
-wire usb0_rvalid;
-wire[31:0] usb0_rdata;
-axi_usb usb0(
-    .rst_n(rst_n),
-    .clk_48(clk_48),
-
-    .rx_j(usb0_rx_j),
-    .rx_se0(usb0_rx_se0),
-    .tx_en(usb0_tx_en),
-    .tx_j(usb0_tx_j),
-    .tx_se0(usb0_tx_se0),
-
-    .awaddr(axi0_awaddr[7:0]),
-    .wdata(axi0_wdata),
-    .wvalid(axi0_wvalid && axi0_awaddr[31:8] == 24'hC00000),
-    .wready(usb0_wready),
-
-    .araddr(axi0_araddr),
-    .arvalid(axi0_arvalid && axi0_araddr[31:8] == 24'hC00000),
-    .arready(usb0_arready),
-    .rdata(usb0_rdata),
-    .rvalid(usb0_rvalid)
-    );*/
 
 endmodule
