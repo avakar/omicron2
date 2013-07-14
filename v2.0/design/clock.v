@@ -10,12 +10,14 @@ module clock_controller(
 
 wire pll_fb;
 wire clk_100;
+wire clk_200;
 wire pll_locked;
 PLL_BASE #(
     .CLKIN_PERIOD(30),
     .COMPENSATION("PLL2DCM"),
     .CLKFBOUT_MULT(18),
     .CLKOUT0_DIVIDE(6),
+    .CLKOUT1_DIVIDE(3),
     .CLK_FEEDBACK("CLKFBOUT")
     )
     pll_200(
@@ -23,7 +25,7 @@ PLL_BASE #(
     .CLKFBIN(pll_fb),
     .RST(rst),
     .CLKOUT0(clk_100),
-    .CLKOUT1(),
+    .CLKOUT1(clk_200),
     .CLKOUT2(),
     .CLKOUT3(),
     .CLKOUT4(),
@@ -31,6 +33,8 @@ PLL_BASE #(
     .CLKFBOUT(pll_fb),
     .LOCKED(pll_locked)
     );
+
+assign clk_sampler = clk_200;
 
 wire dcm_48_clkfx;
 wire dcm_48_locked0;
@@ -66,8 +70,6 @@ BUFG clk_48_bufg(
     .I(dcm_48_clkfx),
     .O(clk_48)
     );
-
-assign clk_sampler = clk_48;
 
 reg dcm_48_locked1;
 reg dcm_48_locked;

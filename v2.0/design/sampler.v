@@ -120,7 +120,7 @@ module sample_strober(
     input rst_n,
 
     input[15:0] s,
-    output sample_strobe,
+    output reg sample_strobe,
 
     input enable,
     input clear_timer,
@@ -131,7 +131,7 @@ module sample_strober(
     );
 
 reg[31:0] cntr;
-wire cntr_strobe = (cntr == period);
+reg cntr_strobe;
 
 reg[15:0] last_s;
 
@@ -139,12 +139,12 @@ wire[15:0] rising_edges = ~last_s & s & rising_edge_mask;
 wire[15:0] falling_edges = last_s & ~s & falling_edge_mask;
 wire edge_strobe = (rising_edges != 0) || (falling_edges != 0);
 
-assign sample_strobe = (enable && cntr_strobe) || edge_strobe;
-
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         cntr <= 1'b0;
     end else begin
+        cntr_strobe <= (cntr == period);
+        sample_strobe <= (enable && cntr_strobe) || edge_strobe;
         last_s <= s;
 
         if (enable) begin
@@ -233,14 +233,12 @@ module sampler(
 
     output compressor_overflow_error,
 
-    input[4:0] waddr,
-    input[31:0] wdata,
-    input wvalid,
-
-    input[4:0] araddr,
-    input arvalid,
-    output reg[31:0] rdata,
-    output reg rvalid
+    input avalid,
+    input awe,
+    input[4:0] aaddr,
+    input[31:0] adata,
+    output reg bvalid,
+    output reg[31:0] bdata
     );
 
 wire[15:0] s_muxed;
@@ -250,6 +248,11 @@ sample_mux #(.w(16)) mux0(
     .o(s_muxed),
     .s(in_mux)
     );
+
+reg[15:0] s_mux_latch;
+always @(posedge clk) begin
+    s_mux_latch <= s_muxed;
+end
 
 reg enable_timer;
 reg clear_timer;
@@ -268,7 +271,7 @@ sample_strober strober0(
     .enable(enable_timer),
     .clear_timer(clear_timer),
 
-    .s(s_muxed),
+    .s(s_mux_latch),
     .sample_strobe(sample_strobe),
 
     .period(period),
@@ -316,7 +319,7 @@ always @(posedge clk or negedge rst_n) begin
         clear_timer <= 1'b0;
         log_channels <= 3'd4;
         clear_pipeline <= 1'b0;
-        rvalid <= 1'b0;
+        bvalid <= 1'b0;
         period <= 1'b0;
         rising_edge_mask <= 1'b0;
         falling_edge_mask <= 1'b0;
@@ -324,52 +327,53 @@ always @(posedge clk or negedge rst_n) begin
     end else begin
         clear_timer <= 1'b0;
         clear_pipeline <= 1'b0;
-        rvalid <= 1'b0;
-        rdata <= 1'sbx;
+        bvalid <= 1'b0;
+        bdata <= 1'sbx;
 
-        if (wvalid) begin
-            case (waddr)
+        if (avalid && awe) begin
+            case (aaddr)
                 5'h0: begin
-                    enable_timer <= wdata[0];
-                    if (wdata[1])
+                    enable_timer <= adata[0];
+                    if (adata[1])
                         clear_timer <= 1'b1;
-                    if (wdata[2])
+                    if (adata[2])
                         clear_pipeline <= 1'b1;
-                    log_channels <= wdata[6:4];
+                    log_channels <= adata[6:4];
                 end
                 5'h4: begin
-                    period <= wdata;
+                    period <= adata;
                 end
                 5'h8: begin
-                    falling_edge_mask <= wdata[15:0];
-                    rising_edge_mask <= wdata[31:16];
+                    falling_edge_mask <= adata[15:0];
+                    rising_edge_mask <= adata[31:16];
                 end
                 5'h10: begin
-                    in_mux[31:0] <= wdata;
+                    in_mux[31:0] <= adata;
                 end
                 5'h14: begin
-                    in_mux[63:32] <= wdata;
+                    in_mux[63:32] <= adata;
                 end
             endcase
         end
 
-        if (arvalid) begin
-            case (araddr)
-                5'h0: rdata <= { 1'b0, log_channels, 3'b0, enable_timer };
-                5'h4: rdata <= period;
-                5'h8: rdata <= { rising_edge_mask, falling_edge_mask };
-                5'hC: rdata <= { ser_data, sample_index[15:0] };
-                5'h10: rdata <= in_mux[31:0];
-                5'h14: rdata <= in_mux[63:32];
+        if (avalid && !awe) begin
+            case (aaddr)
+                5'h0: bdata <= { 1'b0, log_channels, 3'b0, enable_timer };
+                5'h4: bdata <= period;
+                5'h8: bdata <= { rising_edge_mask, falling_edge_mask };
+                5'hC: bdata <= { ser_data, sample_index[15:0] };
+                5'h10: bdata <= in_mux[31:0];
+                5'h14: bdata <= in_mux[63:32];
                 5'h18: begin
-                    rdata <= sample_index[31:0];
+                    bdata <= sample_index[31:0];
                     temp <= sample_index[63:32];
                 end
-                5'h1C: rdata <= temp;
-                default: rdata <= 1'sbx;
+                5'h1C: bdata <= temp;
+                default: bdata <= 1'sbx;
             endcase
-            rvalid <= 1'b1;
         end
+
+        bvalid <= avalid;
     end
 end
 

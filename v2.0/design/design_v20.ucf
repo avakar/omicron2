@@ -179,7 +179,6 @@ NET "flash_si" SLEW = SLOW;
 NET "flash_so" SLEW = SLOW;
 
 #NET "m_fakeclk" LOC = P55 |IOSTANDARD = LVCMOS33;
-
 NET "flash_so" PULLUP;
 NET "s[15]" KEEPER;
 NET "s[14]" KEEPER;
@@ -404,3 +403,6 @@ INST "m_pwren" TNM = m_out_grp;
 INST "m_ras_n" TNM = m_out_grp;
 INST "m_udqm" TNM = m_out_grp;
 #TIMEGRP "m_out_grp" OFFSET = OUT 17 ns AFTER "m_fakeclk";
+#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/07/10
+TIMESPEC TS_cpu_to_sampler = FROM "clkctrl_dcm_48_clkfx" TO "clk_sampler" TIG;
+TIMESPEC TS_sampler_to_cpu = FROM "clk_sampler" TO "clkctrl_dcm_48_clkfx" TIG;
