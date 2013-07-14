@@ -109,12 +109,13 @@ reg io_ready;
 wire io_write_strobe, io_read_strobe, io_addr_strobe;
 wire[3:0] io_byte_enable;
 
-reg[23:0] sdram0_addr_latch;
-reg[15:0] sdram0_wdata_latch;
-reg sdram0_wvalid, sdram0_arvalid;
-wire sdram0_wready, sdram0_arready;
-wire[15:0] sdram0_rdata;
-wire sdram0_rvalid;
+reg io_awe_latch;
+reg[31:0] io_addr_latch;
+reg[31:0] io_write_data_latch;
+reg sdram0_avalid;
+wire sdram0_aready;
+wire[15:0] sdram0_bdata;
+wire sdram0_bvalid;
 
 wire s0_bvalid;
 wire[31:0] s0_bdata;
@@ -130,7 +131,7 @@ cpu cpu0(
   .IO_Byte_Enable(io_byte_enable),
   .IO_Write_Data(io_write_data),
   .IO_Read_Data(io_read_data),
-  .IO_Ready(io_ready || sdram0_rvalid || (sdram0_wvalid && sdram0_wready) || s0_bvalid)
+  .IO_Ready(io_ready || sdram0_bvalid || s0_bvalid)
 );
 
 localparam
@@ -304,16 +305,13 @@ sdram sdram0(
     .rst(!sdram_enable),
     .clk(clk_48),
 
-    .awaddr(sdram0_addr_latch),
-    .wdata(sdram0_wdata_latch),
-    .wvalid(sdram0_wvalid),
-    .wready(sdram0_wready),
-
-    .araddr(sdram0_addr_latch),
-    .arready(sdram0_arready),
-    .arvalid(sdram0_arvalid),
-    .rdata(sdram0_rdata),
-    .rvalid(sdram0_rvalid),
+    .avalid(sdram0_avalid),
+    .aready(sdram0_aready),
+    .awe(io_awe_latch),
+    .aaddr(io_addr_latch[25:2]),
+    .adata(io_write_data_latch[15:0]),
+    .bvalid(sdram0_bvalid),
+    .bdata(sdram0_bdata),
 
     .m_clk_oe(m_clk_oe),
     .m_cke(m_cke),
@@ -379,26 +377,21 @@ aaxi_async_bridge br0(
     );
 
 always @(posedge clk_48) begin
-    if (io_addr_strobe && (io_write_strobe || io_read_strobe))
-        sdram0_addr_latch <= io_addr[25:2];
+    if (sdram0_avalid && sdram0_aready)
+        sdram0_avalid <= 1'b0;
 
-    if (sdram0_wvalid && sdram0_wready)
-        sdram0_wvalid <= 1'b0;
+    if (io_addr_strobe && (io_write_strobe || io_read_strobe)) begin
+        io_addr_latch <= io_addr;
+        io_write_data_latch <= io_write_data;
+        io_awe_latch <= io_write_strobe;
 
-    if (sdram0_arvalid && sdram0_arready)
-        sdram0_arvalid <= 1'b0;
-
-    if (io_addr_strobe && io_read_strobe && io_addr[31:28] == 4'hD)
-        sdram0_arvalid <= 1'b1;
-
-    if (io_addr_strobe && io_write_strobe && io_addr[31:28] == 4'hD) begin
-        sdram0_wdata_latch <= io_write_data[15:0];
-        sdram0_wvalid <= 1'b1;
+        if (io_addr[31:28] == 4'hD)
+            sdram0_avalid <= 1'b1;
     end
 end
 
 always @(*) begin
-    casez (io_addr)
+    casez (io_addr_latch)
         32'hC0000000:
             io_read_data = { usb_addr_ptr, 6'b0, usb_reset_flag, usb_attach };
         32'hC0000004:
@@ -422,7 +415,7 @@ always @(*) begin
         /*32'hC20001??:
             io_read_data = s0_bdata;*/
         32'hD???????:
-            io_read_data = sdram0_rdata;
+            io_read_data = sdram0_bdata;
         default:
             io_read_data = 32'sbx;
     endcase

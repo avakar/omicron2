@@ -93,7 +93,7 @@ endmodule
 
 module sdram_model(
     input clk,
-    input cke_n,
+    input cke,
     input cs_n,
     input ras_n,
     input cas_n,
@@ -113,7 +113,7 @@ wire all_precharge = (a[10] == 1 && {ras_n,cas_n,we_n} == 3'b010);
 
 sdram_bank b0(
     .clk(clk),
-    .cs(!cke_n && !cs_n && (ba == 2'd0 || all_precharge)),
+    .cs(cke && !cs_n && (ba == 2'd0 || all_precharge)),
     .ras_n(ras_n),
     .cas_n(cas_n),
     .we_n(we_n),
@@ -124,7 +124,7 @@ sdram_bank b0(
 
 sdram_bank b1(
     .clk(clk),
-    .cs(!cke_n && !cs_n && (ba == 2'd1 || all_precharge)),
+    .cs(cke && !cs_n && (ba == 2'd1 || all_precharge)),
     .ras_n(ras_n),
     .cas_n(cas_n),
     .we_n(we_n),
@@ -135,7 +135,7 @@ sdram_bank b1(
 
 sdram_bank b2(
     .clk(clk),
-    .cs(!cke_n && !cs_n && (ba == 2'd2 || all_precharge)),
+    .cs(cke && !cs_n && (ba == 2'd2 || all_precharge)),
     .ras_n(ras_n),
     .cas_n(cas_n),
     .we_n(we_n),
@@ -146,7 +146,7 @@ sdram_bank b2(
 
 sdram_bank b3(
     .clk(clk),
-    .cs(!cke_n && !cs_n && (ba == 2'd3 || all_precharge)),
+    .cs(cke && !cs_n && (ba == 2'd3 || all_precharge)),
     .ras_n(ras_n),
     .cas_n(cas_n),
     .we_n(we_n),
@@ -171,7 +171,7 @@ end
 always @(posedge clk) begin
     `assert($time - last_row0_refresh_time < 64000000);
 
-    if (!cke_n && !cs_n) begin
+    if (cke && !cs_n) begin
         if ({ras_n, cas_n, we_n} != 3'b111) begin
             `assert(last_refresh_time + t_rfc < $time);
         end
