@@ -57,6 +57,7 @@ module sdram(
     input[23:0] aaddr,
     input[15:0] adata,
     output reg bvalid,
+    output reg bwe,
     output reg[15:0] bdata,
 
     output reg m_clk_oe,
@@ -188,6 +189,7 @@ always @(posedge clk or posedge rst) begin
 
         bvalid <= 1'b0;
         bdata <= 1'sbx;
+        bwe <= 1'bx;
         f_ack <= 1'b0;
     end else begin
         m_a <= 1'b0;
@@ -195,9 +197,12 @@ always @(posedge clk or posedge rst) begin
         m_dq_out <= 1'sbx;
         m_dq_oe_n <= 16'hFFFF;
         f_ack <= 1'b0;
+        bwe <= 1'bx;
         
         bdata <= m_dq_in;
         bvalid <= read_queue[2];
+        if (read_queue[2])
+            bwe <= 1'b0;
         read_queue <= { read_queue[1:0], 1'b0 };
 
         m_cke <= m_cke0;
@@ -283,6 +288,7 @@ always @(posedge clk or posedge rst) begin
                                 m_dq_oe_n <= 16'h0000;
                                 cmd <= cmd_write;
                                 bvalid <= 1'b1;
+                                bwe <= 1'b1;
                             end else begin
                                 read_queue[0] <= 1'b1;
                                 cmd <= cmd_read;

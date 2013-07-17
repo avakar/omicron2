@@ -4,7 +4,8 @@ module clock_controller(
     output clk_48,
     output clk_sampler,
     output clk_dram,
-    output clk_dram_n,
+    output clk_dram_out,
+    output clk_dram_out_n,
     output locked
     );
 
@@ -71,6 +72,8 @@ BUFG clk_48_bufg(
     .O(clk_48)
     );
 
+assign clk_dram = clk_48;
+
 reg dcm_48_locked1;
 reg dcm_48_locked;
 always @(posedge clk_48 or negedge dcm_48_locked0) begin
@@ -83,24 +86,24 @@ always @(posedge clk_48 or negedge dcm_48_locked0) begin
     end
 end
 
-wire dcm_dram_clk0, dcm_dram_clk180;
+wire dcm_dram_out_clk0, dcm_dram_out_clk180;
 DCM_SP #(
     .CLK_FEEDBACK("1X"),
     .CLKOUT_PHASE_SHIFT("FIXED"),
     .PHASE_SHIFT(-49)
     )
     dcm_dram (
-    .CLKIN(clk_48),
-    .CLKFB(clk_dram),
-    .RST(rst || !dcm_48_locked),
+    .CLKIN(clk_dram),
+    .CLKFB(clk_dram_out),
+    .RST(rst || !pll_locked || !dcm_48_locked),
     .PSEN(1'b0),
-    .CLK0(dcm_dram_clk0),
+    .CLK0(dcm_dram_out_clk0),
     .CLKFX(),
     .CLKFX180(),
     .LOCKED(locked),
     .CLKDV(),
     .CLK90(),
-    .CLK180(dcm_dram_clk180),
+    .CLK180(dcm_dram_out_clk180),
     .CLK270(),
     .CLK2X(),
     .CLK2X180(),
@@ -112,13 +115,13 @@ DCM_SP #(
     );
 
 BUFG clk_dram_bufg(
-    .I(dcm_dram_clk0),
-    .O(clk_dram)
+    .I(dcm_dram_out_clk0),
+    .O(clk_dram_out)
     );
 
 BUFG clk_dram_n_bufg(
-    .I(dcm_dram_clk180),
-    .O(clk_dram_n)
+    .I(dcm_dram_out_clk180),
+    .O(clk_dram_out_n)
     );
 
 endmodule

@@ -36,7 +36,7 @@ module main(
 //---------------------------------------------------------------------
 // Clocks and reset
 
-wire clk_48, clk_sampler, clk_dram, clk_dram_n;
+wire clk_48, clk_sampler, clk_dram, clk_dram_out, clk_dram_out_n;
 wire clk_locked;
 clock_controller clkctrl(
     .rst(!extrst_n),
@@ -44,7 +44,8 @@ clock_controller clkctrl(
     .clk_48(clk_48),
     .clk_sampler(clk_sampler),
     .clk_dram(clk_dram),
-    .clk_dram_n(clk_dram_n),
+    .clk_dram_out(clk_dram_out),
+    .clk_dram_out_n(clk_dram_out_n),
     .locked(clk_locked)
     );
 
@@ -87,14 +88,14 @@ wire s0_strobe;
 
 wire[15:0] s0_fifo_rd_data;
 wire s0_fifo_empty;
-reg s0_fifo_rd;
+wire s0_fifo_rd;
 sample_fifo s0_fifo(
   .rst(irst),
   .wr_clk(clk_sampler),
-  .rd_clk(clk_48),
   .din(s0_data),
   .wr_en(s0_strobe),
 
+  .rd_clk(clk_dram),
   .rd_en(s0_fifo_rd),
   .dout(s0_fifo_rd_data),
   .full(),
@@ -111,14 +112,9 @@ wire[3:0] io_byte_enable;
 
 reg io_awe_latch;
 reg[31:0] io_addr_latch;
-reg[31:0] io_write_data_latch;
-reg sdram0_avalid;
-wire sdram0_aready;
-wire[15:0] sdram0_bdata;
-wire sdram0_bvalid;
 
 wire s0_bvalid;
-wire[31:0] s0_bdata;
+wire sh0_bvalid;
 
 cpu cpu0(
   .Clk(clk_48),
@@ -131,7 +127,7 @@ cpu cpu0(
   .IO_Byte_Enable(io_byte_enable),
   .IO_Write_Data(io_write_data),
   .IO_Read_Data(io_read_data),
-  .IO_Ready(io_ready || sdram0_bvalid || s0_bvalid)
+  .IO_Ready(io_ready || s0_bvalid || sh0_bvalid)
 );
 
 localparam
@@ -291,37 +287,12 @@ wire m_clk_oe;
 ODDR2 m_clk_buf(
     .D0(1'b1),
     .D1(1'b0),
-    .C0(clk_dram),
-    .C1(clk_dram_n),
+    .C0(clk_dram_out),
+    .C1(clk_dram_out_n),
     .CE(m_clk_oe),
     .R(!sdram_enable),
     .S(1'b0),
     .Q(m_clk)
-    );
-
-assign m_cs_n = 1'b0;
-reg[23:0] s0dma_waddr;
-sdram sdram0(
-    .rst(!sdram_enable),
-    .clk(clk_48),
-
-    .avalid(sdram0_avalid),
-    .aready(sdram0_aready),
-    .awe(io_awe_latch),
-    .aaddr(io_addr_latch[25:2]),
-    .adata(io_write_data_latch[15:0]),
-    .bvalid(sdram0_bvalid),
-    .bdata(sdram0_bdata),
-
-    .m_clk_oe(m_clk_oe),
-    .m_cke(m_cke),
-    .m_ras(m_ras_n),
-    .m_cas(m_cas_n),
-    .m_we(m_we_n),
-    .m_ba(m_ba),
-    .m_a(m_a),
-    .m_dqm({m_udqm, m_ldqm}),
-    .m_dq(m_dq)
     );
 
 wire compressor_overflow_error;
@@ -330,9 +301,7 @@ wire br0_avalid;
 wire br0_awe;
 wire[31:2] br0_aaddr;
 wire[31:0] br0_adata;
-wire[3:0] br0_astrb;
 wire br0_bvalid;
-wire[31:0] br0_bdata;
 
 sampler s0(
     .clk(clk_sampler),
@@ -350,7 +319,7 @@ sampler s0(
     .aaddr({br0_aaddr[4:2], 2'b0}),
     .adata(br0_adata),
     .bvalid(br0_bvalid),
-    .bdata(br0_bdata)
+    .bdata()
     );
 
 aaxi_async_bridge br0(
@@ -363,7 +332,7 @@ aaxi_async_bridge br0(
     .s_adata(io_write_data),
     .s_astrb(io_byte_enable),
     .s_bvalid(s0_bvalid),
-    .s_bdata(s0_bdata),
+    .s_bdata(),
 
     .m_clk(clk_sampler),
     .m_avalid(br0_avalid),
@@ -371,22 +340,97 @@ aaxi_async_bridge br0(
     .m_awe(br0_awe),
     .m_aaddr(br0_aaddr),
     .m_adata(br0_adata),
-    .m_astrb(br0_astrb),
+    .m_astrb(),
     .m_bvalid(br0_bvalid),
-    .m_bdata(br0_bdata)
+    .m_bdata(32'b0)
+    );
+
+wire br1_avalid;
+wire br1_awe;
+wire[31:2] br1_aaddr;
+wire[31:0] br1_adata;
+wire br1_bvalid;
+aaxi_async_bridge br1(
+    .rst_n(!irst),
+
+    .s_clk(clk_48),
+    .s_avalid(io_addr_strobe && (io_write_strobe || io_read_strobe) && (io_addr[31:8] == 24'hC20002)),
+    .s_awe(io_write_strobe),
+    .s_aaddr(io_addr[31:2]),
+    .s_adata(io_write_data),
+    .s_astrb(io_byte_enable),
+    .s_bvalid(sh0_bvalid),
+    .s_bdata(),
+
+    .m_clk(clk_dram),
+    .m_avalid(br1_avalid),
+    .m_aready(1'b1),
+    .m_awe(br1_awe),
+    .m_aaddr(br1_aaddr),
+    .m_adata(br1_adata),
+    .m_astrb(),
+    .m_bvalid(br1_bvalid),
+    .m_bdata(32'b0)
+    );
+
+wire sh0_fifo_wr_en;
+wire[15:0] sh0_wr_data;
+wire sh0_wr_almost_full = 1'b0;
+
+reg sh0_fifo_rd;
+wire[15:0] sh0_fifo_rd_data;
+wire sh0_fifo_empty;
+sample_fifo sh0_fifo(
+  .rst(irst),
+
+  .wr_clk(clk_dram),
+  .din(sh0_wr_data),
+  .wr_en(sh0_fifo_wr_en),
+
+  .rd_clk(clk_48),
+  .rd_en(sh0_fifo_rd),
+  .dout(sh0_fifo_rd_data),
+  .full(),
+  .overflow(),
+  .empty(sh0_fifo_empty)
+);
+
+sdram_handler sh0(
+    .rst_n(!irst && sdram_enable),
+    .clk(clk_dram),
+
+    .w_en(s0_fifo_rd),
+    .w_data(s0_fifo_rd_data),
+    .w_empty(s0_fifo_empty),
+
+    .r_en(sh0_fifo_wr_en),
+    .r_data(sh0_wr_data),
+    .r_almost_full(sh0_wr_almost_full),
+
+    .rprio(1'b0), // XXX
+
+    .m_clk_oe(m_clk_oe),
+    .m_cs_n(m_cs_n),
+    .m_cke(m_cke),
+    .m_a(m_a),
+    .m_ba(m_ba),
+    .m_ras_n(m_ras_n),
+    .m_cas_n(m_cas_n),
+    .m_we_n(m_we_n),
+    .m_ldqm(m_ldqm),
+    .m_udqm(m_udqm),
+    .m_dq(m_dq),
+
+    .avalid(br1_avalid),
+    .aaddr(br1_aaddr[2:2]),
+    .adata(br1_adata),
+    .awe(br1_awe),
+    .bvalid(br1_bvalid)
     );
 
 always @(posedge clk_48) begin
-    if (sdram0_avalid && sdram0_aready)
-        sdram0_avalid <= 1'b0;
-
     if (io_addr_strobe && (io_write_strobe || io_read_strobe)) begin
         io_addr_latch <= io_addr;
-        io_write_data_latch <= io_write_data;
-        io_awe_latch <= io_write_strobe;
-
-        if (io_addr[31:28] == 4'hD)
-            sdram0_avalid <= 1'b1;
     end
 end
 
@@ -409,13 +453,11 @@ always @(*) begin
         32'hC2000004:
             io_read_data = { dna_ready, 6'b0, dna[56:32] };
         32'hC2000010:
-            io_read_data = { !s0_fifo_empty };
+            io_read_data = { !sh0_fifo_empty };
         32'hC2000014:
-            io_read_data = s0_fifo_rd_data;
+            io_read_data = sh0_fifo_rd_data;
         /*32'hC20001??:
             io_read_data = s0_bdata;*/
-        32'hD???????:
-            io_read_data = sdram0_bdata;
         default:
             io_read_data = 32'sbx;
     endcase
@@ -430,9 +472,9 @@ always @(posedge clk_48 or posedge irst) begin
         usb_reset_flag <= 1'b0;
         usb_reset_prev <= 1'b0;
         usb_addr_ptr <= 1'b0;
-        s0_fifo_rd <= 1'b0;
+        sh0_fifo_rd <= 1'b0;
     end else begin
-        s0_fifo_rd <= 1'b0;
+        sh0_fifo_rd <= 1'b0;
 
         usb_reset_prev <= usb_reset;
         if (usb_reset && !usb_reset_prev)
@@ -461,7 +503,7 @@ always @(posedge clk_48 or posedge irst) begin
                 end
                 32'hC2000010: begin
                     if (io_write_data[0])
-                        s0_fifo_rd <= 1'b1;
+                        sh0_fifo_rd <= 1'b1;
                 end
             endcase
         end

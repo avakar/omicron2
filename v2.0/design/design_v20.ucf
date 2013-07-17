@@ -406,3 +406,4 @@ INST "m_udqm" TNM = m_out_grp;
 #Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/07/10
 TIMESPEC TS_cpu_to_sampler = FROM "clkctrl_dcm_48_clkfx" TO "clk_sampler" TIG;
 TIMESPEC TS_sampler_to_cpu = FROM "clk_sampler" TO "clkctrl_dcm_48_clkfx" TIG;
+#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/07/17

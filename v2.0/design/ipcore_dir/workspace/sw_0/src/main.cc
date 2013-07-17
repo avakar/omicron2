@@ -67,7 +67,8 @@
 #define SAMPLER_CLEAR_PIPELINE     (1<<2)
 #define SAMPLER_LOG_CHANNELS_gp (4)
 
-#define DRAM16      ((uint32_t volatile *)0xD0000000)
+#define READER_ADDR       *((uint32_t volatile *)0xC2000200)
+#define READER_COUNT      *((uint32_t volatile *)0xC2000204)
 
 #if 0
 static void sendch(char ch)
@@ -209,9 +210,6 @@ int main()
 	enum { ia_none, ia_set_address } action = ia_none;
 	uint8_t new_address = 0;
 	uint8_t config = 0;
-	uint8_t read_addr = 0;
-	uint8_t write_addr = 0;
-	uint8_t dram_data = 0;
 	for (;;)
 	{
 		if (USB_CTRL & USB_RESET_IF)
@@ -382,38 +380,20 @@ int main()
 				sendh(DNA_DATA);
 				sendch('\n');
 				break;
+			case 'r':
+				READER_COUNT = 1;
+				break;
+			case 'R':
+				READER_COUNT = 16;
+				break;
+			case 'c':
+				READER_ADDR = 0;
+				break;
 			case 'm':
 				DRAM_CTRL = DRAM_ENABLE;
 				break;
 			case 'M':
 				DRAM_CTRL = 0;
-				break;
-			case 'R':
-				read_addr = 0;
-				break;
-			case 'r':
-				{
-					uint16_t v = DRAM16[read_addr];
-
-					send("r:");
-					sendh(read_addr);
-					sendch(':');
-					sendh(v);
-					sendch('\n');
-
-					++read_addr;
-				}
-				break;
-			case 'W':
-				write_addr = 0;
-				break;
-			case 'w':
-				send("w:");
-				sendh(write_addr);
-				sendch(':');
-				sendh(dram_data);
-				sendch('\n');
-				DRAM16[write_addr++] = dram_data++;
 				break;
 			case 's':
 				SAMPLER_PERIOD = 4700;
