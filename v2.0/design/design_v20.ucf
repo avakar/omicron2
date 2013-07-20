@@ -14,7 +14,6 @@ NET "led[1]" IOSTANDARD = LVCMOS33;
 NET "led[0]" IOSTANDARD = LVCMOS33;
 NET "clk_33" IOSTANDARD = LVCMOS33;
 
-
 NET "led[0]" LOC = P139;
 NET "led[1]" LOC = P138;
 NET "led[2]" LOC = P133;
@@ -337,13 +336,7 @@ NET "m_dq[3]" KEEPER;
 NET "m_dq[2]" KEEPER;
 NET "m_dq[1]" KEEPER;
 NET "m_dq[0]" KEEPER;
-#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/06/09
-NET "clk_33" TNM_NET = clk_33;
-TIMESPEC TS_clk_33 = PERIOD "clk_33" 30 ns HIGH 50%;
-#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/06/22
-#NET "m_fakeclk" TNM_NET = m_fakeclk;
-#TIMESPEC TS_m_fakeclk = PERIOD "m_fakeclk" 48 MHz HIGH 50%;
-#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/06/22
+
 INST "m_dq<0>" TNM = m_dq_grp;
 INST "m_dq<1>" TNM = m_dq_grp;
 INST "m_dq<2>" TNM = m_dq_grp;
@@ -360,8 +353,6 @@ INST "m_dq<12>" TNM = m_dq_grp;
 INST "m_dq<13>" TNM = m_dq_grp;
 INST "m_dq<14>" TNM = m_dq_grp;
 INST "m_dq<15>" TNM = m_dq_grp;
-#TIMEGRP "m_dq_grp" OFFSET = IN 14 ns VALID 16 ns BEFORE "m_fakeclk" RISING;
-#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/06/22
 INST "m_dq<0>" TNM = m_out_grp;
 INST "m_dq<1>" TNM = m_out_grp;
 INST "m_dq<2>" TNM = m_out_grp;
@@ -402,8 +393,17 @@ INST "m_ldqm" TNM = m_out_grp;
 INST "m_pwren" TNM = m_out_grp;
 INST "m_ras_n" TNM = m_out_grp;
 INST "m_udqm" TNM = m_out_grp;
-#TIMEGRP "m_out_grp" OFFSET = OUT 17 ns AFTER "m_fakeclk";
-#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/07/10
-TIMESPEC TS_cpu_to_sampler = FROM "clkctrl_dcm_48_clkfx" TO "clk_sampler" TIG;
-TIMESPEC TS_sampler_to_cpu = FROM "clk_sampler" TO "clkctrl_dcm_48_clkfx" TIG;
-#Created by Constraints Editor (xc6slx4-tqg144-2) - 2013/07/17
+
+NET "clk_33" TNM_NET = clk_33;
+TIMESPEC TS_clk_33 = PERIOD "clk_33" 30 ns HIGH 50%;
+
+NET "clk_48" TNM_NET = clk_48;
+NET "clk_dram" TNM_NET = clk_dram;
+NET "clk_sampler" TNM_NET = clk_sampler;
+
+TIMESPEC TS_cpu_to_sampler = FROM "clk_48" TO "clk_sampler" TIG;
+TIMESPEC TS_sampler_to_cpu = FROM "clk_sampler" TO "clk_48" TIG;
+TIMESPEC TS_cpu_to_dram = FROM "clk_48" TO "clk_dram" TIG;
+TIMESPEC TS_dram_to_cpu = FROM "clk_dram" TO "clk_48" TIG;
+TIMESPEC TS_dram_to_sampler = FROM "clk_dram" TO "clk_sampler" TIG;
+TIMESPEC TS_sampler_to_dram = FROM "clk_sampler" TO "clk_dram" TIG;

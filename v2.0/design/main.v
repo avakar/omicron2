@@ -30,13 +30,13 @@ module main(
     (* IOB = "FORCE" *) output m_we_n,
     output m_ldqm,
     output m_udqm,
-    inout[15:0] m_dq
+    (* IOB = "FORCE" *) inout[15:0] m_dq
     );
 
 //---------------------------------------------------------------------
 // Clocks and reset
 
-wire clk_48, clk_sampler, clk_dram, clk_dram_out, clk_dram_out_n;
+wire clk_48, clk_dram, clk_sampler, clk_dram_out, clk_dram_out_n;
 wire clk_locked;
 clock_controller clkctrl(
     .rst(!extrst_n),
@@ -283,17 +283,23 @@ dnareader dna0(
     );
 
 reg sdram_enable;
+
 wire m_clk_oe;
+reg m_clk_oe_sync;
 ODDR2 m_clk_buf(
     .D0(1'b1),
     .D1(1'b0),
     .C0(clk_dram_out),
     .C1(clk_dram_out_n),
-    .CE(m_clk_oe),
-    .R(!sdram_enable),
+    .CE(1'b1),
+    .R(!m_clk_oe_sync),
     .S(1'b0),
     .Q(m_clk)
     );
+
+always @(posedge clk_dram_out) begin
+    m_clk_oe_sync <= m_clk_oe;
+end
 
 wire compressor_overflow_error;
 
