@@ -70,6 +70,10 @@
 #define READER_ADDR       *((uint32_t volatile *)0xC2000200)
 #define READER_COUNT      *((uint32_t volatile *)0xC2000204)
 
+#define SAMPLER_WADDR     *((uint32_t const volatile *)0xC2000208)
+
+#define INDEX_RAM         ((uint64_t const volatile *)0xC2001000)
+
 #if 0
 static void sendch(char ch)
 {
@@ -206,10 +210,14 @@ static void sendh(uint64_t s)
 int main()
 {
 	USB_CTRL = USB_ATTACH;
+	DRAM_CTRL = DRAM_ENABLE;
 
 	enum { ia_none, ia_set_address } action = ia_none;
 	uint8_t new_address = 0;
 	uint8_t config = 0;
+	uint32_t waddr = SAMPLER_WADDR & 0x00ffffff;
+	int32_t remaining_reads = 0;
+	int16_t index_addr = 0;
 	for (;;)
 	{
 		if (USB_CTRL & USB_RESET_IF)
@@ -353,10 +361,23 @@ int main()
 
 		if (SAMPLER_FIFO_CTRL & SAMPLER_FIFO_RDY)
 		{
+			--remaining_reads;
 			send("s:");
 			sendh(SAMPLER_FIFO_DATA);
 			sendch('\n');
 			SAMPLER_FIFO_CTRL = SAMPLER_FIFO_RDY;
+		}
+
+		if (remaining_reads == 0)
+		{
+			uint32_t new_waddr = SAMPLER_WADDR & 0x00ffffff;
+			if (new_waddr != waddr)
+			{
+				READER_ADDR = waddr;
+				remaining_reads = new_waddr - waddr;
+				READER_COUNT = remaining_reads;
+				waddr = new_waddr;
+			}
 		}
 
 		if (rx_ready())
@@ -374,6 +395,8 @@ int main()
 				sendh((uint16_t)USB_EP1_IN_CTRL);
 				sendch(':');
 				sendh((uint16_t)USB_EP1_OUT_CTRL);
+				sendch('\n');
+				sendh(SAMPLER_WADDR);
 				sendch('\n');
 				break;
 			case 'd':
@@ -394,6 +417,11 @@ int main()
 				break;
 			case 'M':
 				DRAM_CTRL = 0;
+				break;
+			case 'i':
+				send("i:");
+				sendh(INDEX_RAM[index_addr++]);
+				sendch('\n');
 				break;
 			case 's':
 				SAMPLER_PERIOD = 4700;

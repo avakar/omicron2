@@ -28,7 +28,8 @@ module sdram_handler(
     input awe,
     input[2:2] aaddr,
     input[31:0] adata,
-    output reg bvalid
+    output reg bvalid,
+    output[31:0] bdata
     );
 
 assign m_cs_n = 1'b0;
@@ -73,6 +74,8 @@ sdram sdram0(
 assign w_en = sdram0_avalid && sdram0_aready && sdram0_awe;
 assign r_en = sdram0_bvalid && !sdram0_bwe;
 
+assign bdata = { w_able, 7'b0, waddr };
+
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         waddr <= 1'b0;
@@ -98,6 +101,7 @@ always @(posedge clk or negedge rst_n) begin
                 end
             endcase
         end
+
         bvalid <= avalid;
     end
 end

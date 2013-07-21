@@ -37,14 +37,28 @@ endmodule
 //
 // The size of the output stream can be up to 1.5 times that
 // of the input stream, but will typically be much closer to 0.
+//
+// The compressor will auto-restart every 32Ki samples (a page),
+// in order to inject restart points for the potential parser.
+// The autoreset counter should be reset using the `clear` signal
+// before starting a sampling run. The `new_page` signal will be
+// asserted along with the first sample in each page.
+//
+// The compressor also keeps a 40-bit sample index and pushes
+// it out along with the `out_data`.
 module sample_compressor(
     input clk,
     input rst_n,
 
+    input clear,
+
     input[15:0] in_data,
     input in_strobe,
+
+    output reg new_page,
     output reg[15:0] out_data,
     output reg out_strobe,
+    output reg[39:0] out_sample_index,
 
     output reg overflow_error
     );
@@ -58,58 +72,98 @@ localparam
 reg[1:0] state;
 reg[15:0] last_data;
 reg[15:0] cntr;
+reg[14:0] reset_cntr;
+
+reg[39:0] sample_index;
+
+wire end_page = (reset_cntr == 15'h7fff);
+reg new_page_latch;
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         state <= st_init;
         last_data <= 16'sbx;
         out_data <= 1'sbx;
-        out_strobe <= 1'b0;
+        out_strobe = 1'b0;
         overflow_error <= 1'b0;
+        reset_cntr <= 1'b0;
+        new_page_latch <= 1'b1;
+        new_page <= 1'b0;
+        sample_index <= 1'b0;
     end else begin
         out_data <= 1'sbx;
-        out_strobe <= 1'b0;
-        case (state)
-            st_init: if (in_strobe) begin
-                state <= st_single;
-                out_data <= in_data;
-                out_strobe <= 1'b1;
-            end
-            st_single: if (in_strobe) begin
-                out_data <= in_data;
-                out_strobe <= 1'b1;
-                if (last_data == in_data) begin
-                    state <= st_run;
-                    cntr <= 1'b0;
+        out_sample_index <= 1'sbx;
+        out_strobe = 1'b0;
+
+        if (clear) begin
+            state <= st_init;
+            overflow_error <= 1'b0;
+            reset_cntr <= 1'b0;
+            new_page_latch <= 1'b1;
+            new_page <= 1'b0;
+            sample_index <= 1'b0;
+        end else begin
+            case (state)
+                st_init: if (in_strobe) begin
+                    out_data <= in_data;
+                    out_strobe = 1'b1;
+                    out_sample_index <= sample_index;
+                    if (!end_page)
+                        state <= st_single;
                 end
-            end
-            st_run: if (in_strobe) begin
-                if (last_data != in_data) begin
-                    state <= st_recover;
-                    out_data <= cntr;
-                    out_strobe <= 1'b1;
-                end else begin
-                    if (cntr == 16'hFFFE) begin
-                        out_data <= 16'hFFFF;
-                        out_strobe <= 1'b1;
+                st_single: if (in_strobe) begin
+                    out_data <= in_data;
+                    out_strobe = 1'b1;
+                    out_sample_index <= sample_index;
+                    if (end_page) begin
+                        state <= st_init;
+                    end else if (last_data == in_data) begin
+                        state <= st_run;
+                        cntr <= 1'b0;
                     end
                 end
-                if (cntr == 16'hFFFE)
-                    cntr <= 1'b0;
-                else
-                    cntr <= cntr + 1'b1;
+                st_run: if (in_strobe) begin
+                    if (cntr == 1'b0)
+                        out_sample_index <= sample_index;
+
+                    if (last_data != in_data) begin
+                        state <= st_recover;
+                        out_data <= cntr;
+                        out_strobe = 1'b1;
+                    end else begin
+                        if (cntr == 16'hFFFE) begin
+                            out_data <= 16'hFFFF;
+                            out_strobe = 1'b1;
+                            if (end_page)
+                                state <= st_init;
+                        end
+                    end
+                    if (cntr == 16'hFFFE)
+                        cntr <= 1'b0;
+                    else
+                        cntr <= cntr + 1'b1;
+                end
+                st_recover: begin
+                    if (in_strobe)
+                        overflow_error <= 1'b1;
+                    state <= st_single;
+                    out_data <= last_data;
+                    out_strobe = 1'b1;
+                    out_sample_index <= sample_index;
+                end
+            endcase
+
+            if (out_strobe) begin
+                reset_cntr <= reset_cntr + 1'b1;
+                new_page_latch <= end_page;
+                new_page <= new_page_latch;
             end
-            st_recover: begin
-                if (in_strobe)
-                    overflow_error <= 1'b1;
-                state <= st_single;
-                out_data <= last_data;
-                out_strobe <= 1'b1;
-            end
-        endcase
-        
-        if (in_strobe)
+        end
+
+        if (in_strobe) begin
             last_data <= in_data;
+            sample_index <= sample_index + 1'b1;
+        end
     end
 end
 
@@ -231,6 +285,9 @@ module sampler(
     output[15:0] out_data,
     output out_valid,
 
+    output[63:0] index_data,
+    output index_valid,
+
     output compressor_overflow_error,
 
     input avalid,
@@ -298,17 +355,28 @@ sample_serializer ser0(
     .log_channels(log_channels)
     );
 
+wire compr_new_page;
+wire[39:0] compr_sample_index;
 sample_compressor compressor0(
     .clk(clk),
     .rst_n(rst_n && !clear_pipeline),
+
+    .clear(clear_pipeline),
 
     .in_data(ser_data),
     .in_strobe(ser_strobe),
     .out_data(out_data),
     .out_strobe(out_valid),
 
+    .new_page(compr_new_page),
+    .out_sample_index(compr_sample_index),
+
     .overflow_error(compressor_overflow_error)
     );
+
+assign index_data = compr_sample_index;
+
+assign index_valid = out_valid && compr_new_page;
 
 reg[31:0] temp;
 

@@ -115,6 +115,7 @@ reg[31:0] io_addr_latch;
 
 wire s0_bvalid;
 wire sh0_bvalid;
+wire[31:0] sh0_bdata;
 
 cpu cpu0(
   .Clk(clk_48),
@@ -309,6 +310,9 @@ wire[31:2] br0_aaddr;
 wire[31:0] br0_adata;
 wire br0_bvalid;
 
+wire[63:0] s0_index_data;
+wire s0_index_valid;
+
 sampler s0(
     .clk(clk_sampler),
     .rst_n(!irst),
@@ -317,6 +321,9 @@ sampler s0(
 
     .out_data(s0_data),
     .out_valid(s0_strobe),
+
+    .index_data(s0_index_data),
+    .index_valid(s0_index_valid),
 
     .compressor_overflow_error(compressor_overflow_error),
 
@@ -327,6 +334,28 @@ sampler s0(
     .bvalid(br0_bvalid),
     .bdata()
     );
+
+reg[8:0] s0_index_addr;
+wire[31:0] s0_index_rd_data;
+sampler_index_ram s0_index_ram(
+    .clka(clk_sampler),
+    .wea(s0_index_valid),
+    .addra(s0_index_addr),
+    .dina(s0_index_data),
+
+    .clkb(clk_48),
+    .addrb(io_addr[11:2]),
+    .doutb(s0_index_rd_data)
+    );
+
+always @(posedge clk_sampler or posedge irst) begin
+    if (irst) begin
+        s0_index_addr <= 1'b0;
+    end else begin
+        if (s0_index_valid)
+            s0_index_addr <= s0_index_addr + 1'b1;
+    end
+end
 
 aaxi_async_bridge br0(
     .rst_n(!irst),
@@ -356,6 +385,7 @@ wire br1_awe;
 wire[31:2] br1_aaddr;
 wire[31:0] br1_adata;
 wire br1_bvalid;
+wire[31:0] br1_bdata;
 aaxi_async_bridge br1(
     .rst_n(!irst),
 
@@ -366,7 +396,7 @@ aaxi_async_bridge br1(
     .s_adata(io_write_data),
     .s_astrb(io_byte_enable),
     .s_bvalid(sh0_bvalid),
-    .s_bdata(),
+    .s_bdata(sh0_bdata),
 
     .m_clk(clk_dram),
     .m_avalid(br1_avalid),
@@ -376,7 +406,7 @@ aaxi_async_bridge br1(
     .m_adata(br1_adata),
     .m_astrb(),
     .m_bvalid(br1_bvalid),
-    .m_bdata(32'b0)
+    .m_bdata(br1_bdata)
     );
 
 wire sh0_fifo_wr_en;
@@ -431,7 +461,8 @@ sdram_handler sh0(
     .aaddr(br1_aaddr[2:2]),
     .adata(br1_adata),
     .awe(br1_awe),
-    .bvalid(br1_bvalid)
+    .bvalid(br1_bvalid),
+    .bdata(br1_bdata)
     );
 
 always @(posedge clk_48) begin
@@ -462,6 +493,10 @@ always @(*) begin
             io_read_data = { !sh0_fifo_empty };
         32'hC2000014:
             io_read_data = sh0_fifo_rd_data;
+        32'hC20002??:
+            io_read_data = sh0_bdata;
+        32'hC2001???:
+            io_read_data = s0_index_rd_data;
         /*32'hC20001??:
             io_read_data = s0_bdata;*/
         default:
