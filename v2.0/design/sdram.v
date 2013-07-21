@@ -73,18 +73,37 @@ module sdram(
 
 assign m_dqm = 2'b00;
 
-// @48MHz
-parameter init_count = 15000;
-parameter t_init_oe  = 11000;
-parameter t_init_clk = 10500;
-parameter t_init_cke = 10000;
-parameter t_rfc      = 7;
-parameter t_rp       = 3;
-parameter t_mrd      = 2;
-parameter t_rcd      = 3;
-parameter t_cas      = 2;
-parameter t_ref1     = 374;
-parameter t_ras_min  = 5;
+// @100MHz
+// We're going for a 250us initialization cycle.
+// Since we'll likely be starting the power regulator
+// for the SDRAM from the design, we need about 150us
+// just for the regulator to start an stabilize.
+// In the meantime, all outputs will be set low
+// and clocks stopped (also low).
+//
+// After 150us, we'll raise ras_n, cas_n and we_n thus
+// pushing the noop command to the sdram. Still,
+// the clocks are disabled and cke is low.
+//
+// A little bit after that we'll enable clock. Then,
+// we'll raise cke. At this point, the SDRAM is receiving
+// the noop command.
+//
+// At the very end of the initialization timeout,
+// we'll push precharge, two auto-refresh cycles and
+// then load the mode register.
+//
+// Then the SDRAM is initialized.
+parameter init_count = 25000;
+parameter t_init_oe  = 15000;
+parameter t_init_clk = 14000;
+parameter t_init_cke = 13000;
+parameter t_rfc      = 7;   // 66ns
+parameter t_rp       = 2;   // 20ns
+parameter t_mrd      = 2;   // 2ck
+parameter t_rcd      = 2;   // 20ns
+parameter t_ref1     = 781; // 7812.5ns
+parameter t_ras_min  = 5;   // 44ns
 parameter mode_reg   = 13'b0000000100000;
 
 localparam
