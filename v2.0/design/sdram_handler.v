@@ -35,6 +35,7 @@ module sdram_handler(
 assign m_cs_n = 1'b0;
 
 reg[23:0] waddr;
+reg[23:0] bwaddr;
 reg[23:0] raddr;
 reg[11:0] rcount;
 
@@ -74,15 +75,27 @@ sdram sdram0(
 assign w_en = sdram0_avalid && sdram0_aready && sdram0_awe;
 assign r_en = sdram0_bvalid && !sdram0_bwe;
 
-assign bdata = { w_able, 7'b0, waddr };
+reg[1:0] en_route;
+
+assign bdata = { w_able || en_route, 7'b0, bwaddr };
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         waddr <= 1'b0;
+        bwaddr <= 1'b0;
         raddr <= 1'b0;
         rcount <= 1'b0;
         bvalid <= 1'b0;
+        en_route <= 1'b0;
     end else begin
+        if (sdram0_bvalid && sdram0_bwe)
+            bwaddr <= bwaddr + 1'b1;
+
+        if (sdram0_bvalid && sdram0_bwe && !w_en)
+            en_route <= en_route - 1'b1;
+        else if ((!sdram0_bvalid || !sdram0_bwe) && w_en)
+            en_route <= en_route + 1'b1;
+
         if (w_en)
             waddr <= waddr + 1'b1;
 
