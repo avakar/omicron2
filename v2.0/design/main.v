@@ -411,23 +411,24 @@ aaxi_async_bridge br1(
 
 wire sh0_fifo_wr_en;
 wire[15:0] sh0_wr_data;
-wire sh0_wr_almost_full = 1'b0;
+wire[9:0] sh0_wr_data_count;
+wire sh0_wr_almost_full = sh0_wr_data_count[9:8] == 2'b11;
 
 reg sh0_fifo_rd;
 wire[15:0] sh0_fifo_rd_data;
 wire sh0_fifo_empty;
-sample_fifo sh0_fifo(
+sdram_rd_fifo sh0_fifo(
   .rst(irst),
 
   .wr_clk(clk_dram),
   .din(sh0_wr_data),
   .wr_en(sh0_fifo_wr_en),
+  .full(),
+  .wr_data_count(sh0_wr_data_count),
 
   .rd_clk(clk_48),
   .rd_en(sh0_fifo_rd),
   .dout(sh0_fifo_rd_data),
-  .full(),
-  .overflow(),
   .empty(sh0_fifo_empty)
 );
 
