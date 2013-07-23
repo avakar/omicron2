@@ -41,7 +41,7 @@ reg[11:0] rcount;
 
 wire w_able = !w_empty;
 wire r_able = rcount && !r_almost_full;
-wire rsel = !w_able || rprio;
+wire rsel = !w_able || (rprio && r_able);
 wire sdram0_avalid = r_able || w_able;
 wire sdram0_awe = !rsel;
 

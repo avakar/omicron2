@@ -30,7 +30,7 @@ module main(
     (* IOB = "FORCE" *) output m_we_n,
     output m_ldqm,
     output m_udqm,
-    (* IOB = "FORCE" *) inout[15:0] m_dq
+    inout[15:0] m_dq
     );
 
 //---------------------------------------------------------------------
@@ -89,18 +89,20 @@ wire s0_strobe;
 wire[15:0] s0_fifo_rd_data;
 wire s0_fifo_empty;
 wire s0_fifo_rd;
+wire s0_empty_enough;
 sample_fifo s0_fifo(
   .rst(irst),
   .wr_clk(clk_sampler),
   .din(s0_data),
   .wr_en(s0_strobe),
+  .full(),
+  .overflow(),
 
   .rd_clk(clk_dram),
   .rd_en(s0_fifo_rd),
   .dout(s0_fifo_rd_data),
-  .full(),
-  .overflow(),
-  .empty(s0_fifo_empty)
+  .empty(s0_fifo_empty),
+  .prog_empty(s0_empty_enough)
 );
 
 wire[31:0] io_addr;
@@ -411,8 +413,7 @@ aaxi_async_bridge br1(
 
 wire sh0_fifo_wr_en;
 wire[15:0] sh0_wr_data;
-wire[9:0] sh0_wr_data_count;
-wire sh0_wr_almost_full = sh0_wr_data_count[9:8] == 2'b11;
+wire sh0_wr_almost_full;
 
 reg sh0_fifo_rd;
 wire[15:0] sh0_fifo_rd_data;
@@ -424,7 +425,7 @@ sdram_rd_fifo sh0_fifo(
   .din(sh0_wr_data),
   .wr_en(sh0_fifo_wr_en),
   .full(),
-  .wr_data_count(sh0_wr_data_count),
+  .prog_full(sh0_wr_almost_full),
 
   .rd_clk(clk_48),
   .rd_en(sh0_fifo_rd),
@@ -444,7 +445,7 @@ sdram_handler sh0(
     .r_data(sh0_wr_data),
     .r_almost_full(sh0_wr_almost_full),
 
-    .rprio(1'b0), // XXX
+    .rprio(s0_empty_enough),
 
     .m_clk_oe(m_clk_oe),
     .m_cs_n(m_cs_n),

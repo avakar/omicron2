@@ -65,7 +65,7 @@ module sdram(
     output m_ras,
     output m_cas,
     output m_we,
-    output reg[1:0] m_ba,
+    (* KEEP = "TRUE" *) output reg[1:0] m_ba,
     output reg[12:0] m_a,
     output[1:0] m_dqm,
     inout[15:0] m_dq

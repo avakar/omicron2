@@ -304,7 +304,7 @@
     <property xil_pn:name="Global Clock Delay 3 (Binary String)" xil_pn:value="11111" xil_pn:valueState="default"/>
     <property xil_pn:name="Global Optimization Goal" xil_pn:value="AllClockNets" xil_pn:valueState="default"/>
     <property xil_pn:name="Global Optimization map" xil_pn:value="Off" xil_pn:valueState="default"/>
-    <property xil_pn:name="Global Optimization map spartan6" xil_pn:value="Area" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Global Optimization map spartan6" xil_pn:value="Speed" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Global Set/Reset Port Name" xil_pn:value="GSR_PORT" xil_pn:valueState="default"/>
     <property xil_pn:name="Global Tristate Port Name" xil_pn:value="GTS_PORT" xil_pn:valueState="default"/>
     <property xil_pn:name="HDL Instantiation Template Target Language" xil_pn:value="Verilog" xil_pn:valueState="default"/>
@@ -351,7 +351,7 @@
     <property xil_pn:name="Logical Shifter Extraction" xil_pn:value="true" xil_pn:valueState="default"/>
     <property xil_pn:name="MAC Address for Hardware Co-Simulation" xil_pn:value="" xil_pn:valueState="default"/>
     <property xil_pn:name="Manual Implementation Compile Order" xil_pn:value="false" xil_pn:valueState="default"/>
-    <property xil_pn:name="Map Slice Logic into Unused Block RAMs" xil_pn:value="true" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Map Slice Logic into Unused Block RAMs" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Mask Pins for Multi-Pin Wake-Up Suspend Mode spartan6" xil_pn:value="0x00" xil_pn:valueState="default"/>
     <property xil_pn:name="Max Fanout" xil_pn:value="100000" xil_pn:valueState="default"/>
     <property xil_pn:name="Maximum Compression" xil_pn:value="false" xil_pn:valueState="default"/>
