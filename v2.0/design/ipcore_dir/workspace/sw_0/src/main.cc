@@ -27,7 +27,7 @@
 #define USB_EP1_OUT_CTRL *((uint32_t volatile *)0xC0000110)
 #define USB_EP1_IN_CTRL  *((uint32_t volatile *)0xC0000114)
 
-#define USB_EP_OUT_CNT(x) ((uint8_t)(((x) >> 8) & 0x3f))
+#define USB_EP_OUT_CNT(x) ((uint8_t)(((x) >> 8) & 0x7f))
 #define USB_EP_IN_CNT(x)  ((uint8_t)(x) << 8)
 
 #define USB_EP_TOGGLE     (1<<5)
@@ -73,6 +73,11 @@
 #define SAMPLER_WADDR     *((uint32_t const volatile *)0xC2000208)
 
 #define INDEX_RAM         ((uint64_t const volatile *)0xC2001000)
+
+#define SPI_CTRL          *((uint32_t volatile *)0xC2002000)
+#define SPI_DATA          *((uint32_t volatile *)0xC2002004)
+#define SPI_CS_N          (1<<0)
+#define SPI_BUSY          (1<<1)
 
 #if 0
 static void sendch(char ch)
@@ -207,6 +212,29 @@ static void sendh(uint64_t s)
 	sendh((uint32_t)s);
 }
 
+static void spi_select()
+{
+	SPI_CTRL = 0;
+}
+
+static void spi_unselect()
+{
+	SPI_CTRL = SPI_CS_N;
+}
+
+static uint8_t spi_tran(uint8_t ch)
+{
+	SPI_DATA = ch;
+	while (SPI_CTRL & SPI_BUSY)
+	{
+	}
+	return SPI_DATA;
+}
+
+#include "dfu.h"
+
+dfu_handler dfu;
+
 int main()
 {
 	USB_CTRL = USB_ATTACH;
@@ -218,8 +246,11 @@ int main()
 	uint32_t waddr = SAMPLER_WADDR & 0x00ffffff;
 	int32_t remaining_reads = 0;
 	int16_t index_addr = 0;
+
 	for (;;)
 	{
+		dfu.process();
+
 		if (USB_CTRL & USB_RESET_IF)
 		{
 			//send("RESET\n");
@@ -231,6 +262,8 @@ int main()
 			USB_EP1_OUT_CTRL = USB_EP_STALL | USB_EP_FULL_CLR | USB_EP_SETUP_CLR;
 			action = ia_none;
 			config = 0;
+
+			dfu.usb_reset();
 		}
 
 		if ((USB_EP0_IN_CTRL & USB_EP_FULL) == 0)
@@ -238,6 +271,7 @@ int main()
 			switch (action)
 			{
 			case ia_none:
+				dfu.usb_in_empty();
 				break;
 			case ia_set_address:
 				USB_ADDRESS = new_address;
@@ -245,6 +279,9 @@ int main()
 				break;
 			}
 		}
+
+		if ((USB_EP0_OUT_CTRL & USB_EP_FULL) != 0)
+			dfu.usb_out_full();
 
 		usb_poll();
 
@@ -254,108 +291,123 @@ int main()
 			USB_EP0_OUT_CTRL = USB_EP_TOGGLE_SET | USB_EP_SETUP_CLR | USB_EP_FULL;
 			action = ia_none;
 
-			uint16_t cmd = (USB_EP0_OUT[0] << 8) | USB_EP0_OUT[1];
+			uint8_t bmRequestType = USB_EP0_OUT[0];
+			uint16_t cmd = (bmRequestType << 8) | USB_EP0_OUT[1];
 			uint16_t wValue = (USB_EP0_OUT[3] << 8) | USB_EP0_OUT[2];
-			//uint16_t wIndex = (USB_EP0_OUT[5] << 8) | USB_EP0_OUT[4];
+			uint16_t wIndex = (USB_EP0_OUT[5] << 8) | USB_EP0_OUT[4];
 			uint16_t wLength = (USB_EP0_OUT[7] << 8) | USB_EP0_OUT[6];
 
-			/*send("SETUP ");
-			sendh(cmd);
-			sendch(':');
-			sendh(wValue);
-			sendch(':');
-			sendh(wIndex);
-			sendch(':');
-			sendh(wLength);
-			sendch('\n');*/
-
-			switch (cmd)
+			/*if (((cmd >> 8) & 0x7f) == 0x21)
 			{
-			case 0x8006: // get_descriptor
-				if (wValue == 0x302)
+				send("SETUP ");
+				sendh(cmd);
+				sendch(':');
+				sendh(wValue);
+				sendch(':');
+				sendh(wIndex);
+				sendch(':');
+				sendh(wLength);
+				sendch('\n');
+			}*/
+
+			if ((bmRequestType & 0x7f) == 0x21 && wIndex == 0)
+			{
+				dfu.usb_cmd(cmd, wValue, wLength);
+			}
+			else
+			{
+				switch (cmd)
 				{
-					uint8_t volatile * p = USB_EP0_IN;
-					*p++ = 34;
-					*p++ = 3;
-
-					uint64_t dna = DNA_DATA;
-					for (int i = 0; i < 16; ++i)
+				case 0x8006: // get_descriptor
+					if (wValue == 0x302)
 					{
-						static char const digits[] = "0123456789abcdef";
-						*p++ = digits[dna & 0xf];
-						*p++ = 0;
-						dna = dna >> 4;
-					}
+						uint8_t volatile * p = USB_EP0_IN;
+						*p++ = 34;
+						*p++ = 3;
 
-					uint8_t size = wLength > 34? 34: wLength;
-					USB_EP0_IN_CTRL = USB_EP_IN_CNT(size) | USB_EP_FULL;
-					USB_EP0_OUT_CTRL = USB_EP_FULL_CLR;
-				}
-				else
-				{
-					usb_descriptor_entry_t const * selected = 0;
-					for (size_t i = 0; !selected && i < sizeof usb_descriptor_map / sizeof usb_descriptor_map[0]; ++i)
-					{
-						if (usb_descriptor_map[i].index == wValue)
-							selected = &usb_descriptor_map[i];
-					}
+						uint64_t dna = DNA_DATA;
+						for (int i = 0; i < 16; ++i)
+						{
+							static char const digits[] = "0123456789abcdef";
+							*p++ = digits[dna & 0xf];
+							*p++ = 0;
+							dna = dna >> 4;
+						}
 
-					if (!selected)
-					{
-						USB_EP0_IN_CTRL = USB_EP_STALL;
-						USB_EP0_OUT_CTRL = USB_EP_STALL;
-					}
-					else
-					{
-						uint16_t size = selected->size;
-						if (size > wLength)
-							size = wLength;
-
-						memcpy((void *)USB_EP0_IN, usb_descriptors + selected->offset, size);
+						uint8_t size = wLength > 34? 34: wLength;
 						USB_EP0_IN_CTRL = USB_EP_IN_CNT(size) | USB_EP_FULL;
 						USB_EP0_OUT_CTRL = USB_EP_FULL_CLR;
 					}
-				}
-				break;
-			case 0x0005: // set_address
-				new_address = wValue;
-				action = ia_set_address;
-				USB_EP0_OUT_CTRL = USB_EP_STALL;
-				USB_EP0_IN_CTRL = USB_EP_IN_CNT(0) | USB_EP_FULL;
-				break;
-			case 0x8008: // get_config
-				USB_EP0_IN[0] = config;
-				USB_EP0_IN_CTRL = USB_EP_IN_CNT(1) | USB_EP_FULL;
-				USB_EP0_OUT_CTRL = USB_EP_FULL_CLR;
-				break;
-			case 0x0009: // set_config
-				if (wValue > 1)
-				{
-					USB_EP0_OUT_CTRL = USB_EP_STALL;
-					USB_EP0_IN_CTRL = USB_EP_STALL;
-				}
-				else
-				{
-					config = (uint8_t)wValue;
-
-					if (config)
+					else
 					{
-						USB_EP1_IN_CTRL = USB_EP_TOGGLE_CLR | USB_EP_FULL_CLR;
-						USB_EP1_OUT_CTRL =  USB_EP_TOGGLE_CLR | USB_EP_FULL_CLR | USB_EP_SETUP_CLR;
+						usb_descriptor_entry_t const * map = (!dfu.active()? usb_descriptor_map: dfu_usb_descriptor_map);
+						size_t map_size = (!dfu.active()?
+								sizeof usb_descriptor_map / sizeof usb_descriptor_map[0]: sizeof dfu_usb_descriptor_map / sizeof dfu_usb_descriptor_map[0]);
+
+						usb_descriptor_entry_t const * selected = 0;
+						for (size_t i = 0; !selected && i < map_size; ++i)
+						{
+							if (map[i].index == wValue)
+								selected = &map[i];
+						}
+
+						if (!selected)
+						{
+							USB_EP0_IN_CTRL = USB_EP_STALL;
+							USB_EP0_OUT_CTRL = USB_EP_STALL;
+						}
+						else
+						{
+							uint16_t size = selected->size;
+							if (size > wLength)
+								size = wLength;
+
+							memcpy((void *)USB_EP0_IN, (!dfu.active()? usb_descriptors: dfu_usb_descriptors) + selected->offset, size);
+							USB_EP0_IN_CTRL = USB_EP_IN_CNT(size) | USB_EP_FULL;
+							USB_EP0_OUT_CTRL = USB_EP_FULL_CLR;
+						}
+					}
+					break;
+				case 0x0005: // set_address
+					new_address = wValue;
+					action = ia_set_address;
+					USB_EP0_OUT_CTRL = USB_EP_STALL;
+					USB_EP0_IN_CTRL = USB_EP_IN_CNT(0) | USB_EP_FULL;
+					break;
+				case 0x8008: // get_config
+					USB_EP0_IN[0] = config;
+					USB_EP0_IN_CTRL = USB_EP_IN_CNT(1) | USB_EP_FULL;
+					USB_EP0_OUT_CTRL = USB_EP_FULL_CLR;
+					break;
+				case 0x0009: // set_config
+					if (wValue > 1)
+					{
+						USB_EP0_OUT_CTRL = USB_EP_STALL;
+						USB_EP0_IN_CTRL = USB_EP_STALL;
 					}
 					else
 					{
-						USB_EP1_IN_CTRL = USB_EP_STALL;
-						USB_EP1_OUT_CTRL = USB_EP_STALL | USB_EP_SETUP_CLR;
-					}
+						config = (uint8_t)wValue;
 
+						if (config)
+						{
+							USB_EP1_IN_CTRL = USB_EP_TOGGLE_CLR | USB_EP_FULL_CLR;
+							USB_EP1_OUT_CTRL =  USB_EP_TOGGLE_CLR | USB_EP_FULL_CLR | USB_EP_SETUP_CLR;
+						}
+						else
+						{
+							USB_EP1_IN_CTRL = USB_EP_STALL;
+							USB_EP1_OUT_CTRL = USB_EP_STALL | USB_EP_SETUP_CLR;
+						}
+
+						USB_EP0_OUT_CTRL = USB_EP_STALL;
+						USB_EP0_IN_CTRL = USB_EP_IN_CNT(0) | USB_EP_FULL;
+					}
+					break;
+				default:
 					USB_EP0_OUT_CTRL = USB_EP_STALL;
-					USB_EP0_IN_CTRL = USB_EP_IN_CNT(0) | USB_EP_FULL;
+					USB_EP0_IN_CTRL = USB_EP_STALL;
 				}
-				break;
-			default:
-				USB_EP0_OUT_CTRL = USB_EP_STALL;
-				USB_EP0_IN_CTRL = USB_EP_STALL;
 			}
 		}
 
@@ -429,6 +481,24 @@ int main()
 				break;
 			case 'S':
 				SAMPLER_CTRL = 0;
+				break;
+			case 'g':
+				spi_select();
+				send("spi:cs\n");
+				break;
+			case 'G':
+				spi_unselect();
+				send("spi:cs_n\n");
+				break;
+			case '3':
+				send("spi:03:");
+				sendh(spi_tran(3));
+				sendch('\n');
+				break;
+			case '0':
+				send("spi:00:");
+				sendh(spi_tran(0));
+				sendch('\n');
 				break;
 			default:
 				send("unknown command\n");

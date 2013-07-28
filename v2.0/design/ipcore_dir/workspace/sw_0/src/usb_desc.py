@@ -84,6 +84,15 @@ def LangidsDescriptor(langids):
     return (pack('<BB', 2 + 2*len(langids), DescriptorType.STRING)
         + ''.join((pack('<H', langid) for langid in langids)))
 
+def DfuDescriptor(canDnload=False, canUpload=False, manifestationTolerant=False,
+        willDetach=False, wDetachTimeOut=0xFFFF, wTransferSize=0xFFFF, bcdDFUVersion=0x101):
+    bmAttributes = (
+        ((1<<0) if canDnload else 0) |
+        ((1<<1) if canUpload else 0) |
+        ((1<<2) if manifestationTolerant else 0) |
+        ((1<<3) if willDetach else 0))
+    return pack('<BBBHHH', 0x09, 0x21, bmAttributes, wDetachTimeOut, wTransferSize, bcdDFUVersion)
+
 def CdcHeaderDescriptor(bcdCDC):
     return pack('<BBBH', 5, DescriptorType.CS_INTERFACE, 0x00, bcdCDC)
 
@@ -106,12 +115,7 @@ def CustomDescriptor(desc_type, data):
         chunks.append(chunk)
     return ''.join(chunks)
 
-def print_descriptors(fout, descriptors, rev_hash=None):
-    if 'comment' in descriptors:
-        log = descriptors['comment']
-        log = '// ' + '\n// '.join(log) + '\n\n'
-        fout.write(log)
-
+def print_descriptors(fout, descriptor_sets, rev_hash=None):
     fout.write('''\
 struct usb_descriptor_entry_t
 {
@@ -119,31 +123,42 @@ struct usb_descriptor_entry_t
     uint16_t offset;
     uint16_t size;
 };
-
-static usb_descriptor_entry_t const usb_descriptor_map[] = {
 ''')
-    data = ''
-    for key, value in sorted(descriptors.iteritems()):
-        if not isinstance(key, int):
-            continue
 
-        oldlen = len(data)
-        data += value
-        fout.write('    { 0x%03x, 0x%03x, 0x%03x }, // %d\n' % (key, oldlen, len(data) - oldlen, len(data) - oldlen))
-    fout.write('};\n\nstatic uint8_t const usb_descriptors[] PROGMEM = {\n')
+    for descriptors in descriptor_sets:
+        if 'comment' in descriptors:
+            log = descriptors['comment']
+            log = '// ' + '\n// '.join(log) + '\n\n'
+            fout.write(log)
 
-    if rev_hash:
-        rev_hash_pos = data.find(rev_hash)
+        prefix = descriptors.get('prefix', '')
 
-    while data:
-        line = '    '
-        for ch in data[:16]:
-            line += '0x%0.2x, ' % ord(ch)
-        fout.write(line.rstrip())
-        fout.write('\n')
-        data = data[16:]
+        fout.write('''\
 
-    fout.write('};\n')
+static usb_descriptor_entry_t const %susb_descriptor_map[] = {
+''' % prefix)
+        data = ''
+        for key, value in sorted(descriptors.iteritems()):
+            if not isinstance(key, int):
+                continue
 
-    if rev_hash:
-        fout.write('\nstatic uint16_t const rev_hash_offset = 0x%x;\n' % rev_hash_pos)
+            oldlen = len(data)
+            data += value
+            fout.write('    { 0x%03x, 0x%03x, 0x%03x }, // %d\n' % (key, oldlen, len(data) - oldlen, len(data) - oldlen))
+        fout.write('};\n\nstatic uint8_t const %susb_descriptors[] PROGMEM = {\n' % prefix)
+
+        if rev_hash:
+            rev_hash_pos = data.find(rev_hash)
+
+        while data:
+            line = '    '
+            for ch in data[:16]:
+                line += '0x%0.2x, ' % ord(ch)
+            fout.write(line.rstrip())
+            fout.write('\n')
+            data = data[16:]
+
+        fout.write('};\n')
+
+        if rev_hash:
+            fout.write('\nstatic uint16_t const %srev_hash_offset = 0x%x;\n' % (prefix, rev_hash_pos))

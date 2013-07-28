@@ -38,7 +38,7 @@ module usb_test;
 	wire dp_out;
 	wire dn_out;
 
-	wire d_dir_out;
+	wire tx_en;
 	wire usb_rst;
 	wire transaction_active;
 	wire [3:0] endpoint;
@@ -48,27 +48,31 @@ module usb_test;
 	wire data_strobe;
 	wire success;
 
+    wire my_tx_enable;
     wire my_dp;
     wire my_dn;
-    wire my_tx_enable;
 
-    wire dp_in = d_dir_out? dp_out: my_tx_enable? my_dp: 1'b1;
-    wire dn_in = d_dir_out? dn_out: my_tx_enable? my_dn: 1'b0;
+    wire dp_in = tx_en? dp_out: my_tx_enable? my_dp: 1'b1;
+    wire dn_in = tx_en? dn_out: my_tx_enable? my_dn: 1'b0;
 
-	wire d0p_in = dp_in;
-	wire d0n_in = dn_in;
+    wire rx_j = dp_in;
+    wire rx_se0 = !dp_in && !dn_in;
+
+    assign dp_out = !tx_se0 && tx_j;
+    assign dn_out = !tx_se0 && !tx_j;
 
 	// Instantiate the Unit Under Test (UUT)
 	usb uut (
 		.rst_n(rst_n), 
 		.clk_48(clk_48), 
-		.dp_in(dp_in), 
-		.dn_in(dn_in), 
-		.d0p_in(d0p_in), 
-		.d0n_in(d0n_in), 
-		.dp_out(dp_out), 
-		.dn_out(dn_out), 
-		.d_dir_out(d_dir_out), 
+
+        .rx_j(rx_j),
+        .rx_se0(rx_se0),
+
+        .tx_en(tx_en),
+        .tx_j(tx_j),
+        .tx_se0(tx_se0),
+
 		.usb_address(usb_address), 
 		.usb_rst(usb_rst), 
 		.transaction_active(transaction_active), 
@@ -97,13 +101,18 @@ module usb_test;
     reg tx_transmit;
     reg[7:0] tx_data;
     wire tx_strobe;
+
+    wire my_tx_j;
+    wire my_tx_se0;
+    assign my_dp = !my_tx_se0 && my_tx_j;
+    assign my_dn = !my_tx_se0 && !my_tx_j;
     usb_tx tx(
         .rst_n(rst_n),
         .clk_48(clk_48),
 
-        .usb_dp(my_dp),
-        .usb_dn(my_dn),
-        .usb_tx_en(my_tx_enable),
+        .tx_en(my_tx_enable),
+        .tx_j(my_tx_j),
+        .tx_se0(my_tx_se0),
         
         .transmit(tx_transmit),
         .data(tx_data),
@@ -146,19 +155,19 @@ module usb_test;
         tx_transmit = 0;
 	
         //
-        data_in = "r";
+        data_in = 8'hfe;
         data_in_valid = 1;
         @(posedge clk_48) while (!data_strobe) @(posedge clk_48);
 
-        data_in = ":";
+        data_in = 8'h01;
         @(posedge clk_48) while (!data_strobe) @(posedge clk_48);
 
-        data_in = "0";
+        data_in = 8'h01;
         @(posedge clk_48) while (!data_strobe) @(posedge clk_48);
-        data_in = "d";
+        data_in = 8'h00;
         @(posedge clk_48) while (!data_strobe) @(posedge clk_48);
 
-        data_in = ":";
+        /*data_in = ":";
         @(posedge clk_48) while (!data_strobe) @(posedge clk_48);
 
         data_in = "0";
@@ -171,7 +180,7 @@ module usb_test;
         @(posedge clk_48) while (!data_strobe) @(posedge clk_48);
 
         data_in = "\n";
-        @(posedge clk_48) while (!data_strobe) @(posedge clk_48);
+        @(posedge clk_48) while (!data_strobe) @(posedge clk_48);*/
 
         data_in_valid = 0;
     end

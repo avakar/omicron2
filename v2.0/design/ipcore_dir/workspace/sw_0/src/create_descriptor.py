@@ -24,6 +24,23 @@ usb_desc = {
         interfaces=[
             InterfaceDescriptor(
                 bInterfaceNumber=0,
+                bInterfaceClass=0xFE,
+                bInterfaceSubClass=0x01,
+                bInterfaceProtocol=0x01,
+                iInterface=4,
+                endpoints=[],
+                functional=[
+                    DfuDescriptor(
+                        canDnload=True,
+                        canUpload=True,
+                        manifestationTolerant=True,
+                        willDetach=False,
+                        wTransferSize=4096
+                        )
+                    ]
+                ),
+            InterfaceDescriptor(
+                bInterfaceNumber=1,
                 bInterfaceClass=0x0A,
                 bInterfaceSubClass=0,
                 bInterfaceProtocol=0,
@@ -46,6 +63,52 @@ usb_desc = {
     0x300: LangidsDescriptor([0x409]),
     0x301: StringDescriptor('omicron'),
     0x303: StringDescriptor('debug'),
+    0x304: StringDescriptor('omicron dfu'),
+    }
+
+dfu_desc = {
+    'prefix': 'dfu_',
+    0x100: DeviceDescriptor(
+        bcdUSB=0x110,
+        bDeviceClass=0xff,
+        bDeviceSubClass=0xff,
+        bDeviceProtocol=0xff,
+        bMaxPacketSize0=64,
+        idVendor=0x4a61,
+        idProduct=0x679c,
+        bcdDevice=0x0203,
+        iManufacturer=0,
+        iProduct=1,
+        iSerialNumber=2,
+        bNumConfigurations=1
+        ),
+    0x200: ConfigurationDescriptor(
+        bConfigurationValue=1,
+        bmAttributes=ConfigurationAttributes.Sig,
+        bMaxPower=50,
+        interfaces=[
+            InterfaceDescriptor(
+                bInterfaceNumber=0,
+                bInterfaceClass=0xFE,
+                bInterfaceSubClass=0x01,
+                bInterfaceProtocol=0x02,
+                iInterface=4,
+                endpoints=[],
+                functional=[
+                    DfuDescriptor(
+                        canDnload=True,
+                        canUpload=True,
+                        manifestationTolerant=True,
+                        willDetach=False,
+                        wTransferSize=4096
+                        )
+                    ]
+                )
+            ]
+        ),
+    0x300: LangidsDescriptor([0x409]),
+    0x301: StringDescriptor('omicron'),
+    0x304: StringDescriptor('omicron dfu'),
     }
 
 if __name__ == '__main__':
@@ -53,5 +116,5 @@ if __name__ == '__main__':
         fout = sys.stdout
     else:
         fout = open(sys.argv[1], 'w')
-    print_descriptors(fout, usb_desc)
+    print_descriptors(fout, [usb_desc, dfu_desc])
     fout.close()

@@ -66,13 +66,6 @@ assign usb_dn = usb_tx_en? (usb_tx_se0? 1'b0: !usb_tx_j): 1'bz;
 //---------------------------------------------------------------------
 // Clocks and reset
 
-spiviajtag spiviajtag0(
-    .clk(flash_clk),
-    .cs_n(flash_cs),
-    .mosi(flash_si),
-    .miso(flash_so)
-);
-
 wire[15:0] ss;
 synch #(
     .w(16),
@@ -118,7 +111,7 @@ reg[31:0] io_addr_latch;
 wire s0_bvalid;
 wire sh0_bvalid;
 wire[31:0] sh0_bdata;
-
+wire spi0_bvalid;
 cpu cpu0(
   .Clk(clk_48),
   .Reset(irst),
@@ -130,7 +123,7 @@ cpu cpu0(
   .IO_Byte_Enable(io_byte_enable),
   .IO_Write_Data(io_write_data),
   .IO_Read_Data(io_read_data),
-  .IO_Ready(io_ready || s0_bvalid || sh0_bvalid)
+  .IO_Ready(io_ready || s0_bvalid || sh0_bvalid || spi0_bvalid)
 );
 
 localparam
@@ -467,6 +460,24 @@ sdram_handler sh0(
     .bdata(br1_bdata)
     );
 
+wire[7:0] spi0_bdata;
+spi spi0(
+    .rst_n(!irst),
+    .clk(clk_48),
+
+    .avalid(io_addr_strobe && (io_read_strobe || io_write_strobe) && io_addr[31:8] == 24'hC20020),
+    .awe(io_write_strobe),
+    .adata(io_write_data[7:0]),
+    .aaddr(io_addr[2:2]),
+    .bvalid(spi0_bvalid),
+    .bdata(spi0_bdata),
+
+    .spi_cs(flash_cs),
+    .spi_clk(flash_clk),
+    .spi_mosi(flash_si),
+    .spi_miso(flash_so)
+    );
+
 always @(posedge clk_48) begin
     if (io_addr_strobe && (io_write_strobe || io_read_strobe)) begin
         io_addr_latch <= io_addr;
@@ -499,8 +510,8 @@ always @(*) begin
             io_read_data = sh0_bdata;
         32'hC2001???:
             io_read_data = s0_index_rd_data;
-        /*32'hC20001??:
-            io_read_data = s0_bdata;*/
+        32'hC20020??:
+            io_read_data = spi0_bdata;
         default:
             io_read_data = 32'sbx;
     endcase
