@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.3">
+<eagle version="7.0.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -10428,7 +10428,7 @@ Source: http://download.micron.com/pdf/datasheets/dram/sdram/256MSDRAM.pdf</desc
 </class>
 </classes>
 <parts>
-<part name="IC1" library="xilinx" deviceset="XC6SLX4*" device="TQG144" technology="-2" value="XC6SLX4-1876221"/>
+<part name="IC1" library="xilinx" deviceset="XC6SLX4*" device="TQG144" technology="-2" value="XC6SLX9-1876228"/>
 <part name="GND1" library="supply1" deviceset="GND" device=""/>
 <part name="GND2" library="supply1" deviceset="GND" device=""/>
 <part name="GND3" library="supply1" deviceset="GND" device=""/>

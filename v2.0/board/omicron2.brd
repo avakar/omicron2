@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.3">
+<eagle version="7.0.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -1829,6 +1829,9 @@ design rules under a new name.</description>
 <autorouter>
 <pass name="Default">
 <param name="RoutingGrid" value="50mil"/>
+<param name="AutoGrid" value="1"/>
+<param name="Efforts" value="0"/>
+<param name="TopRouterVariant" value="1"/>
 <param name="tpViaShape" value="round"/>
 <param name="PrefDir.1" value="|"/>
 <param name="PrefDir.2" value="0"/>
@@ -1920,7 +1923,7 @@ design rules under a new name.</description>
 </pass>
 </autorouter>
 <elements>
-<element name="IC1" library="xilinx" package="TQG144" value="XC6SLX4-1876221" x="34.925" y="27.305"/>
+<element name="IC1" library="xilinx" package="TQG144" value="XC6SLX9-1876228" x="34.925" y="27.305"/>
 <element name="X1" library="usb" package="USB-MICRO-B-BOTTOM-MOLEX" value="USB-MICRO-B-BOTTOM" x="74.93" y="26.67" rot="MR0"/>
 <element name="IC2" library="tps73033" package="SOT23-DBV" value="TPS73033DBV-1135395" x="43.18" y="48.26" rot="MR180"/>
 <element name="C1" library="rcl" package="C0603" value="10nF" x="45.72" y="46.355" rot="MR90"/>

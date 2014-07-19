@@ -1,0 +1,2 @@
+* INIT_B must not be connected to a translator output
+* config error should be connected the other way around and through a transistor (done is only pullup)
