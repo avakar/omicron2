@@ -1,0 +1,3 @@
+PROCESSOR=cpu
+REPOSITORIES=
+HWSPEC=../hw_platform_0/system.xml

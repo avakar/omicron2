@@ -1,0 +1,86 @@
+
+
+NET "clk_33" LOC = P134;
+
+
+NET "clk_33" IOSTANDARD = LVCMOS33;
+
+
+NET "led[0]" LOC = P139;
+NET "led[1]" LOC = P138;
+NET "led[2]" LOC = P133;
+
+
+NET "led[2]" IOSTANDARD = LVCMOS33;
+NET "led[1]" IOSTANDARD = LVCMOS33;
+NET "led[0]" IOSTANDARD = LVCMOS33;
+
+
+NET "usb_dp" LOC = P59;
+NET "usb_dn" LOC = P56;
+NET "usb_sp" LOC = P58;
+NET "usb_pullup" LOC = P67;
+
+
+NET "usb_sp" IOSTANDARD = LVDS_33;
+NET "usb_pullup" IOSTANDARD = LVCMOS33;
+NET "usb_dp" IOSTANDARD = LVCMOS33;
+NET "usb_dn" IOSTANDARD = LVCMOS33;
+
+
+NET "vio50" LOC = P45;
+NET "vio33" LOC = P44;
+
+
+NET "vio33" IOSTANDARD = LVCMOS33;
+NET "vio50" IOSTANDARD = LVCMOS33;
+NET "s[1]" IOSTANDARD = LVCMOS33;
+NET "s[0]" IOSTANDARD = LVCMOS33;
+NET "sd[1]" IOSTANDARD = LVCMOS33;
+NET "sd[0]" IOSTANDARD = LVCMOS33;
+
+
+NET "s[0]" LOC = P140;
+NET "s[1]" LOC = P142;
+NET "sd[0]" LOC = P141;
+NET "sd[1]" LOC = P143;
+
+
+NET "spi_clk" LOC = P70;
+NET "spi_mosi" LOC = P64;
+NET "spi_miso" LOC = P65;
+NET "spi_cs" LOC = P38;
+
+
+NET "spi_clk" IOSTANDARD = LVCMOS33;
+NET "spi_cs" IOSTANDARD = LVCMOS33;
+NET "spi_miso" IOSTANDARD = LVCMOS33;
+NET "spi_mosi" IOSTANDARD = LVCMOS33;
+
+# PlanAhead Generated physical constraints 
+
+NET "s[2]" LOC = P2;
+NET "s[3]" LOC = P6;
+NET "s[4]" LOC = P8;
+NET "s[5]" LOC = P10;
+
+# PlanAhead Generated IO constraints 
+
+NET "s[2]" IOSTANDARD = LVCMOS33;
+NET "s[3]" IOSTANDARD = LVCMOS33;
+NET "s[4]" IOSTANDARD = LVCMOS33;
+NET "s[5]" IOSTANDARD = LVCMOS33;
+
+# PlanAhead Generated physical constraints 
+
+NET "sd[2]" LOC = P5;
+NET "sd[3]" LOC = P7;
+NET "sd[4]" LOC = P9;
+NET "sd[5]" LOC = P11;
+
+# PlanAhead Generated IO constraints 
+
+NET "sd[2]" IOSTANDARD = LVCMOS33;
+NET "sd[3]" IOSTANDARD = LVCMOS33;
+NET "sd[4]" IOSTANDARD = LVCMOS33;
+NET "sd[5]" IOSTANDARD = LVCMOS33;
