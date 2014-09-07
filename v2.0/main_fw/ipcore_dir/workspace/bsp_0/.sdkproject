@@ -1,0 +1,3 @@
+THIRPARTY=false
+PROCESSOR=cpu
+MSS_FILE=system.mss
