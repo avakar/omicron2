@@ -45,6 +45,8 @@ assign s[0] = 1'bz;
 
 /* 32'hC0000010 */ wire[15:0] io_usb_ep0_ctrl;
 /* 32'hC0000014 */ //wire[15:0] io_usb_ep0_ctrl;
+/* 32'hC0000018 */ wire[15:0] io_usb_ep1_ctrl;
+/* 32'hC000001C */ //wire[15:0] io_usb_ep1_ctrl;
 
 /* 32'hC0000020 */ wire[7:0] io_spi_ctrl;
 /* 32'hC0000024 */ wire[7:0] io_spi_data;
@@ -85,6 +87,8 @@ always @(*) begin
         32'hC000000C: cpu0_io_read_data <= io_usb_address;
         32'hC0000010: cpu0_io_read_data <= io_usb_ep0_ctrl;
         32'hC0000014: cpu0_io_read_data <= io_usb_ep0_ctrl;
+        32'hC0000018: cpu0_io_read_data <= io_usb_ep1_ctrl;
+        32'hC000001C: cpu0_io_read_data <= io_usb_ep1_ctrl;
         32'hC0000020: cpu0_io_read_data <= io_spi_ctrl;
         32'hC0000024: cpu0_io_read_data <= io_spi_data;
         32'hC0000028: cpu0_io_read_data <= io_icap_ctrl;
@@ -352,6 +356,33 @@ usb_ep usb_ep0(
     .ctrl_wr_en((cpu0_io_addr_strobe && cpu0_io_write_strobe && {cpu0_io_address[31:3], 3'b000} == 32'hC0000010)? cpu0_io_byte_enable[1:0]: 2'b00)
     );
 
+wire usb_ep1_toggle;
+wire usb_ep1_bank_usb;
+wire usb_ep1_bank_in;
+wire usb_ep1_bank_out;
+wire usb_ep1_in_data_valid;
+wire[1:0] usb_ep1_handshake;
+usb_ep_banked usb_ep1(
+    .clk(clk_48),
+
+    .direction_in(usb0_direction_in),
+    .setup(usb0_setup),
+    .success(usb0_endpoint == 4'd1 && usb0_success),
+    .cnt(io_usb_addr_ptr),
+
+    .toggle(usb_ep1_toggle),
+    .handshake(usb_ep1_handshake),
+    .bank_usb(usb_ep1_bank_usb),
+    .bank_in(usb_ep1_bank_in),
+    .bank_out(usb_ep1_bank_out),
+    .in_data_valid(usb_ep1_in_data_valid),
+
+    .ctrl_dir_in(cpu0_io_address[2]),
+    .ctrl_rd_data(io_usb_ep1_ctrl),
+    .ctrl_wr_data(cpu0_io_write_data[15:0]),
+    .ctrl_wr_en((cpu0_io_addr_strobe && cpu0_io_write_strobe && {cpu0_io_address[31:3], 3'b000} == 32'hC0000018)? cpu0_io_byte_enable[1:0]: 2'b00)
+    );
+
 always @(*) begin
     case (usb0_endpoint)
         4'd0: begin
@@ -361,6 +392,14 @@ always @(*) begin
             usb_mem0_bank_in = usb_ep0_bank_in;
             usb_mem0_bank_out = usb_ep0_bank_out;
             usb0_in_data_valid = usb_ep0_in_data_valid;
+        end
+        4'd1: begin
+            usb0_toggle = usb_ep1_toggle;
+            usb0_handshake = usb_ep1_handshake;
+            usb_mem0_bank_usb = usb_ep1_bank_usb;
+            usb_mem0_bank_in = usb_ep1_bank_in;
+            usb_mem0_bank_out = usb_ep1_bank_out;
+            usb0_in_data_valid = usb_ep1_in_data_valid;
         end
         default: begin
             usb0_handshake = 2'b01;

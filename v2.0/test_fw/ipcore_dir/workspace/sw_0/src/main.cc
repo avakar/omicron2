@@ -17,10 +17,20 @@
 #define USB_EP0_OUT_CTRL *((uint8_t volatile *)0xC0000010)
 #define USB_EP0_OUT_STATUS *((uint8_t const volatile *)0xC0000010)
 #define USB_EP0_OUT_CNT *((uint8_t volatile *)0xC0000011)
-
 #define USB_EP0_IN_CTRL *((uint8_t volatile *)0xC0000014)
 #define USB_EP0_IN_STATUS *((uint8_t const volatile *)0xC0000014)
 #define USB_EP0_IN_CNT *((uint8_t volatile *)0xC0000015)
+#define USB_EP0_OUT ((uint8_t volatile *)0xC0001000)
+#define USB_EP0_IN ((uint8_t volatile *)0xC0001040)
+
+#define USB_EP1_OUT_CTRL *((uint8_t volatile *)0xC0000018)
+#define USB_EP1_OUT_STATUS *((uint8_t const volatile *)0xC0000018)
+#define USB_EP1_OUT_CNT *((uint8_t volatile *)0xC0000019)
+#define USB_EP1_IN_CTRL *((uint8_t volatile *)0xC000001C)
+#define USB_EP1_IN_STATUS *((uint8_t const volatile *)0xC000001C)
+#define USB_EP1_IN_CNT (*((uint8_t volatile *)0xC000001D))
+#define USB_EP1_OUT ((uint8_t volatile *)0xC0001080)
+#define USB_EP1_IN ((uint8_t volatile *)0xC00010C0)
 
 #define USB_EP_TOGGLE_CLR (1<<5)
 #define USB_EP_TOGGLE_SET (1<<4)
@@ -47,50 +57,70 @@
 #define DNA *((uint64_t volatile *)0xC0000030)
 #define DNA_READY_bm (1ull<<63)
 
-#define USB_EP0_OUT ((uint8_t volatile *)0xC0001000)
-#define USB_EP0_IN ((uint8_t volatile *)0xC0001040)
+bool usb_dbg_enabled = false;
 
-#define ENABLE_DEBUG
-
-#ifdef ENABLE_DEBUG
-
-#define UART_RX *((uint8_t const volatile *)0x80000000)
-#define UART_TX *((uint8_t volatile *)0x80000004)
-#define UART_STATUS *((uint8_t const volatile *)0x80000008)
-#define UART_STATUS_RX_VALID_bm (1<<0)
-#define UART_STATUS_TX_USED_bm (1<<3)
-
-bool rxready()
+static bool rxready()
 {
-	return UART_STATUS & UART_STATUS_RX_VALID_bm;
+	return usb_dbg_enabled && (USB_EP1_OUT_STATUS & USB_EP_EMPTY) == 0;
 }
 
-uint8_t recv()
+uint8_t usb_dbg_pos = 0;
+
+static uint8_t recv()
 {
 	while (!rxready())
 	{
 	}
 
-	return UART_RX;
-}
-
-void sendch(char ch)
-{
-	while (UART_STATUS & UART_STATUS_TX_USED_bm)
+	uint8_t ch = USB_EP1_OUT[usb_dbg_pos++];
+	if (usb_dbg_pos == USB_EP1_OUT_CNT)
 	{
+		USB_EP1_OUT_CTRL = USB_EP_PULL | USB_EP_PUSH;
+		usb_dbg_pos = 0;
 	}
 
-	UART_TX = ch;
+	return ch;
 }
 
-void send(char const * str)
+uint8_t usb_dbg_tx_pos = 0;
+
+static void send_range(char const * first, char const * last)
 {
-	while (*str != 0)
-		sendch(*str++);
+	if (!usb_dbg_enabled)
+		return;
+
+	while (first != last)
+	{
+		while (USB_EP1_IN_STATUS & USB_EP_FULL)
+			return;
+
+		while (first != last && usb_dbg_tx_pos < 64)
+			USB_EP1_IN[usb_dbg_tx_pos++] = *first++;
+
+		if ((USB_EP1_IN_STATUS & USB_EP_EMPTY) || usb_dbg_tx_pos == 64)
+		{
+			USB_EP1_IN_CNT = usb_dbg_tx_pos;
+			USB_EP1_IN_CTRL = USB_EP_PUSH;
+			usb_dbg_tx_pos = 0;
+		}
+	}
+}
+
+static void sendch(char ch)
+{
+	send_range(&ch, &ch + 1);
+}
+
+static void send(char const * str)
+{
+	char const * end = str;
+	while (*end != 0)
+		++end;
+	send_range(str, end);
 }
 
 template <typename T>
-void sendhex(T n)
+static void sendhex(T n)
 {
 	uint8_t const * p = (uint8_t const *)&n;
 	uint8_t const * pend = (uint8_t const *)&n + sizeof n;
@@ -104,7 +134,20 @@ void sendhex(T n)
 	}
 }
 
-#endif
+template <typename T>
+static void sendhex(char *& res, T n)
+{
+	uint8_t const * p = (uint8_t const *)&n;
+	uint8_t const * pend = (uint8_t const *)&n + sizeof n;
+	while (p != pend)
+	{
+		--pend;
+
+		static char const digits[] = "0123456789abcdef";
+		*res++ = digits[*pend >> 4];
+		*res++ = digits[*pend & 0xf];
+	}
+}
 
 static void spi_begin()
 {
@@ -571,6 +614,7 @@ public:
 	void on_usb_reset()
 	{
 		m_config = 0;
+		usb_dbg_enabled = false;
 	}
 
 	void commit_write(usb_ctrl_req_t & req)
@@ -630,6 +674,7 @@ public:
 			if (req.wValue < 2)
 			{
 				m_config = (uint8_t)req.wValue;
+				usb_dbg_enabled = (m_config == 1);
 				return true;
 			}
 			break;
@@ -704,24 +749,18 @@ int main()
 
 	for (;;)
 	{
-#ifdef ENABLE_DEBUG
 		if (rxready())
 		{
 			switch (recv())
 			{
-			case 's':
-				sendch('s');
-				sendhex(USB_EP0_IN_STATUS);
-				sendch(':');
-				sendhex(USB_EP0_OUT_STATUS);
-				sendch('\n');
+			case 'b':
+				LEDBITS ^= 1;
 				break;
 			case 'L':
 				dh.reconfigure();
 				break;
 			}
 		}
-#endif
 
 		dh.process();
 
@@ -731,6 +770,9 @@ int main()
 			USB_CTRL |= USB_CTRL_RST_CLR;
 			USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
 			USB_EP0_IN_CTRL = USB_EP_STALL_SET | USB_EP_SETUP_CLR;
+			USB_EP1_IN_CTRL = USB_EP_TOGGLE_CLR;
+			USB_EP1_OUT_CTRL = USB_EP_TOGGLE_CLR | USB_EP_SETUP_CLR | USB_EP_PUSH;
+			USB_EP1_IN_CNT = 0;
 
 			if (!last_reset_state)
 			{
@@ -740,11 +782,6 @@ int main()
 
 				uint8_t ds = dh.is_dfu_mode()? 1: 0;
 				uc.set_desc_set(ds);
-#ifdef ENABLE_DEBUG
-				send("RESET ");
-				sendhex(ds);
-				sendch('\n');
-#endif
 				last_reset_state = true;
 			}
 
@@ -754,6 +791,13 @@ int main()
 		{
 			last_reset_state = false;
 			LEDBITS &= ~2;
+		}
+
+		if ((USB_EP1_IN_STATUS & USB_EP_EMPTY) && usb_dbg_tx_pos)
+		{
+			USB_EP1_IN_CNT = usb_dbg_tx_pos;
+			USB_EP1_IN_CTRL = USB_EP_PUSH;
+			usb_dbg_tx_pos = 0;
 		}
 
 		if (usb_handler && (USB_EP0_IN_STATUS & USB_EP_EMPTY) != 0)
@@ -813,7 +857,7 @@ int main()
 			USB_EP0_IN_CTRL = USB_EP_TOGGLE_SET;
 			USB_EP0_OUT_CTRL = USB_EP_TOGGLE_SET | USB_EP_SETUP_CLR;
 
-#ifdef ENABLE_DEBUG
+#if 0
 			sendch('S');
 			sendhex(usb_req.bmRequestType);
 			sendhex(usb_req.bRequest);
@@ -839,9 +883,6 @@ int main()
 
 			if (!usb_handler)
 			{
-#ifdef ENABLE_DEBUG
-				send("STALL\n");
-#endif
 				USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
 				USB_EP0_IN_CTRL = USB_EP_STALL_SET;
 			}
