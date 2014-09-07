@@ -14,20 +14,25 @@
 
 #define USB_ADDRESS *((uint8_t volatile *)0xC000000C)
 
-#define USB_EP0_OUT_CTRL *((uint16_t volatile *)0xC0000010)
-#define USB_EP0_OUT_CNT *((uint8_t volatile *)0xC0000012)
+#define USB_EP0_OUT_CTRL *((uint8_t volatile *)0xC0000010)
+#define USB_EP0_OUT_STATUS *((uint8_t const volatile *)0xC0000010)
+#define USB_EP0_OUT_CNT *((uint8_t volatile *)0xC0000011)
 
-#define USB_EP0_IN_CTRL *((uint16_t volatile *)0xC0000014)
-#define USB_EP0_IN_CNT *((uint8_t volatile *)0xC0000016)
+#define USB_EP0_IN_CTRL *((uint8_t volatile *)0xC0000014)
+#define USB_EP0_IN_STATUS *((uint8_t const volatile *)0xC0000014)
+#define USB_EP0_IN_CNT *((uint8_t volatile *)0xC0000015)
 
-#define USB_EP_TOGGLE_CLR (1<<7)
-#define USB_EP_TOGGLE_SET (1<<6)
-#define USB_EP_TOGGLE     (1<<5)
-#define USB_EP_STALL      (1<<4)
-#define USB_EP_SETUP_CLR  (1<<3)
+#define USB_EP_TOGGLE_CLR (1<<5)
+#define USB_EP_TOGGLE_SET (1<<4)
+#define USB_EP_STALL_SET  (1<<3)
+#define USB_EP_SETUP_CLR  (1<<2)
+#define USB_EP_PULL       (1<<1)
+#define USB_EP_PUSH       (1<<0)
+
+#define USB_EP_TOGGLE     (1<<4)
+#define USB_EP_STALL      (1<<3)
 #define USB_EP_SETUP      (1<<2)
-#define USB_EP_FULL_CLR   (1<<1)
-#define USB_EP_FULL_SET   (1<<0)
+#define USB_EP_EMPTY      (1<<1)
 #define USB_EP_FULL       (1<<0)
 
 #define SPI_CTRL *((uint8_t volatile *)0xC0000020)
@@ -43,9 +48,9 @@
 #define DNA_READY_bm (1ull<<63)
 
 #define USB_EP0_OUT ((uint8_t volatile *)0xC0001000)
-#define USB_EP0_IN ((uint8_t volatile *)0xC0001080)
+#define USB_EP0_IN ((uint8_t volatile *)0xC0001040)
 
-//#define ENABLE_DEBUG
+#define ENABLE_DEBUG
 
 #ifdef ENABLE_DEBUG
 
@@ -704,62 +709,12 @@ int main()
 		{
 			switch (recv())
 			{
-			case 'r':
-				spi_begin();
-				sendhex(spi(0x9E));
-				for (uint8_t i = 0; i < 20; ++i)
-					sendhex(spi(0));
-				sendch('\n');
-				spi_end();
-				break;
-			case 'R':
-				spi_begin();
-				sendhex(spi(0x0B));
-				sendhex(spi(0x00));
-				sendhex(spi(0x00));
-				sendhex(spi(0x00));
-				sendhex(spi(0x00));
-				for (uint8_t i = 0; i < 20; ++i)
-					sendhex(spi(0));
-				sendch('\n');
-				spi_end();
-				break;
 			case 's':
-				spi_begin();
-				sendhex(spi(0x05));
-				for (uint8_t i = 0; i < 20; ++i)
-					sendhex(spi(0));
+				sendch('s');
+				sendhex(USB_EP0_IN_STATUS);
+				sendch(':');
+				sendhex(USB_EP0_OUT_STATUS);
 				sendch('\n');
-				spi_end();
-				break;
-			case 'W':
-				spi_begin();
-				sendhex(spi(0x06));
-				sendch('\n');
-				spi_end();
-				break;
-			case 'w':
-				spi_begin();
-				sendhex(spi(0x04));
-				sendch('\n');
-				spi_end();
-				break;
-			case 'K':
-				spi_begin();
-				sendhex(spi(0xC7));
-				sendch('\n');
-				spi_end();
-				break;
-			case 'T':
-				spi_begin();
-				sendhex(spi(0x02));
-				sendhex(spi(0x00));
-				sendhex(spi(0x00));
-				sendhex(spi(0x00));
-				for (uint8_t i = 0; i < 20; ++i)
-					sendhex(spi(i + 0x10));
-				sendch('\n');
-				spi_end();
 				break;
 			case 'L':
 				dh.reconfigure();
@@ -774,8 +729,8 @@ int main()
 		{
 			USB_ADDRESS = 0;
 			USB_CTRL |= USB_CTRL_RST_CLR;
-			USB_EP0_OUT_CTRL = USB_EP_STALL | USB_EP_FULL_CLR;
-			USB_EP0_IN_CTRL = USB_EP_STALL | USB_EP_FULL_CLR | USB_EP_SETUP_CLR;
+			USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
+			USB_EP0_IN_CTRL = USB_EP_STALL_SET | USB_EP_SETUP_CLR;
 
 			if (!last_reset_state)
 			{
@@ -801,32 +756,33 @@ int main()
 			LEDBITS &= ~2;
 		}
 
-		if (usb_handler && (USB_EP0_IN_CTRL & USB_EP_FULL) == 0)
+		if (usb_handler && (USB_EP0_IN_STATUS & USB_EP_EMPTY) != 0)
 		{
-			if (usb_req.is_write())
+			if (usb_req.is_write() && !usb_req.wLength)
 			{
-				if (!usb_req.wLength)
-				{
-					usb_handler->commit_write(usb_req);
-					usb_handler = 0;
-				}
+				usb_handler->commit_write(usb_req);
+				usb_handler = 0;
 			}
-			else if (usb_req.wLength)
+		}
+
+		if (usb_handler && (USB_EP0_IN_STATUS & USB_EP_FULL) == 0)
+		{
+			if (usb_req.is_read() && usb_req.wLength)
 			{
 				uint8_t len = usb_handler->on_data_in(usb_req, (uint8_t *)USB_EP0_IN);
 				USB_EP0_IN_CNT = len;
-				USB_EP0_IN_CTRL = USB_EP_FULL_SET;
+				USB_EP0_IN_CTRL = USB_EP_PUSH;
 				usb_req.wLength -= len;
 			}
 		}
 
-		if (usb_handler && usb_req.is_write() && (USB_EP0_OUT_CTRL & USB_EP_FULL) != 0)
+		if (usb_handler && usb_req.is_write() && (USB_EP0_OUT_CTRL & USB_EP_EMPTY) == 0)
 		{
 			uint8_t cnt = USB_EP0_OUT_CNT;
 			if (cnt > usb_req.wLength)
 			{
-				USB_EP0_OUT_CTRL = USB_EP_STALL | USB_EP_FULL_CLR;
-				USB_EP0_IN_CTRL = USB_EP_STALL;
+				USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
+				USB_EP0_IN_CTRL = USB_EP_STALL_SET;
 			}
 			else
 			{
@@ -835,27 +791,27 @@ int main()
 
 				if ((usb_req.wLength -= cnt) != 0)
 				{
-					USB_EP0_OUT_CTRL = USB_EP_FULL_CLR;
+					USB_EP0_OUT_CTRL = USB_EP_PULL | USB_EP_PUSH;
 				}
 				else
 				{
 					usb_handler->on_data_out(usb_req, 0, 0);
-					USB_EP0_OUT_CTRL = USB_EP_FULL_CLR | USB_EP_STALL;
-					USB_EP0_IN_CTRL = USB_EP_FULL_SET;
+					USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
+					USB_EP0_IN_CTRL = USB_EP_PUSH;
 				}
 			}
 		}
 
 		if (USB_EP0_OUT_CTRL & USB_EP_SETUP)
 		{
-			USB_EP0_IN_CTRL = USB_EP_TOGGLE_SET | USB_EP_FULL_CLR;
-			USB_EP0_OUT_CTRL = USB_EP_TOGGLE_SET | USB_EP_SETUP_CLR | USB_EP_FULL;
-
 			if (usb_handler && usb_req.is_write())
 				usb_handler->commit_write(usb_req);
 			usb_handler = 0;
 
 			memcpy(&usb_req, (void const *)USB_EP0_OUT, 8);
+
+			USB_EP0_IN_CTRL = USB_EP_TOGGLE_SET;
+			USB_EP0_OUT_CTRL = USB_EP_TOGGLE_SET | USB_EP_SETUP_CLR;
 
 #ifdef ENABLE_DEBUG
 			sendch('S');
@@ -886,26 +842,26 @@ int main()
 #ifdef ENABLE_DEBUG
 				send("STALL\n");
 #endif
-				USB_EP0_OUT_CTRL = USB_EP_STALL;
-				USB_EP0_IN_CTRL = USB_EP_STALL;
+				USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
+				USB_EP0_IN_CTRL = USB_EP_STALL_SET;
 			}
 			else if (usb_req.is_write())
 			{
 				USB_EP0_IN_CNT = 0;
 				if (usb_req.wLength)
 				{
-					USB_EP0_OUT_CTRL = USB_EP_FULL_CLR;
+					USB_EP0_OUT_CTRL = USB_EP_PUSH;
 				}
 				else
 				{
-					USB_EP0_OUT_CTRL = USB_EP_FULL_CLR | USB_EP_STALL;
-					USB_EP0_IN_CTRL = USB_EP_FULL_SET;
+					USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
+					USB_EP0_IN_CTRL = USB_EP_PUSH;
 				}
 			}
 			else
 			{
 				assert(usb_req.is_read());
-				USB_EP0_OUT_CTRL = USB_EP_FULL_CLR;
+				USB_EP0_OUT_CTRL = USB_EP_PUSH;
 			}
 		}
 	}
