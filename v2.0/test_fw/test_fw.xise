@@ -79,8 +79,8 @@
     <property xil_pn:name="Implementation Top" xil_pn:value="Module|main" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top File" xil_pn:value="../main.v" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top Instance Path" xil_pn:value="/main" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Other Bitgen Command Line Options spartan6" xil_pn:value="-bd &quot;ipcore_dir/workspace/sw_0/Release/sw_0.elf&quot; tag cpu" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Other Ngdbuild Command Line Options" xil_pn:value="-bm &quot;ipcore_dir/cpu.bmm&quot;" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Other Bitgen Command Line Options spartan6" xil_pn:value="-bd &quot;../ipcore_dir/workspace/sw_0/Release/sw_0.elf&quot; tag cpu" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Other Ngdbuild Command Line Options" xil_pn:value="-bm &quot;../ipcore_dir/cpu.bmm&quot;" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Package" xil_pn:value="tqg144" xil_pn:valueState="default"/>
     <property xil_pn:name="Preferred Language" xil_pn:value="Verilog" xil_pn:valueState="default"/>
     <property xil_pn:name="Property Specification in Project File" xil_pn:value="Store non-default values only" xil_pn:valueState="non-default"/>

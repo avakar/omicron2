@@ -43,7 +43,7 @@ assign s[0] = 1'bz;
 /* 32'hC0000009 */ reg[6:0] io_usb_addr_ptr;
 /* 32'hC000000C */ reg[6:0] io_usb_address;
 
-/* 32'hC0000010 */ wire[15:0] io_usb_ep0_ctrl;
+/* 32'hC0000010 */ wire[31:0] io_usb_ep0_ctrl;
 /* 32'hC0000014 */ //wire[15:0] io_usb_ep0_ctrl;
 
 /* 32'hC0000020 */ wire[7:0] io_spi_ctrl;
@@ -342,8 +342,8 @@ usb_ep usb_ep0(
 
     .ctrl_dir_in(cpu0_io_address[2]),
     .ctrl_rd_data(io_usb_ep0_ctrl),
-    .ctrl_wr_data(cpu0_io_write_data[15:0]),
-    .ctrl_wr_en((cpu0_io_addr_strobe && cpu0_io_write_strobe && {cpu0_io_address[31:3], 3'b000} == 32'hC0000010)? cpu0_io_byte_enable[1:0]: 2'b00)
+    .ctrl_wr_data(cpu0_io_write_data),
+    .ctrl_wr_en((cpu0_io_addr_strobe && cpu0_io_write_strobe && {cpu0_io_address[31:3], 3'b000} == 32'hC0000010)? cpu0_io_byte_enable[3:0]: 4'b0000)
     );
 
 always @(*) begin

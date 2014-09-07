@@ -14,11 +14,11 @@
 
 #define USB_ADDRESS *((uint8_t volatile *)0xC000000C)
 
-#define USB_EP0_OUT_CTRL *((uint8_t volatile *)0xC0000010)
-#define USB_EP0_OUT_CNT *((uint8_t volatile *)0xC0000011)
+#define USB_EP0_OUT_CTRL *((uint16_t volatile *)0xC0000010)
+#define USB_EP0_OUT_CNT *((uint8_t volatile *)0xC0000012)
 
-#define USB_EP0_IN_CTRL *((uint8_t volatile *)0xC0000014)
-#define USB_EP0_IN_CNT *((uint8_t volatile *)0xC0000015)
+#define USB_EP0_IN_CTRL *((uint16_t volatile *)0xC0000014)
+#define USB_EP0_IN_CNT *((uint8_t volatile *)0xC0000016)
 
 #define USB_EP_TOGGLE_CLR (1<<7)
 #define USB_EP_TOGGLE_SET (1<<6)
