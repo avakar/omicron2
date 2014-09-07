@@ -92,7 +92,8 @@ static void send_range(char const * first, char const * last)
 	while (first != last)
 	{
 		while (USB_EP1_IN_STATUS & USB_EP_FULL)
-			return;
+		{
+		}
 
 		while (first != last && usb_dbg_tx_pos < 64)
 			USB_EP1_IN[usb_dbg_tx_pos++] = *first++;
@@ -759,6 +760,8 @@ int main()
 			case 'L':
 				dh.reconfigure();
 				break;
+			default:
+				send("omicron analyzer -- DFU loader\nbL?\n");
 			}
 		}
 

@@ -5,9 +5,6 @@ module main(
     output vio33,
     output vio50,
     
-    output[5:0] sd,
-    inout[5:0] s,
-
     inout usb_dp,
     inout usb_dn,
     input usb_sp,
@@ -27,9 +24,6 @@ wire strobe_4mhz;
 
 assign vio33 = 1'b0;
 assign vio50 = 1'b0;
-
-assign sd = 6'b111110;
-assign s[0] = 1'bz;
 
 //---------------------------------------------------------------------
 // I/O space
@@ -125,10 +119,7 @@ cpu cpu0(
     .IO_Byte_Enable(cpu0_io_byte_enable),
     .IO_Write_Data(cpu0_io_write_data),
     .IO_Read_Data(cpu0_io_read_data),
-    .IO_Ready(cpu0_io_ready),
-
-    .UART_Rx(s[0]), // input UART_Rx
-    .UART_Tx(s[1]) // output UART_Tx
+    .IO_Ready(cpu0_io_ready)
 );
 
 //---------------------------------------------------------------------
@@ -266,9 +257,6 @@ wire usb_tx_en, usb_tx_j, usb_tx_se0;
 assign usb_dp = usb_tx_en? (usb_tx_se0? 1'b0: usb_tx_j): 1'bz;
 assign usb_dn = usb_tx_en? (usb_tx_se0? 1'b0: !usb_tx_j): 1'bz;
 assign usb_pullup = io_usb_attach? 1'b1: 1'bz;
-
-//assign s[5:2] = { io_ledbits[0], usb_dp, usb_dn, usb_tx_en };
-assign s[5:2] = { io_ledbits[0], usb_rx_j, usb_rx_se0, usb_tx_en };
 
 wire usb_rst;
 wire usb0_transaction_active;
