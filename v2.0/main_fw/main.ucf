@@ -49,3 +49,182 @@ NET "spi_mosi" IOSTANDARD = LVCMOS33;
 NET "clk_33" TNM_NET = clk_33;
 TIMESPEC TS_clk_33 = PERIOD "clk_33" 30 ns HIGH 50%;
 NET "dna0_clk" TNM_NET = dna0_clk;
+
+
+
+NET "m_clk" LOC = P105;
+NET "m_cs_n" LOC = P83;
+NET "m_cke" LOC = P121;
+NET "m_cas_n" LOC = P85;
+NET "m_ras_n" LOC = P84;
+NET "m_we_n" LOC = P87;
+
+
+NET "m_cas_n" IOSTANDARD = LVCMOS33;
+NET "m_cke" IOSTANDARD = LVCMOS33;
+NET "m_clk" IOSTANDARD = LVCMOS33;
+NET "m_cs_n" IOSTANDARD = LVCMOS33;
+NET "m_ldqm" IOSTANDARD = LVCMOS33;
+NET "m_ras_n" IOSTANDARD = LVCMOS33;
+NET "m_udqm" IOSTANDARD = LVCMOS33;
+NET "m_we_n" IOSTANDARD = LVCMOS33;
+
+
+NET "m_a[0]" LOC = P79;
+NET "m_a[1]" LOC = P78;
+NET "m_a[2]" LOC = P75;
+NET "m_a[3]" LOC = P74;
+NET "m_a[4]" LOC = P132;
+NET "m_a[5]" LOC = P102;
+NET "m_a[6]" LOC = P104;
+NET "m_a[7]" LOC = P131;
+NET "m_a[8]" LOC = P127;
+NET "m_a[9]" LOC = P126;
+NET "m_a[10]" LOC = P80;
+NET "m_a[11]" LOC = P124;
+NET "m_a[12]" LOC = P123;
+
+
+NET "m_a[12]" IOSTANDARD = LVCMOS33;
+NET "m_a[11]" IOSTANDARD = LVCMOS33;
+NET "m_a[10]" IOSTANDARD = LVCMOS33;
+NET "m_a[9]" IOSTANDARD = LVCMOS33;
+NET "m_a[8]" IOSTANDARD = LVCMOS33;
+NET "m_a[7]" IOSTANDARD = LVCMOS33;
+NET "m_a[6]" IOSTANDARD = LVCMOS33;
+NET "m_a[5]" IOSTANDARD = LVCMOS33;
+NET "m_a[4]" IOSTANDARD = LVCMOS33;
+NET "m_a[3]" IOSTANDARD = LVCMOS33;
+NET "m_a[2]" IOSTANDARD = LVCMOS33;
+NET "m_a[1]" IOSTANDARD = LVCMOS33;
+NET "m_a[0]" IOSTANDARD = LVCMOS33;
+NET "m_ba[1]" IOSTANDARD = LVCMOS33;
+NET "m_ba[0]" IOSTANDARD = LVCMOS33;
+NET "m_dq[15]" IOSTANDARD = LVCMOS33;
+NET "m_dq[14]" IOSTANDARD = LVCMOS33;
+NET "m_dq[13]" IOSTANDARD = LVCMOS33;
+NET "m_dq[12]" IOSTANDARD = LVCMOS33;
+NET "m_dq[11]" IOSTANDARD = LVCMOS33;
+NET "m_dq[10]" IOSTANDARD = LVCMOS33;
+NET "m_dq[9]" IOSTANDARD = LVCMOS33;
+NET "m_dq[8]" IOSTANDARD = LVCMOS33;
+NET "m_dq[7]" IOSTANDARD = LVCMOS33;
+NET "m_dq[6]" IOSTANDARD = LVCMOS33;
+NET "m_dq[5]" IOSTANDARD = LVCMOS33;
+NET "m_dq[4]" IOSTANDARD = LVCMOS33;
+NET "m_dq[3]" IOSTANDARD = LVCMOS33;
+NET "m_dq[2]" IOSTANDARD = LVCMOS33;
+NET "m_dq[1]" IOSTANDARD = LVCMOS33;
+NET "m_dq[0]" IOSTANDARD = LVCMOS33;
+
+
+NET "m_ba[0]" LOC = P82;
+NET "m_ba[1]" LOC = P81;
+NET "m_dq[0]" LOC = P92;
+NET "m_dq[1]" LOC = P93;
+NET "m_dq[2]" LOC = P94;
+NET "m_dq[3]" LOC = P95;
+NET "m_dq[4]" LOC = P97;
+NET "m_dq[5]" LOC = P98;
+NET "m_dq[6]" LOC = P99;
+NET "m_dq[7]" LOC = P100;
+NET "m_dq[8]" LOC = P119;
+NET "m_dq[9]" LOC = P118;
+NET "m_dq[10]" LOC = P117;
+NET "m_dq[11]" LOC = P116;
+NET "m_dq[12]" LOC = P115;
+NET "m_dq[13]" LOC = P114;
+NET "m_dq[14]" LOC = P112;
+NET "m_dq[15]" LOC = P111;
+NET "m_ldqm" LOC = P88;
+NET "m_udqm" LOC = P120;
+
+# PlanAhead Generated physical constraints 
+NET "m_pwren" LOC = P101;
+
+# PlanAhead Generated IO constraints 
+NET "m_pwren" IOSTANDARD = LVCMOS33;
+NET "m_dq[15]" KEEPER;
+NET "m_dq[14]" KEEPER;
+NET "m_dq[13]" KEEPER;
+NET "m_dq[12]" KEEPER;
+NET "m_dq[11]" KEEPER;
+NET "m_dq[10]" KEEPER;
+NET "m_dq[9]" KEEPER;
+NET "m_dq[8]" KEEPER;
+NET "m_dq[7]" KEEPER;
+NET "m_dq[6]" KEEPER;
+NET "m_dq[5]" KEEPER;
+NET "m_dq[4]" KEEPER;
+NET "m_dq[3]" KEEPER;
+NET "m_dq[2]" KEEPER;
+NET "m_dq[1]" KEEPER;
+NET "m_dq[0]" KEEPER;
+
+INST "m_dq<0>" TNM = m_dq_grp;
+INST "m_dq<1>" TNM = m_dq_grp;
+INST "m_dq<2>" TNM = m_dq_grp;
+INST "m_dq<3>" TNM = m_dq_grp;
+INST "m_dq<4>" TNM = m_dq_grp;
+INST "m_dq<5>" TNM = m_dq_grp;
+INST "m_dq<6>" TNM = m_dq_grp;
+INST "m_dq<7>" TNM = m_dq_grp;
+INST "m_dq<8>" TNM = m_dq_grp;
+INST "m_dq<9>" TNM = m_dq_grp;
+INST "m_dq<10>" TNM = m_dq_grp;
+INST "m_dq<11>" TNM = m_dq_grp;
+INST "m_dq<12>" TNM = m_dq_grp;
+INST "m_dq<13>" TNM = m_dq_grp;
+INST "m_dq<14>" TNM = m_dq_grp;
+INST "m_dq<15>" TNM = m_dq_grp;
+INST "m_dq<0>" TNM = m_out_grp;
+INST "m_dq<1>" TNM = m_out_grp;
+INST "m_dq<2>" TNM = m_out_grp;
+INST "m_dq<3>" TNM = m_out_grp;
+INST "m_dq<4>" TNM = m_out_grp;
+INST "m_dq<5>" TNM = m_out_grp;
+INST "m_dq<6>" TNM = m_out_grp;
+INST "m_dq<7>" TNM = m_out_grp;
+INST "m_dq<8>" TNM = m_out_grp;
+INST "m_dq<9>" TNM = m_out_grp;
+INST "m_dq<10>" TNM = m_out_grp;
+INST "m_dq<11>" TNM = m_out_grp;
+INST "m_dq<12>" TNM = m_out_grp;
+INST "m_dq<13>" TNM = m_out_grp;
+INST "m_dq<14>" TNM = m_out_grp;
+INST "m_dq<15>" TNM = m_out_grp;
+INST "m_a<0>" TNM = m_out_grp;
+INST "m_a<1>" TNM = m_out_grp;
+INST "m_a<2>" TNM = m_out_grp;
+INST "m_a<3>" TNM = m_out_grp;
+INST "m_a<4>" TNM = m_out_grp;
+INST "m_a<5>" TNM = m_out_grp;
+INST "m_a<6>" TNM = m_out_grp;
+INST "m_a<7>" TNM = m_out_grp;
+INST "m_a<8>" TNM = m_out_grp;
+INST "m_a<9>" TNM = m_out_grp;
+INST "m_a<10>" TNM = m_out_grp;
+INST "m_a<11>" TNM = m_out_grp;
+INST "m_a<12>" TNM = m_out_grp;
+INST "m_we_n" TNM = m_out_grp;
+INST "m_ba<0>" TNM = m_out_grp;
+INST "m_ba<1>" TNM = m_out_grp;
+INST "m_cas_n" TNM = m_out_grp;
+INST "m_cke" TNM = m_out_grp;
+INST "m_clk" TNM = m_out_grp;
+INST "m_cs_n" TNM = m_out_grp;
+INST "m_ldqm" TNM = m_out_grp;
+INST "m_pwren" TNM = m_out_grp;
+INST "m_ras_n" TNM = m_out_grp;
+INST "m_udqm" TNM = m_out_grp;
+
+NET "clk_48" TNM_NET = clk_48;
+NET "clk_dram" TNM_NET = clk_dram;
+#NET "clk_sampler" TNM_NET = clk_sampler;
+
+#TIMESPEC TS_cpu_to_sampler = FROM "clk_48" TO "clk_sampler" TIG;
+#TIMESPEC TS_sampler_to_cpu = FROM "clk_sampler" TO "clk_48" TIG;
+TIMESPEC TS_cpu_to_dram = FROM "clk_48" TO "clk_dram" TIG;
+TIMESPEC TS_dram_to_cpu = FROM "clk_dram" TO "clk_48" TIG;
+#TIMESPEC TS_dram_to_sampler = FROM "clk_dram" TO "clk_sampler" TIG;
+#TIMESPEC TS_sampler_to_dram = FROM "clk_sampler" TO "clk_dram" TIG;

@@ -57,6 +57,12 @@
 #define DNA *((uint64_t volatile *)0xC0000030)
 #define DNA_READY_bm (1ull<<63)
 
+#define TEST100 *((uint32_t volatile *)0xD0000000)
+#define SDRAM_CTRL *((uint32_t volatile *)0xD0000010)
+#define SDRAM_ENABLE_bm (1<<0)
+
+#define SDRAM ((uint32_t volatile *)0xD1000000)
+
 bool usb_dbg_enabled = false;
 
 static bool rxready()
@@ -748,6 +754,9 @@ int main()
 
 	bool last_reset_state = false;
 
+	uint8_t sdidx = 0;
+	uint8_t no = 0;
+
 	for (;;)
 	{
 		if (rxready())
@@ -756,6 +765,30 @@ int main()
 			{
 			case 'b':
 				LEDBITS ^= 1;
+				break;
+			case 'w':
+				TEST100 = 0x12345678;
+			case 'r':
+				sendch('r');
+				sendhex(TEST100);
+				sendch('\n');
+				break;
+			case 'P':
+				SDRAM_CTRL = SDRAM_ENABLE_bm;
+				break;
+			case 'p':
+				SDRAM_CTRL = 0;
+				break;
+			case 'R':
+				sendch('r');
+				sendhex(SDRAM[sdidx++]);
+				sendch('\n');
+				break;
+			case 'W':
+				SDRAM[sdidx++] = no++;
+				break;
+			case 'x':
+				sdidx = 0;
 				break;
 			case 'L':
 				dh.reconfigure();

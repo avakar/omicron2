@@ -14,11 +14,29 @@ module main(
     output reg spi_cs,
     output reg spi_clk,
     output reg spi_mosi,
-    input spi_miso
+    input spi_miso,
+    
+    output reg m_pwren,
+    output m_clk,
+    output m_cs_n,
+    output m_cke,
+    output[12:0] m_a,
+    output[1:0] m_ba,
+    output m_ras_n,
+    output m_cas_n,
+    output m_we_n,
+    output m_ldqm,
+    output m_udqm,
+    inout[15:0] m_dq
     );
 
 wire rst_n;
 wire clk_48;
+wire clk_sampler;
+wire clk_dram;
+wire clk_dram_out;
+wire clk_dram_out_n;
+
 wire strobe_1hz;
 wire strobe_4mhz;
 
@@ -51,6 +69,9 @@ assign vio50 = 1'b0;
 
 /* 32'hC0001000 */ wire[31:0] io_usb_mem;
 
+/* 32'hD0000000 */ wire[31:0] io_br100;
+wire io_br100_ready;
+
 
 wire cpu0_io_addr_strobe;
 wire cpu0_io_read_strobe;
@@ -68,8 +89,8 @@ always @(posedge clk_48 or negedge rst_n) begin
         cpu0_io_ready <= 1'b0;
         cpu0_io_read_latency_cnt <= 1'b0;
     end else begin
-        cpu0_io_ready <= cpu0_io_read_latency_cnt;
-        cpu0_io_read_latency_cnt <= cpu0_io_addr_strobe && (cpu0_io_read_strobe || cpu0_io_write_strobe);
+        cpu0_io_ready <= cpu0_io_read_latency_cnt || io_br100_ready;
+        cpu0_io_read_latency_cnt <= cpu0_io_addr_strobe && (cpu0_io_read_strobe || cpu0_io_write_strobe) && cpu0_io_address[31:28] == 4'hC;
     end
 end
 
@@ -89,6 +110,7 @@ always @(*) begin
         32'hC0000030: cpu0_io_read_data <= io_dna[31:0];
         32'hC0000034: cpu0_io_read_data <= io_dna[63:32];
         32'hC0001???: cpu0_io_read_data <= io_usb_mem;
+        32'hD???????: cpu0_io_read_data <= io_br100;
         default: cpu0_io_read_data <= 32'hxxxxxxxx;
     endcase
 end
@@ -121,6 +143,166 @@ cpu cpu0(
     .IO_Read_Data(cpu0_io_read_data),
     .IO_Ready(cpu0_io_ready)
 );
+
+//---------------------------------------------------------------------
+// I/O space @ clk_dram
+
+reg io100_awe;
+wire[31:0] io100_address;
+wire[31:0] io100_adata;
+reg[31:0] io100_bdata;
+wire io100_avalid;
+
+/* 32'hD0000000 */ wire[31:0] io100_test_bdata;
+/* 32'hD0000010 */ wire[31:0] io100_sdram_ctrl_bdata;
+
+/* 32'hD1000000 */
+wire[15:0] io100_sdram_bdata;
+wire io100_sdram_select = io100_address[31:24] == 8'hD1;
+wire io100_sdram_avalid = io100_avalid && io100_sdram_select;
+wire io100_sdram_aready;
+wire io100_sdram_bvalid;
+
+reg io100_ctrl_bvalid;
+always @(posedge clk_dram or negedge rst_n) begin
+    if (!rst_n) begin
+        io100_ctrl_bvalid <= 1'b0;
+    end else begin
+        io100_ctrl_bvalid <= io100_avalid && io100_address[31:24] == 8'hD0;
+    end
+end
+
+wire io100_aready = io100_address[31:24] == 8'hD0 || (io100_sdram_select && io100_sdram_aready);
+wire io100_bvalid = io100_ctrl_bvalid || io100_sdram_bvalid;
+
+always @(posedge clk_dram or negedge rst_n) begin
+    if (!rst_n) begin
+        io100_bdata <= 32'hxxxxxxxx;
+    end else if (io100_bvalid) begin
+        io100_bdata <= 32'hxxxxxxxx;
+        if (io100_sdram_select) begin
+            io100_bdata <= io100_sdram_bdata;
+        end else casez ({ io100_address[31:2], 2'b00 })
+            32'hD0000000: io100_bdata <= io100_test_bdata;
+            32'hD0000010: io100_bdata <= io100_sdram_ctrl_bdata;
+        endcase
+    end
+end
+
+//---------------------------------------------------------------------
+// clk_dram I/O bridge
+
+reg[3:0] br100_addr_strobe;
+reg[3:0] br100_ready;
+
+assign io_br100_ready = br100_ready[3] != br100_ready[2];
+
+assign io100_address = cpu0_io_address;
+assign io100_adata = cpu0_io_write_data;
+
+assign io_br100 = io100_bdata;
+
+always @(posedge clk_48 or negedge rst_n) begin
+    if (!rst_n) begin
+        br100_ready[3:1] <= 3'b0;
+        br100_addr_strobe[0] <= 1'b0;
+        io100_awe <= 1'b0;
+    end else begin
+        br100_ready[3:1] <= br100_ready[2:0];
+        if (cpu0_io_addr_strobe && cpu0_io_address[31:28] == 4'hD) begin
+            io100_awe <= cpu0_io_write_strobe;
+            br100_addr_strobe[0] <= !br100_addr_strobe[0];
+        end
+    end
+end
+
+assign io100_avalid = br100_addr_strobe[3] != br100_addr_strobe[2];
+
+always @(posedge clk_dram or negedge rst_n) begin
+    if (!rst_n) begin
+        br100_addr_strobe[3:1] <= 3'b0;
+        br100_ready[0] <= 1'b0;
+    end else begin
+        br100_addr_strobe[2:1] <= br100_addr_strobe[1:0];
+        if (io100_aready)
+            br100_addr_strobe[3] <= br100_addr_strobe[2];
+        if (io100_bvalid)
+            br100_ready[0] <= !br100_ready[0];
+    end
+end
+
+//---------------------------------------------------------------------
+// TEST100
+
+reg[31:0] test100;
+assign io100_test_bdata = test100;
+always @(posedge clk_dram or negedge rst_n) begin
+    if (!rst_n) begin
+        test100 <= 1'b0;
+    end else begin
+        if (io100_avalid && io100_awe && { io100_address[31:2], 2'b00 } == 32'hD0000000)
+            test100 <= io100_adata;
+    end
+end
+
+//---------------------------------------------------------------------
+// SDRAM
+
+assign io100_sdram_ctrl_bdata = { 30'b0, m_pwren };
+always @(posedge clk_dram or negedge rst_n) begin
+    if (!rst_n) begin
+        m_pwren <= 1'b0;
+    end else begin
+        if (io100_avalid && io100_awe && { io100_address[31:2], 2'b00 } == 32'hD0000010)
+            m_pwren <= io100_adata[0];
+    end
+end
+
+wire m_clk_oe;
+reg m_clk_oe_sync;
+ODDR2 m_clk_buf(
+    .D0(1'b1),
+    .D1(1'b0),
+    .C0(clk_dram_out),
+    .C1(clk_dram_out_n),
+    .CE(1'b1),
+    .R(!m_clk_oe_sync),
+    .S(1'b0),
+    .Q(m_clk)
+    );
+
+always @(posedge clk_dram_out or negedge rst_n) begin
+    if (!rst_n) begin
+        m_clk_oe_sync <= 1'b0;
+    end else begin
+        m_clk_oe_sync <= m_clk_oe;
+    end
+end
+
+assign m_cs_n = 1'b0;
+sdram s0(
+    .rst(!rst_n || !m_pwren),
+    .clk(clk_dram),
+
+    .avalid(io100_sdram_avalid),
+    .aready(io100_sdram_aready),
+    .awe(io100_awe),
+    .aaddr({ 2'b00, io100_address[23:2] }),
+    .adata(io100_adata[15:0]),
+    .bvalid(io100_sdram_bvalid),
+    .bwe(),
+    .bdata(io100_sdram_bdata),
+
+    .m_clk_oe(m_clk_oe),
+    .m_cke(m_cke),
+    .m_ras(m_ras_n),
+    .m_cas(m_cas_n),
+    .m_we(m_we_n),
+    .m_ba(m_ba),
+    .m_a(m_a),
+    .m_dqm({m_udqm, m_ldqm}),
+    .m_dq(m_dq)
+    );
 
 //---------------------------------------------------------------------
 // ICAP
@@ -501,13 +683,16 @@ always @(posedge clk_48 or negedge rst_n) begin
     end
 end
 
-// 48MHz generator
 wire end_of_startup;
 wire clk0_locked;
 clock_controller clk0(
-    .rst_n(end_of_startup),
+    .rst(!end_of_startup),
     .clk_33(clk_33),
     .clk_48(clk_48),
+    .clk_dram(clk_dram),
+    .clk_dram_out(clk_dram_out),
+    .clk_dram_out_n(clk_dram_out_n),
+    .clk_sampler(clk_sampler),
     .locked(clk0_locked)
     );
 assign rst_n = end_of_startup && clk0_locked;
