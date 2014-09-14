@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="C:/devel/checkouts/omicron_analyzer2/v2.0/main_fw/_work/sdram_to_usb_test_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="sdram_to_usb_test" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="25" />
+   <wvobject fp_name="/sdram_to_usb_test/wr_full" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_full</obj_property>
+      <obj_property name="ObjectShortName">wr_full</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/rd_data" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_data[7:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_data[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/rd_empty" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_empty</obj_property>
+      <obj_property name="ObjectShortName">rd_empty</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/rst_n" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rst_n</obj_property>
+      <obj_property name="ObjectShortName">rst_n</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/wr_clk" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_clk</obj_property>
+      <obj_property name="ObjectShortName">wr_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/wr_addr" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_addr[4:0]</obj_property>
+      <obj_property name="ObjectShortName">wr_addr[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/wr_data" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_data[15:0]</obj_property>
+      <obj_property name="ObjectShortName">wr_data[15:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/wr_en" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_en</obj_property>
+      <obj_property name="ObjectShortName">wr_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/wr_push" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_push</obj_property>
+      <obj_property name="ObjectShortName">wr_push</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/rd_clk" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_clk</obj_property>
+      <obj_property name="ObjectShortName">rd_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/rd_addr" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_addr[5:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_addr[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/rd_pull" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_pull</obj_property>
+      <obj_property name="ObjectShortName">rd_pull</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider13" type="divider">
+      <obj_property name="label">New Divider</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">128 128 255</obj_property>
+      <obj_property name="TextColor">230 230 230</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/wr_ptr" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_ptr[3:0]</obj_property>
+      <obj_property name="ObjectShortName">wr_ptr[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/wr_gray0" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_gray0[3:0]</obj_property>
+      <obj_property name="ObjectShortName">wr_gray0[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/wr_gray1" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_gray1[3:0]</obj_property>
+      <obj_property name="ObjectShortName">wr_gray1[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/wr_gray2" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">wr_gray2[3:0]</obj_property>
+      <obj_property name="ObjectShortName">wr_gray2[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/rd_ptr" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_ptr[3:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_ptr[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/rd_gray0" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_gray0[3:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_gray0[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/rd_gray1" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_gray1[3:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_gray1[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/rd_gray2" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_gray2[3:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_gray2[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/rd_gray2_next" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">rd_gray2_next[3:0]</obj_property>
+      <obj_property name="ObjectShortName">rd_gray2_next[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="divider19" type="divider">
+      <obj_property name="label">New Divider</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="BkColor">128 128 255</obj_property>
+      <obj_property name="TextColor">230 230 230</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/mem0/wea" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">wea[0:0]</obj_property>
+      <obj_property name="ObjectShortName">wea[0:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/sdram_to_usb_test/uut/mem0/addra" type="array" db_ref_id="1">
+      <obj_property name="ElementShortName">addra[8:0]</obj_property>
+      <obj_property name="ObjectShortName">addra[8:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+</wave_config>

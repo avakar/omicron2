@@ -20,7 +20,7 @@ reg[23:0] l_addr;
 reg[15:0] l_data;
 reg l_full;
 
-assign aready = !l_full || f_ack;
+assign aready = !rst && (!l_full || f_ack);
 assign f_we = aready? awe: l_we;
 assign f_addr = aready? aaddr: l_addr;
 assign f_data = aready? adata: l_data;

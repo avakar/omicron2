@@ -32,6 +32,12 @@
 #define USB_EP1_OUT ((uint8_t volatile *)0xC0001080)
 #define USB_EP1_IN ((uint8_t volatile *)0xC00010C0)
 
+
+#define USB_EP2_OUT_CTRL *((uint8_t volatile *)0xC0000040)
+#define USB_EP2_OUT_STATUS *((uint8_t const volatile *)0xC0000040)
+#define USB_EP2_IN_CTRL *((uint8_t volatile *)0xC0000044)
+#define USB_EP2_IN_STATUS *((uint8_t const volatile *)0xC0000044)
+
 #define USB_EP_TOGGLE_CLR (1<<5)
 #define USB_EP_TOGGLE_SET (1<<4)
 #define USB_EP_STALL_SET  (1<<3)
@@ -60,6 +66,9 @@
 #define TEST100 *((uint32_t volatile *)0xD0000000)
 #define SDRAM_CTRL *((uint32_t volatile *)0xD0000010)
 #define SDRAM_ENABLE_bm (1<<0)
+
+#define SDRAM_DMA_RDADDR *((uint32_t volatile *)0xD0000020)
+#define SDRAM_DMA_WRADDR *((uint32_t volatile *)0xD0000024)
 
 #define SDRAM ((uint32_t volatile *)0xD1000000)
 
@@ -779,22 +788,25 @@ int main()
 			case 'p':
 				SDRAM_CTRL = 0;
 				break;
-			case 'R':
-				sendch('r');
-				sendhex(SDRAM[sdidx++]);
-				sendch('\n');
-				break;
-			case 'W':
-				SDRAM[sdidx++] = no++;
-				break;
 			case 'x':
-				sdidx = 0;
+				SDRAM_DMA_RDADDR = 0;
 				break;
 			case 'L':
 				dh.reconfigure();
 				break;
 			default:
-				send("omicron analyzer -- DFU loader\nbL?\n");
+				send("omicron analyzer -- DFU loader");
+				send("\nSDRAM_CTRL: ");
+				sendhex(SDRAM_CTRL);
+				send("\nEP2: ");
+				sendhex(USB_EP2_IN_STATUS);
+				sendch(' ');
+				sendhex(USB_EP2_OUT_STATUS);
+				send("\nSDRAM_DMA_RDADDR: ");
+				sendhex(SDRAM_DMA_RDADDR);
+				send("\nSDRAM_DMA_WRADDR: ");
+				sendhex(SDRAM_DMA_WRADDR);
+				send("\nbL?\n");
 			}
 		}
 

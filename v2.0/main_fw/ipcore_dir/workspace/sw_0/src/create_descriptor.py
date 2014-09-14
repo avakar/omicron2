@@ -28,7 +28,7 @@ usb_desc = {
                 bInterfaceClass=0xFE,
                 bInterfaceSubClass=0x01,
                 bInterfaceProtocol=0x01,
-                iInterface=4,
+                iInterface=0,
                 endpoints=[],
                 functional=[
                     DfuDescriptor(
@@ -59,12 +59,30 @@ usb_desc = {
                         bInterval=16)
                     ]
                 ),
+            InterfaceDescriptor(
+                bInterfaceNumber=2,
+                bInterfaceClass=0xFF,
+                bInterfaceSubClass=0,
+                bInterfaceProtocol=0,
+                iInterface=0,
+                endpoints=[
+                    EndpointDescriptor(
+                        bEndpointAddress=2 | Endpoint.In,
+                        bmAttributes=Endpoint.Bulk,
+                        wMaxPacketSize=64,
+                        bInterval=1),
+                    EndpointDescriptor(
+                        bEndpointAddress=2,
+                        bmAttributes=Endpoint.Bulk,
+                        wMaxPacketSize=64,
+                        bInterval=1)
+                    ]
+                ),
             ]
         ),
     0x300: LangidsDescriptor([0x409]),
     0x301: StringDescriptor('omicron'),
     0x303: StringDescriptor('debug'),
-    0x304: StringDescriptor('omicron dfu'),
     }
 
 dfu_desc = {
@@ -93,7 +111,7 @@ dfu_desc = {
                 bInterfaceClass=0xFE,
                 bInterfaceSubClass=0x01,
                 bInterfaceProtocol=0x02,
-                iInterface=4,
+                iInterface=0,
                 endpoints=[],
                 functional=[
                     DfuDescriptor(
@@ -109,8 +127,6 @@ dfu_desc = {
         ),
     0x300: LangidsDescriptor([0x409]),
     0x301: StringDescriptor('omicron'),
-    0x303: StringDescriptor('debug'),
-    0x304: StringDescriptor('omicron dfu'),
     }
 
 if __name__ == '__main__':
