@@ -122,11 +122,13 @@
   <properties>
     <property xil_pn:name="Allow Logic Optimization Across Hierarchy" xil_pn:value="true" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Combinatorial Logic Optimization" xil_pn:value="true" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Configuration Rate spartan6" xil_pn:value="16" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Create Binary Configuration File" xil_pn:value="true" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Device" xil_pn:value="xc6slx9" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Device Family" xil_pn:value="Spartan6" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Drive Done Pin High" xil_pn:value="true" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Enable BitStream Compression" xil_pn:value="true" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Extra Effort (Highest PAR level only)" xil_pn:value="Normal" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Global Optimization map spartan6" xil_pn:value="Speed" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top" xil_pn:value="Module|main" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Implementation Top File" xil_pn:value="../main.v" xil_pn:valueState="non-default"/>
@@ -137,6 +139,7 @@
     <property xil_pn:name="Other Ngdbuild Command Line Options" xil_pn:value="-bm &quot;../ipcore_dir/cpu.bmm&quot;" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Pack I/O Registers/Latches into IOBs" xil_pn:value="For Inputs and Outputs" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Package" xil_pn:value="tqg144" xil_pn:valueState="default"/>
+    <property xil_pn:name="Placer Extra Effort Map" xil_pn:value="Normal" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Preferred Language" xil_pn:value="Verilog" xil_pn:valueState="default"/>
     <property xil_pn:name="Property Specification in Project File" xil_pn:value="Store non-default values only" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Register Duplication Map" xil_pn:value="On" xil_pn:valueState="non-default"/>

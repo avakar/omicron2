@@ -84,6 +84,16 @@
 #define SDRAM ((uint32_t volatile *)0xD1000000)
 
 #define SAMPLER_CTRL *((uint32_t volatile *)0xE0000000)
+#define SAMPLER_TMR_PER *((uint32_t volatile *)0xE0000004)
+#define SAMPLER_EDGE_CTRL *((uint32_t volatile *)0xE0000008)
+#define SAMPLER_SAMPLE_INDEX_LO *((uint32_t volatile *)0xE0000010)
+#define SAMPLER_SAMPLE_INDEX_HI *((uint32_t volatile *)0xE0000014)
+
+#define SAMPLER_ENABLE_bm (1<<0)
+#define SAMPLER_CLEAR_TIMER_bm (1<<1)
+#define SAMPLER_CLEAR_SAMPLE_INDEX_bm (1<<2)
+#define SAMPLER_LOG_CHANNELS_gp 8
+
 
 bool usb_dbg_enabled = false;
 
@@ -775,6 +785,16 @@ T load_le(uint8_t const * p, uint8_t size = sizeof(T))
 	return res;
 }
 
+template <typename T>
+void store_le(uint8_t * p, T v, uint8_t size = sizeof(T))
+{
+	while (size--)
+	{
+		*p++ = (uint8_t)v;
+		v = v >> 8;
+	}
+}
+
 class usb_omicron_handler
 	: public usb_control_handler
 {
@@ -796,6 +816,19 @@ public:
 			if (req.wLength == 4)
 				return true;
 			break;
+		case cmd_start:
+			if (req.wLength == 9)
+				return true;
+			break;
+		case cmd_stop:
+			if (req.wLength == 0)
+			{
+				SAMPLER_CTRL = 0;
+				return true;
+			}
+		case cmd_get_sample_index:
+			if (req.wLength == 8)
+				return true;
 		}
 
 		return false;
@@ -843,11 +876,26 @@ public:
 				USB_EP2_IN_CTRL = USB_EP_PAUSE_CLR;
 			}
 			break;
+		case cmd_start:
+			if (len == 9)
+			{
+				SAMPLER_EDGE_CTRL = load_le<uint32_t>(p + 5);
+				SAMPLER_TMR_PER = load_le<uint32_t>(p + 1);
+				SAMPLER_CTRL = (*p << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_SAMPLE_INDEX_bm | SAMPLER_CLEAR_TIMER_bm | SAMPLER_ENABLE_bm;
+			}
+			break;
 		}
 	}
 
 	uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p)
 	{
+		switch (req.cmd())
+		{
+		case cmd_get_sample_index:
+			store_le(p, SAMPLER_SAMPLE_INDEX_LO);
+			store_le(p + 4, SAMPLER_SAMPLE_INDEX_HI);
+			return 8;
+		}
 		return 0;
 	}
 
@@ -856,6 +904,9 @@ private:
 	{
 		cmd_set_wraddr = 0x2101,
 		cmd_set_rdaddr = 0x2102,
+		cmd_start = 0x2103,
+		cmd_stop = 0x2104,
+		cmd_get_sample_index = 0x8105,
 	};
 };
 

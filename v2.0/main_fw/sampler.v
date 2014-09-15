@@ -174,7 +174,8 @@ module sample_strober(
     input rst_n,
 
     input[15:0] s,
-    output reg sample_strobe,
+    input[15:0] last_s,
+    output sample_strobe,
 
     input enable,
     input clear_timer,
@@ -186,23 +187,23 @@ module sample_strober(
 
 reg[31:0] cntr;
 reg cntr_strobe;
-
-reg[15:0] last_s;
+reg rise_strobe;
+reg fall_strobe;
+assign sample_strobe = (enable && cntr_strobe) || rise_strobe || fall_strobe;
 
 wire[15:0] rising_edges = ~last_s & s & rising_edge_mask;
 wire[15:0] falling_edges = last_s & ~s & falling_edge_mask;
-wire edge_strobe = (rising_edges != 0) || (falling_edges != 0);
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         cntr <= 1'b0;
     end else begin
         cntr_strobe <= (cntr == period);
-        sample_strobe <= (enable && cntr_strobe) || edge_strobe;
-        last_s <= s;
+        rise_strobe <= rising_edges != 0;
+        fall_strobe <= falling_edges != 0;
 
         if (enable) begin
-            if (cntr_strobe)
+            if (cntr == period)
                 cntr <= 1'b0;
             else
                 cntr <= cntr + 1'b1;
@@ -225,6 +226,7 @@ module sample_serializer(
     output reg out_strobe,
     output reg[63:0] sample_index,
 
+    input clear_sampler_index,
     input[2:0] log_channels
     );
 
@@ -274,8 +276,6 @@ end
 
 endmodule
 
-// The sampler input `s` must already be synchronized
-// to avoid metastability.
 module sampler(
     input clk,
     input rst_n,
@@ -293,51 +293,99 @@ module sampler(
     output reg[31:0] bdata
     );
 
-reg[15:0] s_sync0, s_sync1, s_sync2;
+reg[15:0] s_sync0, s_sync1, s_sync2, s_sync3, s_sync4;
 
 always @(posedge clk) begin
     s_sync0 <= s;
     s_sync1 <= s_sync0;
     s_sync2 <= s_sync1;
+    s_sync3 <= s_sync2;
+    s_sync4 <= s_sync3;
 end
 
 wire sample_strobe;
 reg ss0_enable;
+reg ss0_clear_timer;
+reg[31:0] ss0_timer_period;
+reg[15:0] ss0_rising_edge_mask;
+reg[15:0] ss0_falling_edge_mask;
 
 sample_strober ss0(
     .clk(clk),
     .rst_n(rst_n),
 
-    .s(s_sync2),
+    .s(s_sync3),
+    .last_s(s_sync2),
     .sample_strobe(sample_strobe),
 
     .enable(ss0_enable),
-    .clear_timer(1'b0),
+    .clear_timer(ss0_clear_timer),
 
-    .period(32'd200_000_000),
-    .rising_edge_mask(16'b0),
-    .falling_edge_mask(16'b0)
+    .period(ss0_timer_period),
+    .rising_edge_mask(ss0_rising_edge_mask),
+    .falling_edge_mask(ss0_falling_edge_mask)
     );
 
-assign out_valid = sample_strobe;
-assign out_data = s_sync2;
+reg[2:0] ser0_log_channels;
+wire[63:0] ser0_sample_index;
+reg ser0_clear_sample_index;
+
+sample_serializer ser0(
+    .clk(clk),
+    .rst_n(rst_n),
+
+    .in_data(s_sync4),
+    .in_strobe(sample_strobe),
+    .out_data(out_data),
+    .out_strobe(out_valid),
+    .sample_index(ser0_sample_index),
+
+    .clear_sampler_index(ser0_clear_sample_index),
+    .log_channels(ser0_log_channels)
+    );
+
+reg[31:0] read_temp;
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         bvalid <= 1'b0;
         bdata <= 32'hxxxxxxxx;
+        ss0_clear_timer <= 1'b0;
+        ser0_clear_sample_index <= 1'b0;
+        ss0_enable <= 1'b0;
+        ss0_timer_period <= 1'b0;
+        read_temp <= 1'b0;
     end else begin
+        ss0_clear_timer <= 1'b0;
+        ser0_clear_sample_index <= 1'b0;
+
         if (avalid && awe) begin
-            case (aaddr)
-                5'd0: begin
+            case ({ aaddr[4:2], 2'b00 })
+                5'h00: begin
                     ss0_enable <= adata[0];
+                    ss0_clear_timer <= adata[1];
+                    ser0_clear_sample_index <= adata[2];
+                    ser0_log_channels <= adata[10:8];
+                end
+                5'h04: begin
+                    ss0_timer_period <= adata;
+                end
+                5'h08: begin
+                    { ss0_rising_edge_mask, ss0_falling_edge_mask } <= adata;
                 end
             endcase
         end
 
         if (avalid && !awe) begin
-            case (aaddr)
-                5'd0: bdata <= ss0_enable;
+            case ({ aaddr[4:2], 2'b00 })
+                5'd00: bdata <= { ser0_log_channels, 7'b0, ss0_enable };
+                5'd04: bdata <= ss0_timer_period;
+                5'd08: bdata <= { ss0_rising_edge_mask, ss0_falling_edge_mask };
+                5'd10: begin
+                    bdata <= ser0_sample_index[31:0];
+                    read_temp <= ser0_sample_index[63:32];
+                end
+                5'd14: bdata <= read_temp;
                 default: bdata <= 32'hxxxxxxxx;
             endcase
         end
