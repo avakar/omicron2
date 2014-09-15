@@ -75,11 +75,15 @@
 #define SDRAM_DMA_RDSTATUS *((uint32_t volatile *)0xD0000024)
 #define SDRAM_DMA_WRADDR *((uint32_t volatile *)0xD0000028)
 #define SDRAM_DMA_WRSTATUS *((uint32_t volatile *)0xD000002C)
+#define SDRAM_DMA_SFADDR *((uint32_t volatile *)0xD0000030)
+
 #define SDRAM_DMA_ENABLED_bm (1<<0)
 #define SDRAM_DMA_BUF_EMPTY_bm (1<<1)
 #define SDRAM_DMA_BUF_BUSY_bm (1<<2)
 
 #define SDRAM ((uint32_t volatile *)0xD1000000)
+
+#define SAMPLER_CTRL *((uint32_t volatile *)0xE0000000)
 
 bool usb_dbg_enabled = false;
 
@@ -907,14 +911,13 @@ int main()
 			case 'D':
 				enable_setup_print = !enable_setup_print;
 				break;
+			case 'e':
+				SAMPLER_CTRL ^= 1;
+				break;
 			default:
 				send("omicron analyzer -- DFU loader");
 				send("\nSDRAM_CTRL: ");
 				sendhex(SDRAM_CTRL);
-				send("\nEP2: ");
-				sendhex(USB_EP2_IN_STATUS);
-				sendch(' ');
-				sendhex(USB_EP2_OUT_STATUS);
 				send("\nSDRAM_DMA_RDADDR: ");
 				sendhex(SDRAM_DMA_RDADDR);
 				send("\nSDRAM_DMA_RDSTATUS: ");
@@ -923,6 +926,10 @@ int main()
 				sendhex(SDRAM_DMA_WRADDR);
 				send("\nSDRAM_DMA_WRSTATUS: ");
 				sendhex(SDRAM_DMA_WRSTATUS);
+				send("\nSDRAM_DMA_SFADDR: ");
+				sendhex(SDRAM_DMA_SFADDR);
+				send("\nSAMPLER_CTRL: ");
+				sendhex(SAMPLER_CTRL);
 				send("\nbL?\n");
 			}
 		}
@@ -1025,6 +1032,7 @@ int main()
 			USB_EP0_IN_CTRL = USB_EP_TOGGLE_SET;
 			USB_EP0_OUT_CTRL = USB_EP_TOGGLE_SET | USB_EP_SETUP_CLR;
 
+#if 0
 			if (enable_setup_print)
 			{
 				sendch('S');
@@ -1038,6 +1046,7 @@ int main()
 				sendhex(usb_req.wLength);
 				sendch('\n');
 			}
+#endif
 
 			if ((usb_req.bmRequestType & 0x1f) == 0)
 			{
