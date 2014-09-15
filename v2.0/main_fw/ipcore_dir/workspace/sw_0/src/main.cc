@@ -38,6 +38,8 @@
 #define USB_EP2_IN_CTRL *((uint8_t volatile *)0xC0000044)
 #define USB_EP2_IN_STATUS *((uint8_t const volatile *)0xC0000044)
 
+#define USB_EP_PAUSE_CLR (1<<7)
+#define USB_EP_PAUSE_SET (1<<6)
 #define USB_EP_TOGGLE_CLR (1<<5)
 #define USB_EP_TOGGLE_SET (1<<4)
 #define USB_EP_STALL_SET  (1<<3)
@@ -45,6 +47,8 @@
 #define USB_EP_PULL       (1<<1)
 #define USB_EP_PUSH       (1<<0)
 
+#define USB_EP_PAUSE_bm   (1<<7)
+#define USB_EP_TRANSIT_bm (1<<6)
 #define USB_EP_TOGGLE     (1<<4)
 #define USB_EP_STALL      (1<<3)
 #define USB_EP_SETUP      (1<<2)
@@ -68,7 +72,12 @@
 #define SDRAM_ENABLE_bm (1<<0)
 
 #define SDRAM_DMA_RDADDR *((uint32_t volatile *)0xD0000020)
-#define SDRAM_DMA_WRADDR *((uint32_t volatile *)0xD0000024)
+#define SDRAM_DMA_RDSTATUS *((uint32_t volatile *)0xD0000024)
+#define SDRAM_DMA_WRADDR *((uint32_t volatile *)0xD0000028)
+#define SDRAM_DMA_WRSTATUS *((uint32_t volatile *)0xD000002C)
+#define SDRAM_DMA_ENABLED_bm (1<<0)
+#define SDRAM_DMA_BUF_EMPTY_bm (1<<1)
+#define SDRAM_DMA_BUF_BUSY_bm (1<<2)
 
 #define SDRAM ((uint32_t volatile *)0xD1000000)
 
@@ -752,19 +761,116 @@ private:
 	uint8_t m_sn[30];
 };
 
+template <typename T>
+T load_le(uint8_t const * p, uint8_t size = sizeof(T))
+{
+	T res = 0;
+	p += size;
+	while (size--)
+		res = (res << 8) | *--p;
+	return res;
+}
+
+class usb_omicron_handler
+	: public usb_control_handler
+{
+public:
+	void on_usb_reset()
+	{
+	}
+
+	void commit_write(usb_ctrl_req_t & req)
+	{
+	}
+
+	bool on_control_transfer(usb_ctrl_req_t & req)
+	{
+		switch (req.cmd())
+		{
+		case cmd_set_wraddr:
+		case cmd_set_rdaddr:
+			if (req.wLength == 4)
+				return true;
+			break;
+		}
+
+		return false;
+	}
+
+	void on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len)
+	{
+		switch (req.cmd())
+		{
+		case cmd_set_wraddr:
+			if (len == 4)
+			{
+				USB_EP2_OUT_CTRL = USB_EP_PAUSE_SET;
+
+				while (!(SDRAM_DMA_WRSTATUS & SDRAM_DMA_BUF_EMPTY_bm))
+				{
+				}
+
+				SDRAM_DMA_WRADDR = load_le<uint32_t>(p);
+				USB_EP2_OUT_CTRL = USB_EP_PAUSE_CLR;
+			}
+			break;
+		case cmd_set_rdaddr:
+			if (len == 4)
+			{
+				USB_EP2_IN_CTRL = USB_EP_PAUSE_SET;
+				SDRAM_DMA_RDSTATUS = 0;
+
+				while (USB_EP2_IN_STATUS & USB_EP_TRANSIT_bm)
+				{
+				}
+
+				while (SDRAM_DMA_RDSTATUS & SDRAM_DMA_BUF_BUSY_bm)
+				{
+				}
+
+				while (!(USB_EP2_IN_STATUS & USB_EP_EMPTY))
+				{
+					USB_EP2_IN_CTRL = USB_EP_PULL;
+				}
+
+				SDRAM_DMA_RDADDR = load_le<uint32_t>(p);
+
+				SDRAM_DMA_RDSTATUS = SDRAM_DMA_ENABLED_bm;
+				USB_EP2_IN_CTRL = USB_EP_PAUSE_CLR;
+			}
+			break;
+		}
+	}
+
+	uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p)
+	{
+		return 0;
+	}
+
+private:
+	enum
+	{
+		cmd_set_wraddr = 0x2101,
+		cmd_set_rdaddr = 0x2102,
+	};
+};
+
+
 int main()
 {
 	USB_CTRL = USB_CTRL_ATTACH;
+	SDRAM_CTRL = SDRAM_ENABLE_bm;
+	LEDBITS = 0;
 
 	dfu_handler dh;
 	usb_core_handler uc;
+	usb_omicron_handler oh;
 	usb_control_handler * usb_handler = 0;
 	usb_ctrl_req_t usb_req;
 
 	bool last_reset_state = false;
 
-	uint8_t sdidx = 0;
-	uint8_t no = 0;
+	bool enable_setup_print = false;
 
 	for (;;)
 	{
@@ -794,6 +900,13 @@ int main()
 			case 'L':
 				dh.reconfigure();
 				break;
+			case 'h':
+				SDRAM_DMA_RDADDR = 0x142536;
+				SDRAM_DMA_WRADDR = 0x415263;
+				break;
+			case 'D':
+				enable_setup_print = !enable_setup_print;
+				break;
 			default:
 				send("omicron analyzer -- DFU loader");
 				send("\nSDRAM_CTRL: ");
@@ -804,8 +917,12 @@ int main()
 				sendhex(USB_EP2_OUT_STATUS);
 				send("\nSDRAM_DMA_RDADDR: ");
 				sendhex(SDRAM_DMA_RDADDR);
+				send("\nSDRAM_DMA_RDSTATUS: ");
+				sendhex(SDRAM_DMA_RDSTATUS);
 				send("\nSDRAM_DMA_WRADDR: ");
 				sendhex(SDRAM_DMA_WRADDR);
+				send("\nSDRAM_DMA_WRSTATUS: ");
+				sendhex(SDRAM_DMA_WRSTATUS);
 				send("\nbL?\n");
 			}
 		}
@@ -821,11 +938,14 @@ int main()
 			USB_EP1_IN_CTRL = USB_EP_TOGGLE_CLR;
 			USB_EP1_OUT_CTRL = USB_EP_TOGGLE_CLR | USB_EP_SETUP_CLR | USB_EP_PUSH;
 			USB_EP1_IN_CNT = 0;
+			USB_EP2_IN_CTRL = USB_EP_TOGGLE_CLR;
+			USB_EP2_OUT_CTRL = USB_EP_TOGGLE_CLR;
 
 			if (!last_reset_state)
 			{
 				uc.on_usb_reset();
 				dh.on_usb_reset();
+				oh.on_usb_reset();
 				usb_handler = 0;
 
 				uint8_t ds = dh.is_dfu_mode()? 1: 0;
@@ -905,23 +1025,29 @@ int main()
 			USB_EP0_IN_CTRL = USB_EP_TOGGLE_SET;
 			USB_EP0_OUT_CTRL = USB_EP_TOGGLE_SET | USB_EP_SETUP_CLR;
 
-#if 0
-			sendch('S');
-			sendhex(usb_req.bmRequestType);
-			sendhex(usb_req.bRequest);
-			sendch(' ');
-			sendhex(usb_req.wValue);
-			sendch(' ');
-			sendhex(usb_req.wIndex);
-			sendch(' ');
-			sendhex(usb_req.wLength);
-			sendch('\n');
-#endif
+			if (enable_setup_print)
+			{
+				sendch('S');
+				sendhex(usb_req.bmRequestType);
+				sendhex(usb_req.bRequest);
+				sendch(' ');
+				sendhex(usb_req.wValue);
+				sendch(' ');
+				sendhex(usb_req.wIndex);
+				sendch(' ');
+				sendhex(usb_req.wLength);
+				sendch('\n');
+			}
 
 			if ((usb_req.bmRequestType & 0x1f) == 0)
 			{
 				if (uc.on_control_transfer(usb_req))
 					usb_handler = &uc;
+			}
+			else if ((usb_req.bmRequestType & 0x1f) == 1 && usb_req.wIndex == 2)
+			{
+				if (oh.on_control_transfer(usb_req))
+					usb_handler = &oh;
 			}
 			else if ((usb_req.bmRequestType & 0x1f) == 1 && usb_req.wIndex == 0)
 			{

@@ -161,7 +161,9 @@ wire io100_avalid;
 /* 32'hD0000000 */ wire[31:0] io100_test_bdata;
 /* 32'hD0000010 */ wire[31:0] io100_sdram_ctrl_bdata;
 /* 32'hD0000020 */ reg[23:0] io100_sdram_dma_rdaddr;
-/* 32'hD0000024 */ reg[23:0] io100_sdram_dma_wraddr;
+/* 32'hD0000024 */ wire[31:0] io100_sdram_dma_rdstatus;
+/* 32'hD0000028 */ reg[23:0] io100_sdram_dma_wraddr;
+/* 32'hD000002C */ wire[31:0] io100_sdram_dma_wrstatus;
 reg[4:0] usb_ep2_wr_addr;
 
 reg io100_ctrl_bvalid;
@@ -184,8 +186,10 @@ always @(posedge clk_dram or negedge rst_n) begin
         casez ({ io100_address[31:2], 2'b00 })
             32'hD0000000: io100_bdata <= io100_test_bdata;
             32'hD0000010: io100_bdata <= io100_sdram_ctrl_bdata;
-            32'hD0000020: io100_bdata <= { usb_ep2_wr_addr, io100_sdram_dma_rdaddr };
-            32'hD0000024: io100_bdata <= io100_sdram_dma_wraddr;
+            32'hD0000020: io100_bdata <= io100_sdram_dma_rdaddr;
+            32'hD0000024: io100_bdata <= io100_sdram_dma_rdstatus;
+            32'hD0000028: io100_bdata <= io100_sdram_dma_wraddr;
+            32'hD000002C: io100_bdata <= io100_sdram_dma_wrstatus;
         endcase
     end
 end
@@ -297,7 +301,12 @@ wire[15:0] usb_ep2_rd_data;
 wire usb_ep2_rd_pull;
 wire usb_ep2_rd_empty;
 
-wire s0_awe = !usb_ep2_rd_empty;
+reg sdram_dma_wrenable;
+reg sdram_dma_rdenable;
+assign io100_sdram_dma_rdstatus = { usb_ep2_wr_addr != io100_sdram_dma_rdaddr[4:0], 1'b0, sdram_dma_rdenable };
+assign io100_sdram_dma_wrstatus = { usb_ep2_rd_empty, sdram_dma_wrenable };
+
+wire s0_awe = !usb_ep2_rd_empty && sdram_dma_wrenable;
 
 sdram s0(
     .rst(!rst_n || !m_pwren),
@@ -323,13 +332,15 @@ sdram s0(
     .m_dq(m_dq)
     );
 
-assign s0_avalid = io100_sdram_dma_rdaddr[4:0] != 1'b0 || (usb_ep2_wr_addr == 1'b0 && !usb_ep2_wr_full) || s0_awe;
+assign s0_avalid = (sdram_dma_rdenable && (io100_sdram_dma_rdaddr[4:0] != 1'b0 || (usb_ep2_wr_addr == 1'b0 && !usb_ep2_wr_full))) || s0_awe;
 assign usb_ep2_rd_pull = s0_awe && s0_avalid && s0_aready;
 
 always @(posedge clk_dram or negedge rst_n) begin
     if (!rst_n) begin
         io100_sdram_dma_rdaddr <= 1'b0;
         usb_ep2_wr_addr <= 1'b0;
+        sdram_dma_rdenable <= 1'b1;
+        sdram_dma_wrenable <= 1'b1;
     end else begin
         if (s0_avalid && s0_aready) begin
             if (!s0_awe)
@@ -348,7 +359,13 @@ always @(posedge clk_dram or negedge rst_n) begin
                     usb_ep2_wr_addr <= 1'b0;
                 end
                 32'hD0000024: begin
+                    sdram_dma_rdenable <= io100_adata[0];
+                end
+                32'hD0000028: begin
                     io100_sdram_dma_wraddr <= io100_adata[23:0];
+                end
+                32'hD000002C: begin
+                    sdram_dma_wrenable <= io100_adata[0];
                 end
             endcase
         end
@@ -613,6 +630,7 @@ sdram_usb_ep usb_ep2(
     .rst_n(rst_n),
     .clk(clk_48),
 
+    .transaction_active(usb0_transaction_active && usb0_endpoint == 2),
     .direction_in(usb0_direction_in),
     .success(usb0_endpoint == 4'd2 && usb0_success),
     .cnt(io_usb_addr_ptr),
