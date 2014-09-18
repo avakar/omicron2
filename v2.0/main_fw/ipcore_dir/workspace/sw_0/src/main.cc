@@ -76,6 +76,7 @@
 #define SDRAM_DMA_WRADDR *((uint32_t volatile *)0xD0000028)
 #define SDRAM_DMA_WRSTATUS *((uint32_t volatile *)0xD000002C)
 #define SDRAM_DMA_SFADDR *((uint32_t volatile *)0xD0000030)
+#define SDRAM_DMA_RECV_SAMPLE_IDX *((uint64_t volatile *)0xD0000038)
 
 #define SDRAM_DMA_ENABLED_bm (1<<0)
 #define SDRAM_DMA_BUF_EMPTY_bm (1<<1)
@@ -86,13 +87,16 @@
 #define SAMPLER_CTRL *((uint32_t volatile *)0xE0000000)
 #define SAMPLER_TMR_PER *((uint32_t volatile *)0xE0000004)
 #define SAMPLER_EDGE_CTRL *((uint32_t volatile *)0xE0000008)
-#define SAMPLER_SAMPLE_INDEX_LO *((uint32_t volatile *)0xE0000010)
-#define SAMPLER_SAMPLE_INDEX_HI *((uint32_t volatile *)0xE0000014)
+#define SAMPLER_COMPRESSOR_STATE *((uint32_t volatile *)0xE0000010)
+#define SAMPLER_SERIALIZER_STATE *((uint32_t volatile *)0xE0000014)
 
 #define SAMPLER_ENABLE_bm (1<<0)
-#define SAMPLER_CLEAR_TIMER_bm (1<<1)
-#define SAMPLER_CLEAR_SAMPLE_INDEX_bm (1<<2)
+#define SAMPLER_CLEAR_PIPELINE_bm (1<<1)
+#define SAMPLER_SET_MONITOR_bm (1<<2)
+#define SAMPLER_COMPRESSOR_MONITOR_bm (1<<3)
+#define SAMPLER_SERIALIZER_MONITOR_bm (1<<4)
 #define SAMPLER_LOG_CHANNELS_gp 8
+#define SAMPLER_LOG_CHANNELS_bm (0x700)
 
 
 bool usb_dbg_enabled = false;
@@ -827,7 +831,7 @@ public:
 				return true;
 			}
 		case cmd_get_sample_index:
-			if (req.wLength == 8)
+			if (req.wLength == 12)
 				return true;
 		}
 
@@ -881,7 +885,7 @@ public:
 			{
 				SAMPLER_EDGE_CTRL = load_le<uint32_t>(p + 5);
 				SAMPLER_TMR_PER = load_le<uint32_t>(p + 1);
-				SAMPLER_CTRL = (*p << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_SAMPLE_INDEX_bm | SAMPLER_CLEAR_TIMER_bm | SAMPLER_ENABLE_bm;
+				SAMPLER_CTRL = (*p << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_PIPELINE_bm | SAMPLER_ENABLE_bm;
 			}
 			break;
 		}
@@ -892,8 +896,9 @@ public:
 		switch (req.cmd())
 		{
 		case cmd_get_sample_index:
-			store_le(p, SAMPLER_SAMPLE_INDEX_LO);
-			store_le(p + 4, SAMPLER_SAMPLE_INDEX_HI);
+			store_le(p, SDRAM_DMA_SFADDR & 0x7fffffff);
+			store_le(p + 4, SDRAM_DMA_RECV_SAMPLE_IDX);
+			// TODO: get the trail
 			return 8;
 		}
 		return 0;
@@ -925,8 +930,6 @@ int main()
 
 	bool last_reset_state = false;
 
-	bool enable_setup_print = false;
-
 	for (;;)
 	{
 		if (rxready())
@@ -936,51 +939,33 @@ int main()
 			case 'b':
 				LEDBITS ^= 1;
 				break;
-			case 'w':
-				TEST100 = 0x12345678;
-			case 'r':
-				sendch('r');
-				sendhex(TEST100);
-				sendch('\n');
-				break;
-			case 'P':
-				SDRAM_CTRL = SDRAM_ENABLE_bm;
-				break;
-			case 'p':
-				SDRAM_CTRL = 0;
-				break;
-			case 'x':
-				SDRAM_DMA_RDADDR = 0;
-				break;
 			case 'L':
 				dh.reconfigure();
 				break;
-			case 'h':
-				SDRAM_DMA_RDADDR = 0x142536;
-				SDRAM_DMA_WRADDR = 0x415263;
+			case 'S':
+				SAMPLER_EDGE_CTRL = 0;
+				SAMPLER_TMR_PER = 20000;
+				SAMPLER_CTRL = (4 << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_PIPELINE_bm | SAMPLER_ENABLE_bm;
 				break;
-			case 'D':
-				enable_setup_print = !enable_setup_print;
-				break;
-			case 'e':
-				SAMPLER_CTRL ^= 1;
+			case 's':
+				SAMPLER_CTRL = 0;
 				break;
 			default:
 				send("omicron analyzer -- DFU loader");
 				send("\nSDRAM_CTRL: ");
 				sendhex(SDRAM_CTRL);
-				send("\nSDRAM_DMA_RDADDR: ");
-				sendhex(SDRAM_DMA_RDADDR);
-				send("\nSDRAM_DMA_RDSTATUS: ");
-				sendhex(SDRAM_DMA_RDSTATUS);
-				send("\nSDRAM_DMA_WRADDR: ");
-				sendhex(SDRAM_DMA_WRADDR);
-				send("\nSDRAM_DMA_WRSTATUS: ");
-				sendhex(SDRAM_DMA_WRSTATUS);
 				send("\nSDRAM_DMA_SFADDR: ");
 				sendhex(SDRAM_DMA_SFADDR);
+				send("\nSDRAM_DMA_RECV_SAMPLE_IDX: ");
+				sendhex(SDRAM_DMA_RECV_SAMPLE_IDX);
 				send("\nSAMPLER_CTRL: ");
 				sendhex(SAMPLER_CTRL);
+				send("\nSAMPLER_EDGE_CTRL: ");
+				sendhex(SAMPLER_EDGE_CTRL);
+				send("\nSAMPLER_SERIALIZER_STATE: ");
+				sendhex(SAMPLER_SERIALIZER_STATE);
+				send("\nSAMPLER_COMPRESSOR_STATE: ");
+				sendhex(SAMPLER_COMPRESSOR_STATE);
 				send("\nbL?\n");
 			}
 		}

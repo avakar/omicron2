@@ -172,8 +172,11 @@ wire io100_avalid;
 /* 32'hD0000024 */ wire[31:0] io100_sdram_dma_rdstatus;
 /* 32'hD0000028 */ reg[23:0] io100_sdram_dma_wraddr;
 /* 32'hD000002C */ wire[31:0] io100_sdram_dma_wrstatus;
-/* 32'hD0000030 */ wire[31:0] io100_sdram_dma_sfaddr;
+/* 32'hD0000030 */ wire[23:0] io100_sdram_dma_sfaddr; wire sf0_empty;
+/* 32'hD0000038 */ wire[47:0] io100_recv_sample_index;
+
 reg[4:0] usb_ep2_wr_addr;
+reg[63:0] io100_temp;
 
 reg io100_ctrl_bvalid;
 always @(posedge clk_dram or negedge rst_n) begin
@@ -190,6 +193,7 @@ wire io100_bvalid = io100_ctrl_bvalid;
 always @(posedge clk_dram or negedge rst_n) begin
     if (!rst_n) begin
         io100_bdata <= 32'hxxxxxxxx;
+        io100_temp <= 1'sbx;
     end else if (io100_bvalid) begin
         io100_bdata <= 32'hxxxxxxxx;
         casez ({ io100_address[31:2], 2'b00 })
@@ -199,7 +203,12 @@ always @(posedge clk_dram or negedge rst_n) begin
             32'hD0000024: io100_bdata <= io100_sdram_dma_rdstatus;
             32'hD0000028: io100_bdata <= io100_sdram_dma_wraddr;
             32'hD000002C: io100_bdata <= io100_sdram_dma_wrstatus;
-            32'hD0000030: io100_bdata <= io100_sdram_dma_sfaddr;
+            32'hD0000030: begin
+                io100_bdata <= { !sf0_empty, 7'b0, io100_sdram_dma_sfaddr };
+                io100_temp <= io100_recv_sample_index;
+            end
+            32'hD0000038: io100_bdata <= io100_temp[31:0];
+            32'hD000003C: io100_bdata <= io100_temp[47:32];
         endcase
     end
 end
@@ -303,7 +312,6 @@ wire sampler0_out_valid;
 wire sdram_dma_prio_usb;
 wire sf0_rd_en;
 wire[15:0] sf0_dout;
-wire sf0_empty;
 
 sample_fifo sf0(
     .rst(!rst_n),
@@ -328,6 +336,7 @@ sampler sampler0(
 
     .out_data(sampler0_out_data),
     .out_valid(sampler0_out_valid),
+    .out_busy(!sf0_empty),
 
     .avalid(io200_avalid),
     .awe(io200_awe),
@@ -335,6 +344,17 @@ sampler sampler0(
     .adata(io200_adata),
     .bvalid(io200_bvalid),
     .bdata(io200_bdata)
+    );
+
+wire[47:0] recv_sample_index;
+index_scanner idxscan0(
+    .rst_n(rst_n),
+    .clk(clk_dram),
+
+    .sample(sf0_dout),
+    .sample_strobe(sf0_rd_en),
+
+    .index(io100_recv_sample_index)
     );
 
 //---------------------------------------------------------------------
