@@ -1,5 +1,5 @@
 module index_scanner #(
-    parameter width = 48
+    parameter width = 60
     )(
     input rst_n,
     input clk,

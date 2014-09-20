@@ -82,19 +82,31 @@
 #define SDRAM_DMA_BUF_EMPTY_bm (1<<1)
 #define SDRAM_DMA_BUF_BUSY_bm (1<<2)
 
+#define SDRAM_DMA_SFADDR_PTR_bm 0xffffff
+#define SDRAM_DMA_SFADDR_BUSY_bm (1<<24)
+
 #define SDRAM ((uint32_t volatile *)0xD1000000)
 
 #define SAMPLER_CTRL *((uint32_t volatile *)0xE0000000)
+#define SAMPLER_STATUS *((uint32_t const volatile *)0xE0000000)
 #define SAMPLER_TMR_PER *((uint32_t volatile *)0xE0000004)
-#define SAMPLER_EDGE_CTRL *((uint32_t volatile *)0xE0000008)
+#define SAMPLER_RISING_EDGE_CTRL *((uint32_t volatile *)0xE0000008)
+#define SAMPLER_FALLING_EDGE_CTRL *((uint32_t volatile *)0xE000000C)
 #define SAMPLER_COMPRESSOR_STATE *((uint32_t volatile *)0xE0000010)
 #define SAMPLER_SERIALIZER_STATE *((uint32_t volatile *)0xE0000014)
+#define SAMPLER_SRC_SAMPLE_INDEX_LO *((uint32_t volatile *)0xE0000018)
+#define SAMPLER_SRC_SAMPLE_INDEX_HI *((uint32_t volatile *)0xE000001C)
+
+#define SAMPLER_MUX1 *((uint32_t volatile *)0xE0000020)
+#define SAMPLER_MUX2 *((uint32_t volatile *)0xE0000024)
+#define SAMPLER_MUX3 *((uint32_t volatile *)0xE0000028)
 
 #define SAMPLER_ENABLE_bm (1<<0)
 #define SAMPLER_CLEAR_PIPELINE_bm (1<<1)
 #define SAMPLER_SET_MONITOR_bm (1<<2)
 #define SAMPLER_COMPRESSOR_MONITOR_bm (1<<3)
-#define SAMPLER_SERIALIZER_MONITOR_bm (1<<4)
+#define SAMPLER_OVERFLOW_bm (1<<4)
+#define SAMPLER_PIPELINE_BUSY_bm (1<<5)
 #define SAMPLER_LOG_CHANNELS_gp 8
 #define SAMPLER_LOG_CHANNELS_bm (0x700)
 
@@ -790,19 +802,27 @@ T load_le(uint8_t const * p, uint8_t size = sizeof(T))
 }
 
 template <typename T>
-void store_le(uint8_t * p, T v, uint8_t size = sizeof(T))
+uint8_t * store_le(uint8_t * p, T v, uint8_t size = sizeof(T))
 {
 	while (size--)
 	{
 		*p++ = (uint8_t)v;
 		v = v >> 8;
 	}
+
+	return p;
 }
 
 class usb_omicron_handler
 	: public usb_control_handler
 {
 public:
+	usb_omicron_handler()
+		: m_running(false), m_start_sfaddr(0), m_start_src_index(0), m_start_recv_index(0)
+	{
+
+	}
+
 	void on_usb_reset()
 	{
 	}
@@ -821,18 +841,22 @@ public:
 				return true;
 			break;
 		case cmd_start:
-			if (req.wLength == 9)
+			if (req.wLength == 25 && !m_running)
 				return true;
 			break;
 		case cmd_stop:
 			if (req.wLength == 0)
 			{
-				SAMPLER_CTRL = 0;
+				this->stop();
 				return true;
 			}
+			break;
 		case cmd_get_sample_index:
-			if (req.wLength == 12)
+			if (req.wLength >= 12)
 				return true;
+			break;
+		case cmd_get_config:
+			return true;
 		}
 
 		return false;
@@ -843,7 +867,7 @@ public:
 		switch (req.cmd())
 		{
 		case cmd_set_wraddr:
-			if (len == 4)
+			if (len)
 			{
 				USB_EP2_OUT_CTRL = USB_EP_PAUSE_SET;
 
@@ -856,7 +880,7 @@ public:
 			}
 			break;
 		case cmd_set_rdaddr:
-			if (len == 4)
+			if (len)
 			{
 				USB_EP2_IN_CTRL = USB_EP_PAUSE_SET;
 				SDRAM_DMA_RDSTATUS = 0;
@@ -881,27 +905,152 @@ public:
 			}
 			break;
 		case cmd_start:
-			if (len == 9)
+			if (len)
 			{
-				SAMPLER_EDGE_CTRL = load_le<uint32_t>(p + 5);
-				SAMPLER_TMR_PER = load_le<uint32_t>(p + 1);
-				SAMPLER_CTRL = (*p << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_PIPELINE_bm | SAMPLER_ENABLE_bm;
+				assert(!m_running);
+				assert(*p <= 4); // XXX
+
+				SAMPLER_MUX1 = load_le<uint32_t>(p + 5);
+				SAMPLER_MUX2 = load_le<uint32_t>(p + 9);
+				SAMPLER_MUX3 = load_le<uint32_t>(p + 13);
+
+				this->start(
+					*p,
+					load_le<uint8_t>(p + 1),
+					load_le<uint32_t>(p + 17),
+					load_le<uint32_t>(p + 21));
 			}
 			break;
 		}
 	}
 
+	void start(uint8_t shift, uint32_t tmr, uint32_t rising_edge, uint32_t falling_edge)
+	{
+		m_serializer_shift = shift;
+		m_start_src_index = SAMPLER_SRC_SAMPLE_INDEX_LO;
+		m_start_src_index |= (uint64_t)SAMPLER_SRC_SAMPLE_INDEX_HI << 32;
+		m_start_sfaddr = (SDRAM_DMA_SFADDR & SDRAM_DMA_SFADDR_PTR_bm);
+		m_start_recv_index = SDRAM_DMA_RECV_SAMPLE_IDX;
+
+		SAMPLER_TMR_PER = tmr;
+		SAMPLER_RISING_EDGE_CTRL = rising_edge;
+		SAMPLER_FALLING_EDGE_CTRL = falling_edge;
+		SAMPLER_CTRL = (shift << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_PIPELINE_bm | SAMPLER_ENABLE_bm;
+	}
+
 	uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p)
 	{
+		uint8_t * p_orig = p;
 		switch (req.cmd())
 		{
 		case cmd_get_sample_index:
-			store_le(p, SDRAM_DMA_SFADDR & 0x7fffffff);
-			store_le(p + 4, SDRAM_DMA_RECV_SAMPLE_IDX);
-			// TODO: get the trail
-			return 8;
+			return this->get_trail(p);
+		case cmd_get_config:
+			p = store_le<uint8_t>(p, (m_running? 0x80: 0) | m_serializer_shift);
+			p = store_le(p, SAMPLER_TMR_PER);
+			p = store_le(p, SAMPLER_MUX1);
+			p = store_le(p, SAMPLER_MUX2);
+			p = store_le(p, SAMPLER_MUX3);
+			p = store_le(p, SAMPLER_RISING_EDGE_CTRL);
+			p = store_le(p, SAMPLER_FALLING_EDGE_CTRL);
+			break;
 		}
-		return 0;
+		return p - p_orig;
+	}
+
+	uint8_t get_trail(uint8_t * p)
+	{
+		uint64_t src_idx = SAMPLER_SRC_SAMPLE_INDEX_LO;
+		src_idx |= ((uint64_t)SAMPLER_SRC_SAMPLE_INDEX_HI<<32);
+		src_idx -= m_start_src_index;
+
+	restart:
+		SAMPLER_CTRL = SAMPLER_CTRL | SAMPLER_SET_MONITOR_bm;
+		uint32_t sfaddr = SDRAM_DMA_SFADDR;
+		uint64_t recv_idx = SDRAM_DMA_RECV_SAMPLE_IDX;
+		recv_idx -= m_start_recv_index;
+		recv_idx <<= 4 - m_serializer_shift;
+
+	restart2:
+		uint8_t * cur = p;
+
+		cur = store_le<uint32_t>(cur, sfaddr & SDRAM_DMA_SFADDR_PTR_bm);
+		cur = store_le<uint64_t>(cur, recv_idx);
+
+		if (recv_idx >= src_idx)
+		{
+			*cur++ = 0;
+			*cur++ = 0;
+			return 2;
+		}
+
+		if (sfaddr & SDRAM_DMA_SFADDR_BUSY_bm)
+			goto restart;
+
+		uint32_t compressor_state = SAMPLER_COMPRESSOR_STATE;
+		uint32_t compressor_samples;
+		switch ((compressor_state >> 16) & 0x3)
+		{
+		case 0:
+		case 1:
+			*cur++ = 0;
+			compressor_samples = 0;
+			break;
+		case 2:
+			compressor_samples = (compressor_state & 0xffff);
+			*cur++ = 2;
+			*cur++ = compressor_samples;
+			*cur++ = compressor_samples >> 8;
+			break;
+		case 3:
+			goto restart;
+		}
+
+		compressor_samples <<= 4 - m_serializer_shift;
+		if (recv_idx + compressor_samples < src_idx)
+		{
+			uint32_t serializer_state = SAMPLER_SERIALIZER_STATE;
+			if ((SAMPLER_STATUS & SAMPLER_COMPRESSOR_MONITOR_bm) == 0)
+				goto restart;
+
+			uint8_t ser_samples = (serializer_state >> 16) & 0xf;
+			*cur++ = ser_samples;
+			*cur++ = serializer_state;
+			*cur++ = serializer_state >> 8;
+		}
+		else
+		{
+			*cur++ = 0;
+		}
+
+		SAMPLER_CTRL = SAMPLER_CTRL | SAMPLER_SET_MONITOR_bm;
+		uint32_t sfaddr2 = SDRAM_DMA_SFADDR;
+		uint64_t recv_idx2 = SDRAM_DMA_RECV_SAMPLE_IDX;
+		recv_idx2 -= m_start_recv_index;
+		recv_idx2 <<= 4 - m_serializer_shift;
+
+		if (recv_idx2 != recv_idx)
+		{
+			sfaddr = sfaddr2;
+			recv_idx = recv_idx2;
+			goto restart2;
+		}
+
+		return cur - p;
+	}
+
+	void stop()
+	{
+		SAMPLER_CTRL = 0;
+		while (SAMPLER_STATUS & SAMPLER_PIPELINE_BUSY_bm)
+		{
+		}
+
+		while (SDRAM_DMA_SFADDR & SDRAM_DMA_SFADDR_BUSY_bm)
+		{
+		}
+
+		m_running = false;
 	}
 
 private:
@@ -912,7 +1061,14 @@ private:
 		cmd_start = 0x2103,
 		cmd_stop = 0x2104,
 		cmd_get_sample_index = 0x8105,
+		cmd_get_config = 0x8106,
 	};
+
+	bool m_running;
+	uint8_t m_serializer_shift;
+	uint32_t m_start_sfaddr;
+	uint64_t m_start_src_index;
+	uint64_t m_start_recv_index;
 };
 
 
@@ -943,29 +1099,53 @@ int main()
 				dh.reconfigure();
 				break;
 			case 'S':
-				SAMPLER_EDGE_CTRL = 0;
-				SAMPLER_TMR_PER = 20000;
-				SAMPLER_CTRL = (4 << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_PIPELINE_bm | SAMPLER_ENABLE_bm;
+				oh.start(4, 200000000, 0, 0);
 				break;
 			case 's':
-				SAMPLER_CTRL = 0;
+				oh.stop();
 				break;
+			case '1':
+				SAMPLER_TMR_PER = 200000000;
+				break;
+			case '2':
+				SAMPLER_TMR_PER = 2000;
+				break;
+			case '3':
+				SAMPLER_TMR_PER = 2;
+				break;
+			case '4':
+				SAMPLER_TMR_PER = 20;
+				break;
+			case '5':
+				SAMPLER_TMR_PER = 200;
+				break;
+			case '6':
+				SAMPLER_TMR_PER = 1;
+				break;
+			case '7':
+				SAMPLER_TMR_PER = 0;
+				break;
+			case 'm':
+				SAMPLER_MUX1 = 0x8a418820;
+				break;
+			case 'M':
+				SAMPLER_MUX1 = 0x8a418834;
+				break;
+			case 't':
+			{
+				uint8_t buf[32];
+				uint8_t s = oh.get_trail(buf);
+
+				sendch('t');
+				for (uint8_t i = 0; i < s; ++i)
+					sendhex(buf[i]);
+				sendch('\n');
+				break;
+			}
 			default:
 				send("omicron analyzer -- DFU loader");
-				send("\nSDRAM_CTRL: ");
-				sendhex(SDRAM_CTRL);
-				send("\nSDRAM_DMA_SFADDR: ");
-				sendhex(SDRAM_DMA_SFADDR);
-				send("\nSDRAM_DMA_RECV_SAMPLE_IDX: ");
-				sendhex(SDRAM_DMA_RECV_SAMPLE_IDX);
-				send("\nSAMPLER_CTRL: ");
-				sendhex(SAMPLER_CTRL);
-				send("\nSAMPLER_EDGE_CTRL: ");
-				sendhex(SAMPLER_EDGE_CTRL);
-				send("\nSAMPLER_SERIALIZER_STATE: ");
-				sendhex(SAMPLER_SERIALIZER_STATE);
-				send("\nSAMPLER_COMPRESSOR_STATE: ");
-				sendhex(SAMPLER_COMPRESSOR_STATE);
+				send("\nSAMPLER_STATUS: ");
+				sendhex(SAMPLER_STATUS);
 				send("\nbL?\n");
 			}
 		}

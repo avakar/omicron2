@@ -40,11 +40,16 @@ wire clk_dram;
 wire clk_dram_out;
 wire clk_dram_out_n;
 
+wire clk_24_s;
+
 wire strobe_1hz;
 wire strobe_4mhz;
 
 assign vio33 = 1'b0;
 assign vio50 = 1'b0;
+
+wire usb_rx_j, usb_rx_se0;
+wire usb_tx_en, usb_tx_j, usb_tx_se0;
 
 assign sd = 16'b0;
 
@@ -166,17 +171,16 @@ wire[31:0] io100_adata;
 reg[31:0] io100_bdata;
 wire io100_avalid;
 
-/* 32'hD0000000 */ wire[31:0] io100_test_bdata;
 /* 32'hD0000010 */ wire[31:0] io100_sdram_ctrl_bdata;
 /* 32'hD0000020 */ reg[23:0] io100_sdram_dma_rdaddr;
 /* 32'hD0000024 */ wire[31:0] io100_sdram_dma_rdstatus;
 /* 32'hD0000028 */ reg[23:0] io100_sdram_dma_wraddr;
 /* 32'hD000002C */ wire[31:0] io100_sdram_dma_wrstatus;
 /* 32'hD0000030 */ wire[23:0] io100_sdram_dma_sfaddr; wire sf0_empty;
-/* 32'hD0000038 */ wire[47:0] io100_recv_sample_index;
+/* 32'hD0000038 */ wire[59:0] io100_recv_sample_index;
 
 reg[4:0] usb_ep2_wr_addr;
-reg[63:0] io100_temp;
+reg[59:0] io100_temp;
 
 reg io100_ctrl_bvalid;
 always @(posedge clk_dram or negedge rst_n) begin
@@ -197,7 +201,6 @@ always @(posedge clk_dram or negedge rst_n) begin
     end else if (io100_bvalid) begin
         io100_bdata <= 32'hxxxxxxxx;
         casez ({ io100_address[31:2], 2'b00 })
-            32'hD0000000: io100_bdata <= io100_test_bdata;
             32'hD0000010: io100_bdata <= io100_sdram_ctrl_bdata;
             32'hD0000020: io100_bdata <= { usb_ep2_wr_addr, io100_sdram_dma_rdaddr };
             32'hD0000024: io100_bdata <= io100_sdram_dma_rdstatus;
@@ -208,7 +211,7 @@ always @(posedge clk_dram or negedge rst_n) begin
                 io100_temp <= io100_recv_sample_index;
             end
             32'hD0000038: io100_bdata <= io100_temp[31:0];
-            32'hD000003C: io100_bdata <= io100_temp[47:32];
+            32'hD000003C: io100_bdata <= io100_temp[59:32];
         endcase
     end
 end
@@ -261,7 +264,7 @@ end
 wire io200_avalid;
 wire io200_aready = 1'b1;
 reg io200_awe;
-reg[4:0] io200_aaddr;
+reg[5:0] io200_aaddr;
 reg[31:0] io200_adata;
 wire io200_bvalid;
 wire[31:0] io200_bdata;
@@ -281,7 +284,7 @@ always @(posedge clk_48 or negedge rst_n) begin
         br200_bvalid[3:1] <= br200_bvalid[2:0];
         if (cpu0_io_addr_strobe && (cpu0_io_read_strobe || cpu0_io_write_strobe) && cpu0_io_address[31:28] == 4'hE) begin
             io200_adata <= cpu0_io_write_data;
-            io200_aaddr <= cpu0_io_address[4:0];
+            io200_aaddr <= cpu0_io_address[5:0];
             io200_awe <= cpu0_io_write_strobe;
             br200_avalid[0] <= !br200_avalid[0];
         end
@@ -312,6 +315,7 @@ wire sampler0_out_valid;
 wire sdram_dma_prio_usb;
 wire sf0_rd_en;
 wire[15:0] sf0_dout;
+wire sf0_full;
 
 sample_fifo sf0(
     .rst(!rst_n),
@@ -319,7 +323,7 @@ sample_fifo sf0(
     .wr_clk(clk_sampler),
     .din(sampler0_out_data),
     .wr_en(sampler0_out_valid),
-    .full(),
+    .full(sf0_full),
 
     .rd_clk(clk_dram),
     .rd_en(sf0_rd_en),
@@ -328,15 +332,37 @@ sample_fifo sf0(
     .prog_empty(sdram_dma_prio_usb)
     );
 
+wire s0_running;
+wire s0_overflow;
 sampler sampler0(
     .rst_n(rst_n),
     .clk(clk_sampler),
 
-    .s(s),
+    .s({
+        2'b0,
+        clk_33,
+        clk_24_s,
+        spi_cs,
+        spi_clk,
+        spi_mosi,
+        spi_miso,
+        usb_dp,
+        usb_dn,
+        usb_pullup,
+        usb_rx_j,
+        usb_rx_se0,
+        usb_tx_en,
+        usb_tx_j,
+        usb_tx_se0,
+        s
+        }),
 
     .out_data(sampler0_out_data),
     .out_valid(sampler0_out_valid),
-    .out_busy(!sf0_empty),
+    .out_ready(!sf0_full),
+
+    .running(s0_running),
+    .overflow(s0_overflow),
 
     .avalid(io200_avalid),
     .awe(io200_awe),
@@ -346,7 +372,6 @@ sampler sampler0(
     .bdata(io200_bdata)
     );
 
-wire[47:0] recv_sample_index;
 index_scanner idxscan0(
     .rst_n(rst_n),
     .clk(clk_dram),
@@ -356,20 +381,6 @@ index_scanner idxscan0(
 
     .index(io100_recv_sample_index)
     );
-
-//---------------------------------------------------------------------
-// TEST100
-
-reg[31:0] test100;
-assign io100_test_bdata = test100;
-always @(posedge clk_dram or negedge rst_n) begin
-    if (!rst_n) begin
-        test100 <= 1'b0;
-    end else begin
-        if (io100_avalid && io100_awe && { io100_address[31:2], 2'b00 } == 32'hD0000000)
-            test100 <= io100_adata;
-    end
-end
 
 //---------------------------------------------------------------------
 // SDRAM
@@ -655,12 +666,11 @@ end
 //---------------------------------------------------------------------
 // USB
 
-wire usb_rx_j_presync, usb_rx_j, usb_rx_se0;
+wire usb_rx_j_presync;
 IBUFDS usb_j_buf(.I(usb_sp), .IB(usb_sn), .O(usb_rx_j_presync));
 synch usb_j_synch(clk_48, usb_rx_j_presync, usb_rx_j);
 synch usb_se0_synch(clk_48, !usb_dp && !usb_dn, usb_rx_se0);
 
-wire usb_tx_en, usb_tx_j, usb_tx_se0;
 assign usb_dp = usb_tx_en? (usb_tx_se0? 1'b0: usb_tx_j): 1'bz;
 assign usb_dn = usb_tx_en? (usb_tx_se0? 1'b0: !usb_tx_j): 1'bz;
 assign usb_pullup = io_usb_attach? 1'b1: 1'bz;
@@ -883,7 +893,7 @@ end
 
 //---------------------------------------------------------------------
 // LED drivers
-assign led = io_ledbits;
+assign led = { io_ledbits[0], s0_overflow, s0_running };
 
 //---------------------------------------------------------------------
 // DNA
@@ -949,6 +959,17 @@ always @(posedge clk_48 or negedge rst_n) begin
             clk_4mhz_prescaler <= 1'b0;
         else
             clk_4mhz_prescaler <= clk_4mhz_prescaler + 1'b1;
+    end
+end
+
+// clk_24_s
+reg clk_24_s_reg;
+assign clk_24_s = clk_24_s_reg;
+always @(posedge clk_48 or negedge rst_n) begin
+    if (!rst_n) begin
+        clk_24_s_reg <= 1'b0;
+    end else begin
+        clk_24_s_reg <= !clk_24_s_reg;
     end
 end
 
