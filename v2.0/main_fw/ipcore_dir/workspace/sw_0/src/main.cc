@@ -269,7 +269,7 @@ public:
 class usb_control_handler
 {
 public:
-	virtual void on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len) = 0;
+	virtual bool on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len) = 0;
 	virtual uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p) = 0;
 	virtual void commit_write(usb_ctrl_req_t & req) = 0;
 };
@@ -428,7 +428,7 @@ public:
 		return false;
 	}
 
-	void on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len)
+	bool on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len)
 	{
 		switch (req.cmd())
 		{
@@ -467,6 +467,8 @@ public:
 			}
 			break;
 		}
+
+		return true;
 	}
 
 	uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p)
@@ -738,9 +740,9 @@ public:
 		return false;
 	}
 
-	void on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len)
+	bool on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len)
 	{
-
+		return false;
 	}
 
 	uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p)
@@ -862,7 +864,7 @@ public:
 		return false;
 	}
 
-	void on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len)
+	bool on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len)
 	{
 		switch (req.cmd())
 		{
@@ -878,7 +880,7 @@ public:
 				SDRAM_DMA_WRADDR = load_le<uint32_t>(p);
 				USB_EP2_OUT_CTRL = USB_EP_PAUSE_CLR;
 			}
-			break;
+			return true;
 		case cmd_set_rdaddr:
 			if (len)
 			{
@@ -903,12 +905,13 @@ public:
 				SDRAM_DMA_RDSTATUS = SDRAM_DMA_ENABLED_bm;
 				USB_EP2_IN_CTRL = USB_EP_PAUSE_CLR;
 			}
-			break;
+			return true;
 		case cmd_start:
 			if (len)
 			{
 				assert(!m_running);
-				assert(*p <= 4); // XXX
+				if (*p > 4)
+					return false;
 
 				SAMPLER_MUX1 = load_le<uint32_t>(p + 5);
 				SAMPLER_MUX2 = load_le<uint32_t>(p + 9);
@@ -920,8 +923,10 @@ public:
 					load_le<uint32_t>(p + 17),
 					load_le<uint32_t>(p + 21));
 			}
-			break;
+			return true;
 		}
+
+		return false;
 	}
 
 	void start(uint8_t shift, uint32_t tmr, uint32_t rising_edge, uint32_t falling_edge)
@@ -1056,12 +1061,12 @@ public:
 private:
 	enum
 	{
-		cmd_set_wraddr = 0x2101,
-		cmd_set_rdaddr = 0x2102,
-		cmd_start = 0x2103,
-		cmd_stop = 0x2104,
-		cmd_get_sample_index = 0x8105,
-		cmd_get_config = 0x8106,
+		cmd_set_wraddr = 0x4101,
+		cmd_set_rdaddr = 0x4102,
+		cmd_start = 0x4103,
+		cmd_stop = 0x4104,
+		cmd_get_sample_index = 0xc105,
+		cmd_get_config = 0xc106,
 	};
 
 	bool m_running;
@@ -1218,21 +1223,33 @@ int main()
 			{
 				USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
 				USB_EP0_IN_CTRL = USB_EP_STALL_SET;
+				usb_handler = 0;
 			}
 			else
 			{
 				assert(usb_req.wLength);
-				usb_handler->on_data_out(usb_req, (uint8_t const *)USB_EP0_OUT, cnt);
-
-				if ((usb_req.wLength -= cnt) != 0)
+				if (!usb_handler->on_data_out(usb_req, (uint8_t const *)USB_EP0_OUT, cnt))
+				{
+					USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
+					USB_EP0_IN_CTRL = USB_EP_STALL_SET;
+					usb_handler = 0;
+				}
+				else if ((usb_req.wLength -= cnt) != 0)
 				{
 					USB_EP0_OUT_CTRL = USB_EP_PULL | USB_EP_PUSH;
 				}
 				else
 				{
-					usb_handler->on_data_out(usb_req, 0, 0);
 					USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
-					USB_EP0_IN_CTRL = USB_EP_PUSH;
+					if (!usb_handler->on_data_out(usb_req, 0, 0))
+					{
+						USB_EP0_IN_CTRL = USB_EP_STALL_SET;
+						usb_handler = 0;
+					}
+					else
+					{
+						USB_EP0_IN_CTRL = USB_EP_PUSH;
+					}
 				}
 			}
 		}

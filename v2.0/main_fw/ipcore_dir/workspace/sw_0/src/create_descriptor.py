@@ -76,6 +76,10 @@ usb_desc = {
                         bmAttributes=Endpoint.Bulk,
                         wMaxPacketSize=64,
                         bInterval=1)
+                    ],
+                functional=[
+                    CustomDescriptor(75,
+                        '\x02' + UUID('49e8fed9-9f8d-4ff9-bc8c-c8d0f43f904f').get_bytes())
                     ]
                 ),
             ]
