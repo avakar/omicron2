@@ -33,10 +33,10 @@
 #define USB_EP1_IN ((uint8_t volatile *)0xC00010C0)
 
 
-#define USB_EP2_OUT_CTRL *((uint8_t volatile *)0xC0000040)
-#define USB_EP2_OUT_STATUS *((uint8_t const volatile *)0xC0000040)
-#define USB_EP2_IN_CTRL *((uint8_t volatile *)0xC0000044)
-#define USB_EP2_IN_STATUS *((uint8_t const volatile *)0xC0000044)
+#define USB_EP3_OUT_CTRL *((uint8_t volatile *)0xC0000040)
+#define USB_EP3_OUT_STATUS *((uint8_t const volatile *)0xC0000040)
+#define USB_EP3_IN_CTRL *((uint8_t volatile *)0xC0000044)
+#define USB_EP3_IN_STATUS *((uint8_t const volatile *)0xC0000044)
 
 #define USB_EP_PAUSE_CLR (1<<7)
 #define USB_EP_PAUSE_SET (1<<6)
@@ -871,23 +871,23 @@ public:
 		case cmd_set_wraddr:
 			if (len)
 			{
-				USB_EP2_OUT_CTRL = USB_EP_PAUSE_SET;
+				USB_EP3_OUT_CTRL = USB_EP_PAUSE_SET;
 
 				while (!(SDRAM_DMA_WRSTATUS & SDRAM_DMA_BUF_EMPTY_bm))
 				{
 				}
 
 				SDRAM_DMA_WRADDR = load_le<uint32_t>(p);
-				USB_EP2_OUT_CTRL = USB_EP_PAUSE_CLR;
+				USB_EP3_OUT_CTRL = USB_EP_PAUSE_CLR;
 			}
 			return true;
 		case cmd_set_rdaddr:
 			if (len)
 			{
-				USB_EP2_IN_CTRL = USB_EP_PAUSE_SET;
+				USB_EP3_IN_CTRL = USB_EP_PAUSE_SET;
 				SDRAM_DMA_RDSTATUS = 0;
 
-				while (USB_EP2_IN_STATUS & USB_EP_TRANSIT_bm)
+				while (USB_EP3_IN_STATUS & USB_EP_TRANSIT_bm)
 				{
 				}
 
@@ -895,15 +895,15 @@ public:
 				{
 				}
 
-				while (!(USB_EP2_IN_STATUS & USB_EP_EMPTY))
+				while (!(USB_EP3_IN_STATUS & USB_EP_EMPTY))
 				{
-					USB_EP2_IN_CTRL = USB_EP_PULL;
+					USB_EP3_IN_CTRL = USB_EP_PULL;
 				}
 
 				SDRAM_DMA_RDADDR = load_le<uint32_t>(p);
 
 				SDRAM_DMA_RDSTATUS = SDRAM_DMA_ENABLED_bm;
-				USB_EP2_IN_CTRL = USB_EP_PAUSE_CLR;
+				USB_EP3_IN_CTRL = USB_EP_PAUSE_CLR;
 			}
 			return true;
 		case cmd_start:
@@ -1166,8 +1166,8 @@ int main()
 			USB_EP1_IN_CTRL = USB_EP_TOGGLE_CLR;
 			USB_EP1_OUT_CTRL = USB_EP_TOGGLE_CLR | USB_EP_SETUP_CLR | USB_EP_PUSH;
 			USB_EP1_IN_CNT = 0;
-			USB_EP2_IN_CTRL = USB_EP_TOGGLE_CLR;
-			USB_EP2_OUT_CTRL = USB_EP_TOGGLE_CLR;
+			USB_EP3_IN_CTRL = USB_EP_TOGGLE_CLR;
+			USB_EP3_OUT_CTRL = USB_EP_TOGGLE_CLR;
 
 			if (!last_reset_state)
 			{

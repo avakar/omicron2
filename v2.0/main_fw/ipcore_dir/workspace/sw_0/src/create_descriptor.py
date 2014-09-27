@@ -67,12 +67,12 @@ usb_desc = {
                 iInterface=0,
                 endpoints=[
                     EndpointDescriptor(
-                        bEndpointAddress=2 | Endpoint.In,
+                        bEndpointAddress=3 | Endpoint.In,
                         bmAttributes=Endpoint.Bulk,
                         wMaxPacketSize=64,
                         bInterval=1),
                     EndpointDescriptor(
-                        bEndpointAddress=2,
+                        bEndpointAddress=3,
                         bmAttributes=Endpoint.Bulk,
                         wMaxPacketSize=64,
                         bInterval=1)
