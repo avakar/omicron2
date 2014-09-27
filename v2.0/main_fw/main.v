@@ -80,6 +80,9 @@ assign sd = 16'b0;
 /* 32'hC0000040 */ wire[15:0] io_usb_ep3_ctrl;
 /* 32'hC0000044 */ //wire[15:0] io_usb_ep3_ctrl;
 
+/* 32'hC0000048 */ wire[15:0] io_usb_ep2_ctrl;
+/* 32'hC000004C */ //wire[15:0] io_usb_ep2_ctrl;
+
 /* 32'hC0001000 */ wire[31:0] io_usb_mem;
 
 /* 32'hD0000000 */ wire[31:0] io_br100;
@@ -126,6 +129,8 @@ always @(*) begin
         32'hC0000034: cpu0_io_read_data <= io_dna[63:32];
         32'hC0000040: cpu0_io_read_data <= io_usb_ep3_ctrl;
         32'hC0000044: cpu0_io_read_data <= io_usb_ep3_ctrl;
+        32'hC0000048: cpu0_io_read_data <= io_usb_ep2_ctrl;
+        32'hC000004C: cpu0_io_read_data <= io_usb_ep2_ctrl;
         32'hC0001???: cpu0_io_read_data <= io_usb_mem;
         32'hD???????: cpu0_io_read_data <= io_br100;
         32'hE???????: cpu0_io_read_data <= io_br200;
@@ -723,7 +728,7 @@ reg usb_mem0_bank_out;
 wire[7:0] usb_mem0_douta;
 usb_mem usb_mem0(
     .clka(clk_48),
-    .wea(usb0_transaction_active && usb0_endpoint < 2 && !usb0_direction_in && usb0_data_strobe && !io_usb_addr_ptr[6]),
+    .wea(usb0_transaction_active && usb0_endpoint < 3 && !usb0_direction_in && usb0_data_strobe && !io_usb_addr_ptr[6]),
     .addra({ usb_mem0_bank_usb, usb0_endpoint[1:0], usb0_direction_in, io_usb_addr_ptr[5:0] }),
     .dina(usb0_data_out),
     .douta(usb_mem0_douta),
@@ -789,6 +794,33 @@ usb_ep_banked usb_ep1(
     .ctrl_wr_en((cpu0_io_addr_strobe && cpu0_io_write_strobe && {cpu0_io_address[31:3], 3'b000} == 32'hC0000018)? cpu0_io_byte_enable[1:0]: 2'b00)
     );
 
+wire usb_ep2_toggle;
+wire usb_ep2_bank_usb;
+wire usb_ep2_bank_in;
+wire usb_ep2_bank_out;
+wire usb_ep2_in_data_valid;
+wire[1:0] usb_ep2_handshake;
+usb_ep usb_ep2(
+    .clk(clk_48),
+
+    .direction_in(usb0_direction_in),
+    .setup(usb0_setup),
+    .success(usb0_endpoint == 4'd2 && usb0_success),
+    .cnt(io_usb_addr_ptr),
+
+    .toggle(usb_ep2_toggle),
+    .handshake(usb_ep2_handshake),
+    .bank_usb(usb_ep2_bank_usb),
+    .bank_in(usb_ep2_bank_in),
+    .bank_out(usb_ep2_bank_out),
+    .in_data_valid(usb_ep2_in_data_valid),
+
+    .ctrl_dir_in(cpu0_io_address[2]),
+    .ctrl_rd_data(io_usb_ep2_ctrl),
+    .ctrl_wr_data(cpu0_io_write_data[15:0]),
+    .ctrl_wr_en((cpu0_io_addr_strobe && cpu0_io_write_strobe && {cpu0_io_address[31:3], 3'b000} == 32'hC0000048)? cpu0_io_byte_enable[1:0]: 2'b00)
+    );
+
 wire usb_ep3_toggle;
 wire usb_ep3_in_data_valid;
 wire[1:0] usb_ep3_handshake;
@@ -850,6 +882,15 @@ always @(*) begin
             usb_mem0_bank_in = usb_ep1_bank_in;
             usb_mem0_bank_out = usb_ep1_bank_out;
             usb0_in_data_valid = usb_ep1_in_data_valid;
+            usb0_data_in = usb_mem0_douta;
+        end
+        4'd2: begin
+            usb0_toggle = usb_ep2_toggle;
+            usb0_handshake = usb_ep2_handshake;
+            usb_mem0_bank_usb = usb_ep2_bank_usb;
+            usb_mem0_bank_in = usb_ep2_bank_in;
+            usb_mem0_bank_out = usb_ep2_bank_out;
+            usb0_in_data_valid = usb_ep2_in_data_valid;
             usb0_data_in = usb_mem0_douta;
         end
         4'd3: begin

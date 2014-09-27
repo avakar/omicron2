@@ -312,7 +312,7 @@ sample_serializer ser0(
     .clk(clk),
     .rst_n(rst_n),
 
-    .in_data(s_sync3),
+    .in_data(s_sync3[15:0]),
     .in_strobe(sample_strobe),
     .out_data(ser0_out_data),
     .out_strobe(ser0_out_valid),

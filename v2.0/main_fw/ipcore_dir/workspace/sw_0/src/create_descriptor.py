@@ -75,7 +75,12 @@ usb_desc = {
                         bEndpointAddress=3,
                         bmAttributes=Endpoint.Bulk,
                         wMaxPacketSize=64,
-                        bInterval=1)
+                        bInterval=1),
+                    EndpointDescriptor(
+                        bEndpointAddress=2 | Endpoint.In,
+                        bmAttributes=Endpoint.Interrupt,
+                        wMaxPacketSize=64,
+                        bInterval=16),
                     ],
                 functional=[
                     CustomDescriptor(75,

@@ -32,6 +32,14 @@
 #define USB_EP1_OUT ((uint8_t volatile *)0xC0001080)
 #define USB_EP1_IN ((uint8_t volatile *)0xC00010C0)
 
+#define USB_EP2_OUT_CTRL *((uint8_t volatile *)0xC0000048)
+#define USB_EP2_OUT_STATUS *((uint8_t const volatile *)0xC0000048)
+#define USB_EP2_OUT_CNT *((uint8_t volatile *)0xC0000049)
+#define USB_EP2_IN_CTRL *((uint8_t volatile *)0xC000004C)
+#define USB_EP2_IN_STATUS *((uint8_t const volatile *)0xC000004C)
+#define USB_EP2_IN_CNT (*((uint8_t volatile *)0xC000004D))
+#define USB_EP2_OUT ((uint8_t volatile *)0xC0001100)
+#define USB_EP2_IN ((uint8_t volatile *)0xC0001140)
 
 #define USB_EP3_OUT_CTRL *((uint8_t volatile *)0xC0000040)
 #define USB_EP3_OUT_STATUS *((uint8_t const volatile *)0xC0000040)
@@ -1158,13 +1166,15 @@ int main()
 		{
 			USB_ADDRESS = 0;
 			USB_CTRL |= USB_CTRL_RST_CLR;
-			USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
+			USB_EP0_OUT_CTRL = USB_EP_STALL_SET | USB_EP_SETUP_CLR;
 			USB_EP0_IN_CTRL = USB_EP_STALL_SET | USB_EP_SETUP_CLR;
-			USB_EP1_IN_CTRL = USB_EP_TOGGLE_CLR;
+			USB_EP1_IN_CTRL = USB_EP_TOGGLE_CLR | USB_EP_SETUP_CLR;
 			USB_EP1_OUT_CTRL = USB_EP_TOGGLE_CLR | USB_EP_SETUP_CLR | USB_EP_PUSH;
 			USB_EP1_IN_CNT = 0;
-			USB_EP3_IN_CTRL = USB_EP_TOGGLE_CLR;
-			USB_EP3_OUT_CTRL = USB_EP_TOGGLE_CLR;
+			USB_EP2_IN_CTRL = USB_EP_TOGGLE_CLR | USB_EP_SETUP_CLR;
+			USB_EP2_OUT_CTRL = USB_EP_STALL_SET | USB_EP_SETUP_CLR;
+			USB_EP3_IN_CTRL = USB_EP_TOGGLE_CLR | USB_EP_SETUP_CLR;
+			USB_EP3_OUT_CTRL = USB_EP_TOGGLE_CLR | USB_EP_SETUP_CLR;
 
 			if (!last_reset_state)
 			{
