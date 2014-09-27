@@ -90,16 +90,13 @@
 #define SAMPLER_CTRL *((uint32_t volatile *)0xE0000000)
 #define SAMPLER_STATUS *((uint32_t const volatile *)0xE0000000)
 #define SAMPLER_TMR_PER *((uint32_t volatile *)0xE0000004)
-#define SAMPLER_RISING_EDGE_CTRL *((uint32_t volatile *)0xE0000008)
-#define SAMPLER_FALLING_EDGE_CTRL *((uint32_t volatile *)0xE000000C)
-#define SAMPLER_COMPRESSOR_STATE *((uint32_t volatile *)0xE0000010)
-#define SAMPLER_SERIALIZER_STATE *((uint32_t volatile *)0xE0000014)
-#define SAMPLER_SRC_SAMPLE_INDEX_LO *((uint32_t volatile *)0xE0000018)
-#define SAMPLER_SRC_SAMPLE_INDEX_HI *((uint32_t volatile *)0xE000001C)
-
-#define SAMPLER_MUX1 *((uint32_t volatile *)0xE0000020)
-#define SAMPLER_MUX2 *((uint32_t volatile *)0xE0000024)
-#define SAMPLER_MUX3 *((uint32_t volatile *)0xE0000028)
+#define SAMPLER_MUX1 *((uint32_t volatile *)0xE0000010)
+#define SAMPLER_MUX2 *((uint32_t volatile *)0xE0000014)
+#define SAMPLER_MUX3 *((uint32_t volatile *)0xE0000018)
+#define SAMPLER_COMPRESSOR_STATE *((uint32_t volatile *)0xE0000020)
+#define SAMPLER_SERIALIZER_STATE *((uint32_t volatile *)0xE0000024)
+#define SAMPLER_SRC_SAMPLE_INDEX_LO *((uint32_t volatile *)0xE0000028)
+#define SAMPLER_SRC_SAMPLE_INDEX_HI *((uint32_t volatile *)0xE000002C)
 
 #define SAMPLER_ENABLE_bm (1<<0)
 #define SAMPLER_CLEAR_PIPELINE_bm (1<<1)
@@ -109,6 +106,10 @@
 #define SAMPLER_PIPELINE_BUSY_bm (1<<5)
 #define SAMPLER_LOG_CHANNELS_gp 8
 #define SAMPLER_LOG_CHANNELS_bm (0x700)
+#define SAMPLER_EDGE_CTRL_gp 16
+#define SAMPLER_EDGE_CTRL_gm 0x30000
+#define SAMPLER_RISING_EDGE_bm (1<<16)
+#define SAMPLER_FALLING_EDGE_bm (1<<17)
 
 
 bool usb_dbg_enabled = false;
@@ -843,7 +844,7 @@ public:
 				return true;
 			break;
 		case cmd_start:
-			if (req.wLength == 25 && !m_running)
+			if (req.wLength == 18 && !m_running)
 				return true;
 			break;
 		case cmd_stop:
@@ -913,15 +914,14 @@ public:
 				if (*p > 4)
 					return false;
 
-				SAMPLER_MUX1 = load_le<uint32_t>(p + 5);
-				SAMPLER_MUX2 = load_le<uint32_t>(p + 9);
-				SAMPLER_MUX3 = load_le<uint32_t>(p + 13);
+				SAMPLER_MUX1 = load_le<uint32_t>(p + 6);
+				SAMPLER_MUX2 = load_le<uint32_t>(p + 10);
+				SAMPLER_MUX3 = load_le<uint32_t>(p + 14);
 
 				this->start(
-					*p,
-					load_le<uint8_t>(p + 1),
-					load_le<uint32_t>(p + 17),
-					load_le<uint32_t>(p + 21));
+					p[0],
+					load_le<uint8_t>(p + 2),
+					p[1]);
 			}
 			return true;
 		}
@@ -929,7 +929,7 @@ public:
 		return false;
 	}
 
-	void start(uint8_t shift, uint32_t tmr, uint32_t rising_edge, uint32_t falling_edge)
+	void start(uint8_t shift, uint32_t tmr, uint8_t edge_ctrl)
 	{
 		m_serializer_shift = shift;
 		m_start_src_index = SAMPLER_SRC_SAMPLE_INDEX_LO;
@@ -938,9 +938,7 @@ public:
 		m_start_recv_index = SDRAM_DMA_RECV_SAMPLE_IDX;
 
 		SAMPLER_TMR_PER = tmr;
-		SAMPLER_RISING_EDGE_CTRL = rising_edge;
-		SAMPLER_FALLING_EDGE_CTRL = falling_edge;
-		SAMPLER_CTRL = (shift << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_PIPELINE_bm | SAMPLER_ENABLE_bm;
+		SAMPLER_CTRL = (edge_ctrl << SAMPLER_EDGE_CTRL_gp) | (shift << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_PIPELINE_bm | SAMPLER_ENABLE_bm;
 	}
 
 	uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p)
@@ -952,12 +950,11 @@ public:
 			return this->get_trail(p);
 		case cmd_get_config:
 			p = store_le<uint8_t>(p, (m_running? 0x80: 0) | m_serializer_shift);
+			p = store_le<uint8_t>(p, (SAMPLER_CTRL & SAMPLER_EDGE_CTRL_gm) >> SAMPLER_EDGE_CTRL_gp);
 			p = store_le(p, SAMPLER_TMR_PER);
 			p = store_le(p, SAMPLER_MUX1);
 			p = store_le(p, SAMPLER_MUX2);
 			p = store_le(p, SAMPLER_MUX3);
-			p = store_le(p, SAMPLER_RISING_EDGE_CTRL);
-			p = store_le(p, SAMPLER_FALLING_EDGE_CTRL);
 			break;
 		}
 		return p - p_orig;
@@ -1104,7 +1101,7 @@ int main()
 				dh.reconfigure();
 				break;
 			case 'S':
-				oh.start(4, 200000000, 0, 0);
+				oh.start(4, 200000000, 0);
 				break;
 			case 's':
 				oh.stop();

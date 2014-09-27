@@ -126,36 +126,34 @@ module sample_strober #(
     input clk,
     input rst_n,
 
-    input[w-1:0] s,
-    input[w-1:0] last_s,
+    input s_prev,
+    input s,
     output sample_strobe,
 
     input enable,
     input clear_timer,
 
     input[31:0] period,
-    input[w-1:0] rising_edge_mask,
-    input[w-1:0] falling_edge_mask
+    input[1:0] edge_ctrl
     );
 
 reg[31:0] cntr;
 reg cntr_strobe;
-reg rise_strobe;
-reg fall_strobe;
-assign sample_strobe = enable && (cntr_strobe || rise_strobe || fall_strobe);
+reg edge_strobe;
 
-wire[w-1:0] rising_edges = ~last_s & s & rising_edge_mask;
-wire[w-1:0] falling_edges = last_s & ~s & falling_edge_mask;
+wire rising = s && !s_prev && edge_ctrl[0];
+wire falling = !s && s_prev && edge_ctrl[1];
+
+assign sample_strobe = enable && (cntr_strobe || edge_strobe);
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         cntr <= 1'b0;
-        rise_strobe <= 1'b0;
-        fall_strobe <= 1'b0;
+        cntr_strobe <= 1'b0;
+        edge_strobe <= 1'b0;
     end else begin
         cntr_strobe <= (period != 32'hffffffff) && (cntr == period);
-        rise_strobe <= rising_edges != 0;
-        fall_strobe <= falling_edges != 0;
+        edge_strobe <= rising || falling;
 
         if (enable) begin
             if (cntr == period)
@@ -257,16 +255,16 @@ module sampler(
     output reg[31:0] bdata
     );
 
-reg[31:0] s_sync0, s_sync1, s_sync2, s_sync3;
-reg[15:0] s_sync4;
+reg[31:0] s_sync0, s_sync1;
+reg[16:0] s_sync2, s_sync3;
 
-reg[79:0] mux_ctrl;
-wire[15:0] mux_out;
+reg[84:0] mux_ctrl;
+wire[16:0] mux_out;
 sample_mux #(
     .inw(32),
-    .outw(16)
+    .outw(17)
     ) mux0(
-    .i(s_sync3),
+    .i(s_sync1),
     .o(mux_out),
     .s(mux_ctrl)
     );
@@ -274,35 +272,32 @@ sample_mux #(
 always @(posedge clk) begin
     s_sync0 <= s;
     s_sync1 <= s_sync0;
-    s_sync2 <= s_sync1;
+    s_sync2 <= mux_out;
     s_sync3 <= s_sync2;
-    s_sync4 <= mux_out;
 end
 
 wire sample_strobe;
 reg clear_pipeline;
 reg ss0_enable;
 reg[31:0] ss0_timer_period;
-reg[31:0] ss0_rising_edge_mask;
-reg[31:0] ss0_falling_edge_mask;
 reg ss0_clear_timer;
+reg[1:0] ss0_edge_ctrl;
 
-assign running = ss0_enable || ss0_falling_edge_mask != 0 || ss0_rising_edge_mask != 0;
+assign running = ss0_enable;
 
 sample_strober ss0(
     .clk(clk),
     .rst_n(rst_n),
 
-    .s(s_sync2),
-    .last_s(s_sync3),
+    .s_prev(s_sync2[16]),
+    .s(s_sync3[16]),
+    .edge_ctrl(ss0_edge_ctrl),
     .sample_strobe(sample_strobe),
 
     .enable(ss0_enable),
     .clear_timer(ss0_clear_timer),
 
-    .period(ss0_timer_period),
-    .rising_edge_mask(ss0_rising_edge_mask),
-    .falling_edge_mask(ss0_falling_edge_mask)
+    .period(ss0_timer_period)
     );
 
 reg[2:0] ser0_log_channels;
@@ -317,7 +312,7 @@ sample_serializer ser0(
     .clk(clk),
     .rst_n(rst_n),
 
-    .in_data(s_sync4),
+    .in_data(s_sync3),
     .in_strobe(sample_strobe),
     .out_data(ser0_out_data),
     .out_strobe(ser0_out_valid),
@@ -366,9 +361,11 @@ always @(posedge clk or negedge rst_n) begin
         clear_pipeline <= 1'b0;
         ss0_enable <= 1'b0;
         ss0_timer_period <= 1'b0;
+        ss0_edge_ctrl <= 1'b0;
         sample_index <= 1'b0;
         out_overflow <= 1'b0;
         mux_ctrl <= {
+            5'h1F,
             5'hF, 5'hE, 5'hD, 5'hC,
             5'hB, 5'hA, 5'h9, 5'h8,
             5'h7, 5'h6, 5'h5, 5'h4,
@@ -395,37 +392,34 @@ always @(posedge clk or negedge rst_n) begin
                         out_overflow <= 1'b0;
                     set_monitor <= adata[2];
                     ser0_log_channels <= adata[10:8];
+                    ss0_edge_ctrl <= adata[17:16];
                 end
                 6'h04: begin
                     ss0_timer_period <= adata;
                     ss0_clear_timer <= 1'b1;
                 end
-                6'h08: ss0_rising_edge_mask <= adata;
-                6'h0C: ss0_falling_edge_mask <= adata;
-                6'h20: mux_ctrl[31:0] <= adata;
-                6'h24: mux_ctrl[63:32] <= adata;
-                6'h28: mux_ctrl[79:64] <= adata[15:0];
+                6'h10: mux_ctrl[31:0] <= adata;
+                6'h14: mux_ctrl[63:32] <= adata;
+                6'h18: mux_ctrl[84:64] <= adata[20:0];
             endcase
         end
 
         if (avalid && !awe) begin
             case ({ aaddr[5:2], 2'b00 })
-                6'h00: bdata <= { ser0_log_channels, out_overflow, sc0_overflow, pipeline_busy, 1'b0, sc0_monitor, 2'b0, ss0_enable };
+                6'h00: bdata <= { ss0_edge_ctrl, 5'b0, ser0_log_channels, out_overflow, sc0_overflow, pipeline_busy, 1'b0, sc0_monitor, 2'b0, ss0_enable };
                 6'h04: bdata <= ss0_timer_period;
-                6'h08: bdata <= ss0_rising_edge_mask;
-                6'h0C: bdata <= ss0_falling_edge_mask;
-                6'h10: bdata <= sc0_pipeline_state;
-                6'h14: bdata <= ser0_pipeline_state;
-                6'h18: begin
+                6'h10: bdata <= mux_ctrl[31:0];
+                6'h14: bdata <= mux_ctrl[63:32];
+                6'h18: bdata <= mux_ctrl[84:64];
+                6'h20: bdata <= sc0_pipeline_state;
+                6'h24: bdata <= ser0_pipeline_state;
+                6'h28: begin
                     bdata <= sample_index[31:0];
                     temp <= sample_index[63:32];
                 end
-                6'h1C: begin
+                6'h2C: begin
                     bdata <= temp;
                 end
-                6'h20: bdata <= mux_ctrl[31:0];
-                6'h24: bdata <= mux_ctrl[63:32];
-                6'h28: bdata <= mux_ctrl[79:64];
                 default: bdata <= 32'hxxxxxxxx;
             endcase
         end

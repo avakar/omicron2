@@ -724,13 +724,13 @@ wire[7:0] usb_mem0_douta;
 usb_mem usb_mem0(
     .clka(clk_48),
     .wea(usb0_transaction_active && usb0_endpoint < 2 && !usb0_direction_in && usb0_data_strobe && !io_usb_addr_ptr[6]),
-    .addra({ usb_mem0_bank_usb, usb0_endpoint[0], usb0_direction_in, io_usb_addr_ptr[5:0] }),
+    .addra({ usb_mem0_bank_usb, usb0_endpoint[1:0], usb0_direction_in, io_usb_addr_ptr[5:0] }),
     .dina(usb0_data_out),
     .douta(usb_mem0_douta),
 
     .clkb(clk_48),
     .web((cpu0_io_addr_strobe && cpu0_io_write_strobe && cpu0_io_address[31:12] == 20'hC0001)? cpu0_io_byte_enable: 4'b0000),
-    .addrb({ cpu0_io_address[6]? usb_mem0_bank_in: usb_mem0_bank_out, cpu0_io_address[7:2] }),
+    .addrb({ cpu0_io_address[6]? usb_mem0_bank_in: usb_mem0_bank_out, cpu0_io_address[8:2] }),
     .dinb(cpu0_io_write_data),
     .doutb(io_usb_mem)
     );
