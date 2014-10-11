@@ -220,11 +220,9 @@ INST "m_udqm" TNM = m_out_grp;
 
 NET "clk_48" TNM_NET = clk_48;
 NET "clk_dram" TNM_NET = clk_dram;
-NET "clk_sampler" TNM_NET = clk_sampler;
+#NET "clk_sampler" TNM_NET = clk_sampler;
 
-TIMESPEC TS_cpu_to_sampler = FROM "clk_48" TO "clk_sampler" TIG;
-TIMESPEC TS_sampler_to_cpu = FROM "clk_sampler" TO "clk_48" TIG;
+#TIMESPEC TS_cpu_to_sampler = FROM "clk_48" TO "clk_sampler" TIG;
+#TIMESPEC TS_sampler_to_cpu = FROM "clk_sampler" TO "clk_48" TIG;
 TIMESPEC TS_cpu_to_dram = FROM "clk_48" TO "clk_dram" TIG;
 TIMESPEC TS_dram_to_cpu = FROM "clk_dram" TO "clk_48" TIG;
-#TIMESPEC TS_dram_to_sampler = FROM "clk_dram" TO "clk_sampler" TIG;
-#TIMESPEC TS_sampler_to_dram = FROM "clk_sampler" TO "clk_dram" TIG;

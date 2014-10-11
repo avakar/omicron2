@@ -7,11 +7,14 @@ module index_scanner #(
     input[15:0] sample,
     input sample_strobe,
 
-    output reg[width-1:0] index
+    output reg[width-1:0] index,
+    output[17:0] compressor_state
     );
 
 reg[15:0] last_sample;
 reg[1:0] state;
+
+assign compressor_state = { last_sample, state };
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin

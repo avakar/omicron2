@@ -176,16 +176,22 @@ wire[31:0] io100_adata;
 reg[31:0] io100_bdata;
 wire io100_avalid;
 
-/* 32'hD0000010 */ wire[31:0] io100_sdram_ctrl_bdata;
+/* 32'hD0000010 */
+reg[7:0] io100_sdram_dma_choke_addr;
+reg io100_sdram_dma_choke_enable;
+reg io100_sdram_dma_choked;
+// wire m_pwren;
 /* 32'hD0000020 */ reg[23:0] io100_sdram_dma_rdaddr;
 /* 32'hD0000024 */ wire[31:0] io100_sdram_dma_rdstatus;
 /* 32'hD0000028 */ reg[23:0] io100_sdram_dma_wraddr;
 /* 32'hD000002C */ wire[31:0] io100_sdram_dma_wrstatus;
 /* 32'hD0000030 */ wire[23:0] io100_sdram_dma_sfaddr; wire sf0_empty;
-/* 32'hD0000038 */ wire[59:0] io100_recv_sample_index;
+/* 32'hD0000038 */ wire[63:0] io100_current_marker;
+/* 32'hD0000040 */ reg[63:0] io100_start_marker;
+/* 32'hD0000048 */ reg[63:0] io100_stop_marker;
 
 reg[4:0] usb_ep3_wr_addr;
-reg[59:0] io100_temp;
+reg[63:0] io100_temp;
 
 reg io100_ctrl_bvalid;
 always @(posedge clk_dram or negedge rst_n) begin
@@ -206,17 +212,22 @@ always @(posedge clk_dram or negedge rst_n) begin
     end else if (io100_bvalid) begin
         io100_bdata <= 32'hxxxxxxxx;
         casez ({ io100_address[31:2], 2'b00 })
-            32'hD0000010: io100_bdata <= io100_sdram_ctrl_bdata;
+            32'hD0000010: io100_bdata <= { m_pwren };
+            32'hD0000014: io100_bdata <= { io100_sdram_dma_choke_addr, 5'b0, io100_sdram_dma_choke_enable, io100_sdram_dma_choked, 1'b0};
             32'hD0000020: io100_bdata <= { usb_ep3_wr_addr, io100_sdram_dma_rdaddr };
             32'hD0000024: io100_bdata <= io100_sdram_dma_rdstatus;
             32'hD0000028: io100_bdata <= io100_sdram_dma_wraddr;
             32'hD000002C: io100_bdata <= io100_sdram_dma_wrstatus;
             32'hD0000030: begin
                 io100_bdata <= { !sf0_empty, 7'b0, io100_sdram_dma_sfaddr };
-                io100_temp <= io100_recv_sample_index;
+                io100_temp <= io100_current_marker;
             end
             32'hD0000038: io100_bdata <= io100_temp[31:0];
-            32'hD000003C: io100_bdata <= io100_temp[59:32];
+            32'hD000003C: io100_bdata <= io100_temp[63:32];
+            32'hD0000040: io100_bdata <= io100_start_marker[31:0];
+            32'hD0000044: io100_bdata <= io100_start_marker[63:32];
+            32'hD0000048: io100_bdata <= io100_stop_marker[31:0];
+            32'hD000004C: io100_bdata <= io100_stop_marker[63:32];
         endcase
     end
 end
@@ -377,28 +388,8 @@ sampler sampler0(
     .bdata(io200_bdata)
     );
 
-index_scanner idxscan0(
-    .rst_n(rst_n),
-    .clk(clk_dram),
-
-    .sample(sf0_dout),
-    .sample_strobe(sf0_rd_en),
-
-    .index(io100_recv_sample_index)
-    );
-
 //---------------------------------------------------------------------
 // SDRAM
-
-assign io100_sdram_ctrl_bdata = { 30'b0, m_pwren };
-always @(posedge clk_dram or negedge rst_n) begin
-    if (!rst_n) begin
-        m_pwren <= 1'b0;
-    end else begin
-        if (io100_avalid && io100_awe && { io100_address[31:2], 2'b00 } == 32'hD0000010)
-            m_pwren <= io100_adata[0];
-    end
-end
 
 wire m_clk_oe;
 reg m_clk_oe_sync;
@@ -445,13 +436,13 @@ assign io100_sdram_dma_wrstatus = { usb_ep3_rd_empty, sdram_dma_wrenable };
 
 wire s0_usbrd_avalid = sdram_dma_rdenable && (io100_sdram_dma_rdaddr[4:0] != 1'b0 || (usb_ep3_wr_addr == 1'b0 && !usb_ep3_wr_full));
 wire s0_usbwr_avalid = !usb_ep3_rd_empty && sdram_dma_wrenable;
-wire s0_sf_avalid = !sf0_empty;
+wire s0_sf_avalid = !sf0_empty && !io100_sdram_dma_choked;
 
 wire s0_sf_selected = s0_sf_avalid && (!sdram_dma_prio_usb || (!s0_usbrd_avalid && !s0_usbwr_avalid));
 
 wire s0_awe = s0_sf_selected || s0_usbwr_avalid;
 
-assign sf0_rd_en = s0_sf_selected && s0_aready;
+assign sf0_rd_en = (s0_sf_selected && s0_aready) || (!sf0_empty && io100_sdram_dma_choked);
 
 reg[23:0] sdram_dma_sf0_wraddr;
 assign io100_sdram_dma_sfaddr = sdram_dma_sf0_wraddr;
@@ -505,18 +496,30 @@ sdram s0(
 assign s0_avalid = s0_usbrd_avalid || s0_usbwr_avalid || s0_sf_avalid;
 assign usb_ep3_rd_pull = !s0_sf_selected && s0_usbwr_avalid && s0_aready;
 
+reg sdram_dma_last_choked;
+wire[23:0] sdram_dma_sf0_next_wraddr = sdram_dma_sf0_wraddr + 1'b1;
+
 always @(posedge clk_dram or negedge rst_n) begin
     if (!rst_n) begin
+        m_pwren <= 1'b0;
         io100_sdram_dma_rdaddr <= 1'b0;
         usb_ep3_wr_addr <= 1'b0;
         sdram_dma_rdenable <= 1'b1;
         sdram_dma_wrenable <= 1'b1;
         sdram_dma_sf0_wraddr <= 1'b0;
+        sdram_dma_last_choked <= 1'b1;
+        io100_sdram_dma_choked <= 1'b1;
+        io100_sdram_dma_choke_addr <= 1'sbx;
+        io100_sdram_dma_choke_enable <= 1'b0;
     end else begin
+        sdram_dma_last_choked <= io100_sdram_dma_choked;
+
         if (s0_avalid && s0_aready) begin
-            if (s0_sf_selected)
-                sdram_dma_sf0_wraddr <= sdram_dma_sf0_wraddr + 1'b1;
-            else if (!s0_usbwr_avalid)
+            if (s0_sf_selected) begin
+                sdram_dma_sf0_wraddr <= sdram_dma_sf0_next_wraddr;
+                if (io100_sdram_dma_choke_enable && sdram_dma_sf0_next_wraddr[23:16] == io100_sdram_dma_choke_addr)
+                    io100_sdram_dma_choked <= 1'b1;
+            end else if (!s0_usbwr_avalid)
                 io100_sdram_dma_rdaddr <= io100_sdram_dma_rdaddr + 1'b1;
             else
                 io100_sdram_dma_wraddr <= io100_sdram_dma_wraddr + 1'b1;
@@ -525,8 +528,27 @@ always @(posedge clk_dram or negedge rst_n) begin
         if (usb_ep3_wr_en)
             usb_ep3_wr_addr <= usb_ep3_wr_addr + 1'b1;
 
+        if (!io100_sdram_dma_choked && sdram_dma_last_choked) begin
+            io100_start_marker <= io100_current_marker;
+        end
+
+        if (io100_sdram_dma_choked && !sdram_dma_last_choked) begin
+            io100_stop_marker <= io100_current_marker;
+        end
+
         if (io100_avalid && io100_awe) begin
             casez ({ io100_address[31:2], 2'b00 })
+                32'hD0000010: begin
+                    m_pwren <= io100_adata[0];
+                end
+                32'hD0000014: begin
+                    io100_sdram_dma_choke_enable <= io100_adata[2];
+                    if (io100_adata[3])
+                        io100_sdram_dma_choked <= 1'b0;
+                    if (io100_adata[4])
+                        io100_sdram_dma_choked <= 1'b1;
+                    io100_sdram_dma_choke_addr <= io100_adata[15:8];
+                end
                 32'hD0000020: begin
                     io100_sdram_dma_rdaddr <= { io100_adata[23:5], 5'b0 };
                     usb_ep3_wr_addr <= 1'b0;
@@ -544,6 +566,26 @@ always @(posedge clk_dram or negedge rst_n) begin
         end
     end
 end
+
+//---------------------------------------------------------------------
+// sampler receiver
+
+wire[45:0] idxscan0_index;
+wire[17:0] idxscan0_state;
+index_scanner #(
+    .width(46)
+    ) idxscan0(
+    .rst_n(rst_n),
+    .clk(clk_dram),
+
+    .sample(sf0_dout),
+    .sample_strobe(sf0_rd_en),
+
+    .index(idxscan0_index),
+    .compressor_state(idxscan0_state)
+    );
+
+assign io100_current_marker = { idxscan0_state, idxscan0_index };
 
 //---------------------------------------------------------------------
 // ICAP
@@ -1023,9 +1065,10 @@ clock_controller clk0(
     .clk_dram(clk_dram),
     .clk_dram_out(clk_dram_out),
     .clk_dram_out_n(clk_dram_out_n),
-    .clk_sampler(clk_sampler),
+    .clk_sampler(),
     .locked(clk0_locked)
     );
+assign clk_sampler = clk_dram;
 assign rst_n = end_of_startup && clk0_locked;
 
 // Reset generator

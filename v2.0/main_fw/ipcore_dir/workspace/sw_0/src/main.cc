@@ -79,12 +79,23 @@
 #define SDRAM_CTRL *((uint32_t volatile *)0xD0000010)
 #define SDRAM_ENABLE_bm (1<<0)
 
+#define SDRAM_DMA_CTRL *((uint32_t volatile *)0xD0000014)
+#define SDRAM_DMA_CHOKED_bm (1<<1)
+#define SDRAM_DMA_CHOKE_ENABLE_bm (1<<2)
+#define SDRAM_DMA_UNCHOKE_bm (1<<3)
+#define SDRAM_DMA_CHOKE_bm (1<<4)
+#define SDRAM_DMA_CHOKE_ADDR_bm 0xff00
+#define SDRAM_DMA_CHOKE_ADDR_gp 8
+
 #define SDRAM_DMA_RDADDR *((uint32_t volatile *)0xD0000020)
 #define SDRAM_DMA_RDSTATUS *((uint32_t volatile *)0xD0000024)
 #define SDRAM_DMA_WRADDR *((uint32_t volatile *)0xD0000028)
 #define SDRAM_DMA_WRSTATUS *((uint32_t volatile *)0xD000002C)
 #define SDRAM_DMA_SFADDR *((uint32_t volatile *)0xD0000030)
-#define SDRAM_DMA_RECV_SAMPLE_IDX *((uint64_t volatile *)0xD0000038)
+#define SDRAM_DMA_CURRENT_MARKER *((uint64_t volatile *)0xD0000038)
+#define SDRAM_DMA_START_MARKER *((uint64_t volatile *)0xD0000040)
+#define SDRAM_DMA_STOP_MARKER *((uint64_t volatile *)0xD0000048)
+#define SDRAM_DMA_MARKER_IDX_bm 0x3FFFFFFFFFFF
 
 #define SDRAM_DMA_ENABLED_bm (1<<0)
 #define SDRAM_DMA_BUF_EMPTY_bm (1<<1)
@@ -852,8 +863,12 @@ public:
 				return true;
 			break;
 		case cmd_start:
-			if (req.wLength == 18 && !m_running)
+			if (req.wLength == 18)
+			{
+				if (m_running)
+					this->stop();
 				return true;
+			}
 			break;
 		case cmd_stop:
 			if (req.wLength == 0)
@@ -868,6 +883,24 @@ public:
 			break;
 		case cmd_get_config:
 			return true;
+		case cmd_unchoke:
+			{
+				uint32_t ctrl = SDRAM_DMA_CTRL;
+				if (!(SDRAM_DMA_CTRL & SDRAM_DMA_CHOKED_bm))
+					return false;
+
+				uint8_t choke_addr = (ctrl & SDRAM_DMA_CHOKE_ADDR_bm) >> SDRAM_DMA_CHOKE_ADDR_gp;
+				uint32_t sfaddr = SDRAM_DMA_SFADDR & SDRAM_DMA_SFADDR_PTR_bm;
+
+				if ((sfaddr >> 16) == choke_addr)
+					return false;
+
+				return true;
+			}
+		case cmd_move_choke:
+			if (req.wLength == 4)
+				return true;
+			break;
 		}
 
 		return false;
@@ -928,8 +961,16 @@ public:
 
 				this->start(
 					p[0],
-					load_le<uint8_t>(p + 2),
+					load_le<uint32_t>(p + 2),
 					p[1]);
+			}
+			return true;
+		case cmd_move_choke:
+			if (len)
+			{
+				uint32_t addr = load_le<uint32_t>(p);
+				uint8_t new_choke = (addr + 0xff0000) >> 16;
+				SDRAM_DMA_CTRL = (new_choke << SDRAM_DMA_CHOKE_ADDR_gp) | SDRAM_DMA_CHOKE_ENABLE_bm;
 			}
 			return true;
 		}
@@ -943,10 +984,15 @@ public:
 		m_start_src_index = SAMPLER_SRC_SAMPLE_INDEX_LO;
 		m_start_src_index |= (uint64_t)SAMPLER_SRC_SAMPLE_INDEX_HI << 32;
 		m_start_sfaddr = (SDRAM_DMA_SFADDR & SDRAM_DMA_SFADDR_PTR_bm);
-		m_start_recv_index = SDRAM_DMA_RECV_SAMPLE_IDX;
+		m_start_recv_index = SDRAM_DMA_CURRENT_MARKER & SDRAM_DMA_MARKER_IDX_bm;
 
 		SAMPLER_TMR_PER = tmr;
 		SAMPLER_CTRL = (edge_ctrl << SAMPLER_EDGE_CTRL_gp) | (shift << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_PIPELINE_bm | SAMPLER_ENABLE_bm;
+
+		uint8_t choke_addr = (m_start_sfaddr + 0xff0000) >> 16;
+
+		SDRAM_DMA_CTRL = (choke_addr << SDRAM_DMA_CHOKE_ADDR_gp) | SDRAM_DMA_CHOKE_ENABLE_bm | SDRAM_DMA_CHOKE_bm;
+		m_running = true;
 	}
 
 	uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p)
@@ -964,6 +1010,11 @@ public:
 			p = store_le(p, SAMPLER_MUX2);
 			p = store_le(p, SAMPLER_MUX3);
 			break;
+		case cmd_unchoke:
+			p = store_le(p, SDRAM_DMA_SFADDR & SDRAM_DMA_SFADDR_PTR_bm);
+			SDRAM_DMA_CTRL |= SDRAM_DMA_UNCHOKE_bm;
+			p = store_le(p, SDRAM_DMA_START_MARKER);
+			break;
 		}
 		return p - p_orig;
 	}
@@ -977,7 +1028,7 @@ public:
 	restart:
 		SAMPLER_CTRL = SAMPLER_CTRL | SAMPLER_SET_MONITOR_bm;
 		uint32_t sfaddr = SDRAM_DMA_SFADDR;
-		uint64_t recv_idx = SDRAM_DMA_RECV_SAMPLE_IDX;
+		uint64_t recv_idx = SDRAM_DMA_CURRENT_MARKER & SDRAM_DMA_MARKER_IDX_bm;
 		recv_idx -= m_start_recv_index;
 		recv_idx <<= 4 - m_serializer_shift;
 
@@ -985,13 +1036,19 @@ public:
 		uint8_t * cur = p;
 
 		cur = store_le<uint32_t>(cur, sfaddr & SDRAM_DMA_SFADDR_PTR_bm);
+		if (SDRAM_DMA_CTRL & SDRAM_DMA_CHOKED_bm)
+		{
+			cur = store_le<uint64_t>(cur, SDRAM_DMA_STOP_MARKER);
+			return cur - p;
+		}
+
 		cur = store_le<uint64_t>(cur, recv_idx);
 
 		if (recv_idx >= src_idx)
 		{
 			*cur++ = 0;
 			*cur++ = 0;
-			return 2;
+			return cur - p;
 		}
 
 		if (sfaddr & SDRAM_DMA_SFADDR_BUSY_bm)
@@ -1035,11 +1092,11 @@ public:
 
 		SAMPLER_CTRL = SAMPLER_CTRL | SAMPLER_SET_MONITOR_bm;
 		uint32_t sfaddr2 = SDRAM_DMA_SFADDR;
-		uint64_t recv_idx2 = SDRAM_DMA_RECV_SAMPLE_IDX;
+		uint64_t recv_idx2 = SDRAM_DMA_CURRENT_MARKER & SDRAM_DMA_MARKER_IDX_bm;
 		recv_idx2 -= m_start_recv_index;
 		recv_idx2 <<= 4 - m_serializer_shift;
 
-		if (recv_idx2 != recv_idx)
+		if (recv_idx2 != recv_idx || (SDRAM_DMA_CTRL & SDRAM_DMA_CHOKED_bm))
 		{
 			sfaddr = sfaddr2;
 			recv_idx = recv_idx2;
@@ -1060,6 +1117,7 @@ public:
 		{
 		}
 
+		SDRAM_DMA_CTRL = SDRAM_DMA_CHOKE_bm;
 		m_running = false;
 	}
 
@@ -1072,6 +1130,8 @@ private:
 		cmd_stop = 0x4104,
 		cmd_get_sample_index = 0xc105,
 		cmd_get_config = 0xc106,
+		cmd_unchoke = 0xc107,
+		cmd_move_choke = 0x4108,
 	};
 
 	bool m_running;
