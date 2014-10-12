@@ -131,6 +131,13 @@
 #define SAMPLER_RISING_EDGE_bm (1<<16)
 #define SAMPLER_FALLING_EDGE_bm (1<<17)
 
+#define PIC_STATUS *((uint32_t const volatile *)0xC0000050)
+#define PIC_CTRL *((uint8_t volatile *)0xC0000050)
+#define PIC_MCLR_bm (1<<0)
+#define PIC_OUT_bm (1<<1)
+#define PIC_BUSY_bm (1<<2)
+#define PIC_CNT *((uint8_t volatile *)0xC0000051)
+#define PIC_SHIFT *((uint32_t volatile *)0xC0000054)
 
 bool usb_dbg_enabled = false;
 
@@ -1144,6 +1151,95 @@ private:
 	uint64_t m_start_recv_index;
 };
 
+void wait(uint32_t us)
+{
+	uint32_t base = TMR;
+	while ((TMR - base) <= us)
+	{
+	}
+}
+
+struct pic_flash_handler
+{
+	pic_flash_handler()
+	{
+	}
+
+	void enter()
+	{
+		PIC_CTRL = PIC_MCLR_bm;
+		wait(250);
+
+		this->write(0x4D434850, 33);
+	}
+
+	void read_seq(uint8_t size)
+	{
+		while (size--)
+		{
+			this->write(0x04, 6);
+			this->read(16);
+		}
+	}
+
+	void read(uint16_t addr, uint16_t * buf, uint8_t size)
+	{
+		if (addr >= 0x2000)
+		{
+			this->write(0x00, 6);
+			this->write(0, 16);
+		}
+		else
+		{
+			this->write(0x02, 6);
+			this->write(0, 16);
+		}
+
+		uint16_t incr_count = addr & 0x1fff;
+		while (incr_count)
+		{
+			this->write(0x06, 6);
+			--incr_count;
+		}
+
+		while (size)
+		{
+			this->write(0x04, 6);
+			*buf++ = (this->read(16) >> 1) & 0x3fff;
+			if (--size)
+				this->write(0x06, 6);
+		}
+	}
+
+	void exit()
+	{
+		PIC_CTRL = 0;
+	}
+
+private:
+	uint16_t read(uint8_t len)
+	{
+		PIC_SHIFT = 0xFFFFFFFF;
+		PIC_CNT = len;
+		while (PIC_STATUS & PIC_BUSY_bm)
+		{
+		}
+		wait(1);
+		return PIC_SHIFT >> (32 - len);
+	}
+
+	void write(uint32_t shift, uint8_t len)
+	{
+		PIC_SHIFT = shift;
+		PIC_CTRL = PIC_MCLR_bm | PIC_OUT_bm;
+		PIC_CNT = len;
+		while (PIC_STATUS & PIC_BUSY_bm)
+		{
+		}
+		wait(1);
+		PIC_CTRL = PIC_MCLR_bm;
+	}
+};
 
 int main()
 {
@@ -1156,6 +1252,8 @@ int main()
 	usb_omicron_handler oh;
 	usb_control_handler * usb_handler = 0;
 	usb_ctrl_req_t usb_req;
+
+	pic_flash_handler pfh;
 
 	bool last_reset_state = false;
 
@@ -1171,54 +1269,31 @@ int main()
 			case 'L':
 				dh.reconfigure();
 				break;
-			case 'S':
-				oh.start(4, 200000000, 0);
+			case 'p':
+				pfh.exit();
 				break;
-			case 's':
-				oh.stop();
+			case 'P':
+				pfh.enter();
 				break;
-			case '1':
-				SAMPLER_TMR_PER = 200000000;
-				break;
-			case '2':
-				SAMPLER_TMR_PER = 2000;
-				break;
-			case '3':
-				SAMPLER_TMR_PER = 2;
-				break;
-			case '4':
-				SAMPLER_TMR_PER = 20;
-				break;
-			case '5':
-				SAMPLER_TMR_PER = 200;
-				break;
-			case '6':
-				SAMPLER_TMR_PER = 1;
-				break;
-			case '7':
-				SAMPLER_TMR_PER = 0;
-				break;
-			case 'm':
-				SAMPLER_MUX1 = 0x8a418820;
-				break;
-			case 'M':
-				SAMPLER_MUX1 = 0x8a418834;
-				break;
-			case 't':
-			{
-				uint8_t buf[32];
-				uint8_t s = oh.get_trail(buf);
+			case 'D':
+				{
+					uint16_t data[10];
+					pfh.read(0x2000, data, 10);
 
-				sendch('t');
-				for (uint8_t i = 0; i < s; ++i)
-					sendhex(buf[i]);
-				sendch('\n');
+					sendch('p');
+					for (uint8_t i = 0; i < 10; ++i)
+					{
+						sendhex(data[i]);
+						sendch(':');
+					}
+					sendch('\n');
+				}
 				break;
-			}
+			case 'R':
+				pfh.read_seq(32);
+				break;
 			default:
 				send("omicron analyzer -- DFU loader");
-				send("\nSAMPLER_STATUS: ");
-				sendhex(SAMPLER_STATUS);
 				send("\nbL?\n");
 			}
 		}

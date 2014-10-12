@@ -15,7 +15,11 @@ module main(
     output reg spi_clk,
     output reg spi_mosi,
     input spi_miso,
-    
+
+    output reg pic_mclr_n,
+    inout pic_clk,
+    inout pic_data,
+
     output reg m_pwren,
     output m_clk,
     output m_cs_n,
@@ -84,6 +88,9 @@ assign s = 16'bzzzz_zzzz_zzzz_zzzz;
 /* 32'hC0000048 */ wire[15:0] io_usb_ep2_ctrl;
 /* 32'hC000004C */ //wire[15:0] io_usb_ep2_ctrl;
 
+/* 32'hC0000050 */ wire[31:0] io_pic_ctrl;
+/* 32'hC0000054 */ wire[31:0] io_pic_shift;
+
 /* 32'hC0001000 */ wire[31:0] io_usb_mem;
 
 /* 32'hD0000000 */ wire[31:0] io_br100;
@@ -132,6 +139,8 @@ always @(*) begin
         32'hC0000044: cpu0_io_read_data <= io_usb_ep3_ctrl;
         32'hC0000048: cpu0_io_read_data <= io_usb_ep2_ctrl;
         32'hC000004C: cpu0_io_read_data <= io_usb_ep2_ctrl;
+        32'hC0000050: cpu0_io_read_data <= io_pic_ctrl;
+        32'hC0000054: cpu0_io_read_data <= io_pic_shift;
         32'hC0001???: cpu0_io_read_data <= io_usb_mem;
         32'hD???????: cpu0_io_read_data <= io_br100;
         32'hE???????: cpu0_io_read_data <= io_br200;
@@ -362,18 +371,18 @@ sampler sampler0(
         2'b0,
         clk_33,
         clk_24_s,
+        pic_mclr_n,
+        pic_clk,
+        pic_data,
         spi_cs,
         spi_clk,
         spi_mosi,
         spi_miso,
         usb_dp,
         usb_dn,
-        usb_pullup,
         usb_rx_j,
         usb_rx_se0,
         usb_tx_en,
-        usb_tx_j,
-        usb_tx_se0,
         s
         }),
 
@@ -675,7 +684,7 @@ always @(posedge clk_48 or negedge rst_n) begin
 end
 
 //---------------------------------------------------------------------
-// SPI
+// FLASH SPI
 
 reg[7:0] data_out;
 reg[3:0] data_cnt;
@@ -711,6 +720,80 @@ always @(posedge clk_48 or negedge rst_n) begin
         if (!spi_clk) begin
             data_out[0] <= spi_miso;
             spi_clk <= 1'b1;
+        end
+    end
+end
+
+//---------------------------------------------------------------------
+// PIC SPI
+
+reg pic_txen;
+reg pic_tx_data;
+reg pic_tx_clk;
+
+assign pic_data = (!pic_mclr_n && pic_txen)? pic_tx_data: 1'bz;
+assign pic_clk = pic_mclr_n? 1'bz: pic_tx_clk;
+
+reg[2:0] pic_clk_presc;
+wire pic_clken = (pic_clk_presc == 3'd7);
+always @(posedge clk_48 or negedge rst_n) begin
+    if (!rst_n) begin
+        pic_clk_presc <= 1'b0;
+    end else begin
+        pic_clk_presc <= pic_clk_presc + 1'b1;
+    end
+end
+
+reg pic_ctrl_out;
+reg[5:0] pic_cnt;
+reg[31:0] pic_shift;
+wire pic_busy = pic_cnt != 1'b0;
+
+assign io_pic_shift = pic_shift;
+assign io_pic_ctrl = { pic_cnt, 5'b0, pic_busy, pic_ctrl_out, !pic_mclr_n };
+
+always @(posedge clk_48 or negedge rst_n) begin
+    if (!rst_n) begin
+        pic_tx_data <= 1'bx;
+        pic_txen <= 1'b0;
+        pic_tx_clk <= 1'b0;
+        pic_mclr_n <= 1'b1;
+        pic_cnt <= 1'b0;
+        pic_ctrl_out <= 1'b0;
+        pic_shift <= 1'sbx;
+    end else begin
+        if (pic_clken) begin
+            if (pic_busy) begin
+                pic_tx_clk <= !pic_tx_clk;
+                pic_txen <= pic_ctrl_out;
+
+                if (!pic_tx_clk) begin
+                    pic_tx_data <= pic_shift[0];
+                    pic_shift <= { 1'b0, pic_shift[31:1] };
+                end else begin
+                    pic_shift[31] <= pic_data;
+                    pic_cnt <= pic_cnt - 1'b1;
+                end
+            end else begin
+                pic_txen <= 1'b0;
+            end
+        end
+
+        if (cpu0_io_addr_strobe && cpu0_io_write_strobe) begin
+            case ({cpu0_io_address[31:2], 2'b00})
+                32'hC0000050: begin
+                    if (cpu0_io_byte_enable[0]) begin
+                        pic_mclr_n <= !cpu0_io_write_data[0];
+                        pic_ctrl_out <= cpu0_io_write_data[1];
+                    end
+                    if (cpu0_io_byte_enable[1]) begin
+                        pic_cnt <= cpu0_io_write_data[13:8];
+                    end
+                end
+                32'hC0000054: begin
+                    pic_shift <= cpu0_io_write_data;
+                end
+            endcase
         end
     end
 end

@@ -236,7 +236,8 @@ NET "pic_data" IOSTANDARD = LVCMOS33;
 NET "pic_mclr_n" IOSTANDARD = LVCMOS33;
 
 
-NET "pic_data" KEEPER;
+NET "pic_data" PULLDOWN;
+NET "pic_clk" PULLDOWN;
 NET "spi_miso" KEEPER;
 NET "s[15]" KEEPER;
 NET "s[14]" KEEPER;
