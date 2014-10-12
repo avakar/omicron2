@@ -177,10 +177,13 @@ reg[31:0] io100_bdata;
 wire io100_avalid;
 
 /* 32'hD0000010 */
-reg[7:0] io100_sdram_dma_choke_addr;
-reg io100_sdram_dma_choke_enable;
-reg io100_sdram_dma_choked;
 // wire m_pwren;
+/* 32'hD0000014:1 */ reg io100_sdram_dma_choked;
+/* 32'hD0000014:2 */ reg io100_sdram_dma_choke_enable;
+/* 32'hD0000014:3 */ // reg io100_sdram_dma_choke_enable_clr;
+/* 32'hD0000014:4 */ // reg io100_sdram_dma_choke_enable_set;
+/* 32'hD0000014:5 */ reg io100_sdram_dma_clear_marker;
+/* 32'hD0000014:8 */ reg[7:0] io100_sdram_dma_choke_addr;
 /* 32'hD0000020 */ reg[23:0] io100_sdram_dma_rdaddr;
 /* 32'hD0000024 */ wire[31:0] io100_sdram_dma_rdstatus;
 /* 32'hD0000028 */ reg[23:0] io100_sdram_dma_wraddr;
@@ -582,10 +585,28 @@ index_scanner #(
     .sample_strobe(sf0_rd_en),
 
     .index(idxscan0_index),
-    .compressor_state(idxscan0_state)
+    .compressor_state(idxscan0_state),
+
+    .clear_state(io100_sdram_dma_clear_marker)
     );
 
 assign io100_current_marker = { idxscan0_state, idxscan0_index };
+
+always @(posedge clk_dram or negedge rst_n) begin
+    if (!rst_n) begin
+        io100_sdram_dma_clear_marker <= 1'b0;
+    end else begin
+        io100_sdram_dma_clear_marker <= 1'b0;
+        if (io100_avalid && io100_awe) begin
+            casez ({ io100_address[31:2], 2'b00 })
+                32'hD0000014: begin
+                    if (io100_adata[5])
+                        io100_sdram_dma_clear_marker <= 1'b1;
+                end
+            endcase
+        end
+    end
+end
 
 //---------------------------------------------------------------------
 // ICAP

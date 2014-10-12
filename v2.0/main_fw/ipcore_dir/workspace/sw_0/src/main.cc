@@ -84,6 +84,7 @@
 #define SDRAM_DMA_CHOKE_ENABLE_bm (1<<2)
 #define SDRAM_DMA_UNCHOKE_bm (1<<3)
 #define SDRAM_DMA_CHOKE_bm (1<<4)
+#define SDRAM_DMA_CLEAR_MARKER_STATE_bm (1<<5)
 #define SDRAM_DMA_CHOKE_ADDR_bm 0xff00
 #define SDRAM_DMA_CHOKE_ADDR_gp 8
 
@@ -840,7 +841,7 @@ class usb_omicron_handler
 {
 public:
 	usb_omicron_handler()
-		: m_running(false), m_start_sfaddr(0), m_start_src_index(0), m_start_recv_index(0)
+		: m_running(false), m_start_src_index(0), m_start_recv_index(0)
 	{
 
 	}
@@ -980,18 +981,21 @@ public:
 
 	void start(uint8_t shift, uint32_t tmr, uint8_t edge_ctrl)
 	{
+		assert(!m_running);
+
 		m_serializer_shift = shift;
 		m_start_src_index = SAMPLER_SRC_SAMPLE_INDEX_LO;
 		m_start_src_index |= (uint64_t)SAMPLER_SRC_SAMPLE_INDEX_HI << 32;
-		m_start_sfaddr = (SDRAM_DMA_SFADDR & SDRAM_DMA_SFADDR_PTR_bm);
+
+		uint32_t start_sfaddr = (SDRAM_DMA_SFADDR & SDRAM_DMA_SFADDR_PTR_bm);
 		m_start_recv_index = SDRAM_DMA_CURRENT_MARKER & SDRAM_DMA_MARKER_IDX_bm;
+
+		uint8_t choke_addr = (start_sfaddr + 0xff0000) >> 16;
+		SDRAM_DMA_CTRL = (choke_addr << SDRAM_DMA_CHOKE_ADDR_gp) | SDRAM_DMA_CHOKE_ENABLE_bm | SDRAM_DMA_CHOKE_bm | SDRAM_DMA_CLEAR_MARKER_STATE_bm;
 
 		SAMPLER_TMR_PER = tmr;
 		SAMPLER_CTRL = (edge_ctrl << SAMPLER_EDGE_CTRL_gp) | (shift << SAMPLER_LOG_CHANNELS_gp) | SAMPLER_CLEAR_PIPELINE_bm | SAMPLER_ENABLE_bm;
 
-		uint8_t choke_addr = (m_start_sfaddr + 0xff0000) >> 16;
-
-		SDRAM_DMA_CTRL = (choke_addr << SDRAM_DMA_CHOKE_ADDR_gp) | SDRAM_DMA_CHOKE_ENABLE_bm | SDRAM_DMA_CHOKE_bm;
 		m_running = true;
 	}
 
@@ -1136,7 +1140,6 @@ private:
 
 	bool m_running;
 	uint8_t m_serializer_shift;
-	uint32_t m_start_sfaddr;
 	uint64_t m_start_src_index;
 	uint64_t m_start_recv_index;
 };
