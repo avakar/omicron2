@@ -29,7 +29,7 @@ module main(
     output m_udqm,
     inout[15:0] m_dq,
 
-    input[15:0] s,
+    inout[15:0] s,
     output[15:0] sd
     );
 
@@ -51,7 +51,8 @@ assign vio50 = 1'b0;
 wire usb_rx_j, usb_rx_se0;
 wire usb_tx_en, usb_tx_j, usb_tx_se0;
 
-assign sd = 16'b0;
+assign sd = 16'b0000_0000_0000_0000;
+assign s = 16'bzzzz_zzzz_zzzz_zzzz;
 
 //---------------------------------------------------------------------
 // I/O space
