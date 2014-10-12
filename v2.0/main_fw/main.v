@@ -900,10 +900,27 @@ sdram_usb_ep usb_ep3(
     );
 
 always @(*) begin
-    usb0_handshake = 2'b01;
-    usb_mem0_bank_usb = 1'bx;
     usb_mem0_bank_in = 1'bx;
     usb_mem0_bank_out = 1'bx;
+    case (cpu0_io_address[8:7])
+        2'd0: begin
+            usb_mem0_bank_in = usb_ep0_bank_in;
+            usb_mem0_bank_out = usb_ep0_bank_out;
+        end
+        2'd1: begin
+            usb_mem0_bank_in = usb_ep1_bank_in;
+            usb_mem0_bank_out = usb_ep1_bank_out;
+        end
+        2'd2: begin
+            usb_mem0_bank_in = usb_ep2_bank_in;
+            usb_mem0_bank_out = usb_ep2_bank_out;
+        end
+    endcase
+end
+
+always @(*) begin
+    usb0_handshake = 2'b01;
+    usb_mem0_bank_usb = 1'bx;
     usb0_in_data_valid = 1'b0;
     usb0_toggle = 1'bx;
     usb0_data_in = 8'hxx;
@@ -912,8 +929,6 @@ always @(*) begin
             usb0_toggle = usb_ep0_toggle;
             usb0_handshake = usb_ep0_handshake;
             usb_mem0_bank_usb = usb_ep0_bank_usb;
-            usb_mem0_bank_in = usb_ep0_bank_in;
-            usb_mem0_bank_out = usb_ep0_bank_out;
             usb0_in_data_valid = usb_ep0_in_data_valid;
             usb0_data_in = usb_mem0_douta;
         end
@@ -921,8 +936,6 @@ always @(*) begin
             usb0_toggle = usb_ep1_toggle;
             usb0_handshake = usb_ep1_handshake;
             usb_mem0_bank_usb = usb_ep1_bank_usb;
-            usb_mem0_bank_in = usb_ep1_bank_in;
-            usb_mem0_bank_out = usb_ep1_bank_out;
             usb0_in_data_valid = usb_ep1_in_data_valid;
             usb0_data_in = usb_mem0_douta;
         end
@@ -930,8 +943,6 @@ always @(*) begin
             usb0_toggle = usb_ep2_toggle;
             usb0_handshake = usb_ep2_handshake;
             usb_mem0_bank_usb = usb_ep2_bank_usb;
-            usb_mem0_bank_in = usb_ep2_bank_in;
-            usb_mem0_bank_out = usb_ep2_bank_out;
             usb0_in_data_valid = usb_ep2_in_data_valid;
             usb0_data_in = usb_mem0_douta;
         end
