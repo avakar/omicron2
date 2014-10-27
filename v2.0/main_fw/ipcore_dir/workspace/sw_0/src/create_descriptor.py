@@ -1,5 +1,15 @@
-import struct, sys, os, os.path
-from uuid import UUID
+import struct, sys, os, os.path, subprocess, base64
+import uuid
+
+output = subprocess.check_output(['git', 'log', '-1', '--date=raw', '--pretty=format:%H %cd'])
+githash, ts, zone = output.split()
+githash = base64.b16decode(githash, casefold=True)
+ts = int(ts)
+zone = int(zone, 10)
+zone = (zone // 100) * 60 + (zone % 100)
+
+yb = uuid.UUID('49e8fed9-9f8d-4ff9-bc8c-c8d0f43f904f')
+version_info = struct.pack('<B16sIhH20sB', 2, yb.get_bytes(), ts, zone, 20, githash, 0)
 
 from usb_desc import *
 usb_desc = {
@@ -83,8 +93,7 @@ usb_desc = {
                         bInterval=16),
                     ],
                 functional=[
-                    CustomDescriptor(75,
-                        '\x02' + UUID('49e8fed9-9f8d-4ff9-bc8c-c8d0f43f904f').get_bytes())
+                    CustomDescriptor(75, version_info)
                     ]
                 ),
             ]
@@ -143,5 +152,6 @@ if __name__ == '__main__':
         fout = sys.stdout
     else:
         fout = open(sys.argv[1], 'w')
-    print_descriptors(fout, [usb_desc, dfu_desc])
+
+    print_descriptors(fout, [usb_desc, dfu_desc], version_info)
     fout.close()

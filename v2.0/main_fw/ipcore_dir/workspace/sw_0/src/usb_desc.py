@@ -115,7 +115,7 @@ def CustomDescriptor(desc_type, data):
         chunks.append(chunk)
     return ''.join(chunks)
 
-def print_descriptors(fout, descriptor_sets, rev_hash=None):
+def print_descriptors(fout, descriptor_sets, version_info=None):
     fout.write('''\
 struct usb_descriptor_entry_t
 {
@@ -157,6 +157,12 @@ static usb_descriptor_entry_t const usb_descriptor_map[] = {
 
     fout.write('static uint8_t const usb_descriptor_data[] = {\n')
 
+    if version_info:
+        version_info_pos = data.find(version_info)
+        if version_info_pos == -1:
+            version_info_pos = len(data)
+            data += version_info
+
     while data:
         line = '    '
         for ch in data[:16]:
@@ -175,6 +181,6 @@ static usb_descriptor_entry_t const usb_descriptor_map[] = {
         i += cnt
     fout.write('};\n\n')
 
-    if rev_hash:
-        rev_hash_pos = data.find(rev_hash)
-        fout.write('\nstatic uint16_t const %srev_hash_offset = 0x%x;\n' % (prefix, rev_hash_pos))
+    if version_info:
+        fout.write('\nstatic uint16_t const version_info_offset = 0x%x;\nstatic uint16_t const version_info_length = 0x%x;\n'
+            % (version_info_pos, len(version_info)))

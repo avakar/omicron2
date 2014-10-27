@@ -139,6 +139,36 @@
 #define PIC_CNT *((uint8_t volatile *)0xC0000051)
 #define PIC_SHIFT *((uint32_t volatile *)0xC0000054)
 
+static void wait(uint32_t us)
+{
+	uint32_t base = TMR;
+	while ((TMR - base) <= us)
+	{
+	}
+}
+
+template <typename T>
+T load_le(uint8_t const * p, uint8_t size = sizeof(T))
+{
+	T res = 0;
+	p += size;
+	while (size--)
+		res = (res << 8) | *--p;
+	return res;
+}
+
+template <typename T>
+uint8_t * store_le(uint8_t * p, T v, uint8_t size = sizeof(T))
+{
+	while (size--)
+	{
+		*p++ = (uint8_t)v;
+		v = v >> 8;
+	}
+
+	return p;
+}
+
 bool usb_dbg_enabled = false;
 
 static bool rxready()
@@ -298,16 +328,194 @@ class usb_control_handler
 {
 public:
 	virtual bool on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len) = 0;
+	virtual bool on_data_out_done(usb_ctrl_req_t & req) = 0;
 	virtual uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p) = 0;
 	virtual void commit_write(usb_ctrl_req_t & req) = 0;
+};
+
+
+struct pic_flash_handler
+{
+	pic_flash_handler()
+		: m_status(st_app), m_time_base(0), m_current_address(0)
+	{
+	}
+
+	bool is_busy() const
+	{
+		return m_status == st_init || m_status == st_busy_flash || m_status == st_busy_config;
+	}
+
+	void process()
+	{
+		switch (m_status)
+		{
+		case st_app:
+		case st_idle:
+			break;
+		case st_init:
+			if (TMR - m_time_base > 250)
+			{
+				this->write(0x4D434850, 33);
+				m_current_address = 0;
+				m_status = st_idle;
+			}
+			break;
+		case st_busy_flash:
+			if (TMR - m_time_base > 2500)
+				m_status = st_idle;
+			break;
+		case st_busy_config:
+			if (TMR - m_time_base > 5000)
+				m_status = st_idle;
+			break;
+		}
+	}
+
+	void enter()
+	{
+		if (m_status == st_app)
+		{
+			PIC_CTRL = PIC_MCLR_bm;
+			m_status = st_init;
+			m_time_base = TMR;
+		}
+	}
+
+	void program_block(uint16_t addr, uint16_t const * data, uint8_t size)
+	{
+		if (size == 0)
+			return;
+
+		assert((addr & 0x2000) == 0);
+		assert((addr & 0x0f) == ((addr + size - 1) & 0x0f));
+
+		this->seek(addr);
+
+		uint16_t const * last = data + size;
+		while (data != last)
+		{
+			this->write(0x02, 6);
+			this->write(*data++ << 1, 16);
+
+			if (data != last)
+				this->increment_address();
+		}
+
+		this->write(0x08, 6);
+		m_time_base = TMR;
+		m_status = st_busy_flash;
+	}
+
+	void program_config(uint16_t addr, uint16_t value)
+	{
+		this->seek(addr);
+		this->write(0x02, 6);
+		this->write(value << 1, 16);
+		this->write(0x08, 6);
+		m_time_base = TMR;
+		m_status = st_busy_config;
+	}
+
+	void increment_address()
+	{
+		this->write(0x06, 6);
+		++m_current_address;
+	}
+
+	void bulk_erase()
+	{
+		this->write(0x09, 6);
+		m_time_base = TMR;
+		m_status = st_busy_config;
+	}
+
+	void seek(uint16_t addr)
+	{
+		addr &= 0x3fff;
+
+		if ((m_current_address & 0x2000) != (addr & 0x2000) || m_current_address > addr)
+		{
+			if (addr & 0x2000)
+			{
+				this->write(0x00, 6);
+				this->write(0x3fff << 1, 16);
+				m_current_address = 0x2000;
+			}
+			else
+			{
+				this->write(0x16, 6);
+				m_current_address = 0x0000;
+			}
+		}
+
+		while (m_current_address < addr)
+			this->increment_address();
+	}
+
+	void read(uint8_t * buf, uint8_t size)
+	{
+		uint8_t * end = buf + size;
+		while (buf != end)
+		{
+			this->write(0x04, 6);
+			uint16_t data = (this->read(16) >> 1) & 0x3fff;
+			*buf++ = data;
+			if (buf != end)
+				*buf++ = data >> 8;
+			if (buf != end)
+				this->increment_address();
+		}
+	}
+
+	void read(uint16_t addr, uint8_t * buf, uint8_t size)
+	{
+		this->seek(addr);
+		this->read(buf, size);
+	}
+
+	void exit()
+	{
+		PIC_CTRL = 0;
+		m_status = st_app;
+	}
+
+private:
+	uint16_t read(uint8_t len)
+	{
+		PIC_SHIFT = 0xFFFFFFFF;
+		PIC_CNT = len;
+		while (PIC_STATUS & PIC_BUSY_bm)
+		{
+		}
+		wait(1);
+		return PIC_SHIFT >> (32 - len);
+	}
+
+	void write(uint32_t shift, uint8_t len)
+	{
+		PIC_SHIFT = shift;
+		PIC_CTRL = PIC_MCLR_bm | PIC_OUT_bm;
+		PIC_CNT = len;
+		while (PIC_STATUS & PIC_BUSY_bm)
+		{
+		}
+		wait(1);
+		PIC_CTRL = PIC_MCLR_bm;
+	}
+
+	enum state_t { st_app, st_init, st_idle, st_busy_flash, st_busy_config } m_status;
+
+	uint32_t m_time_base;
+	uint16_t m_current_address;
 };
 
 class dfu_handler
 	: public usb_control_handler
 {
 public:
-	dfu_handler()
-		: m_state(app_idle), m_status(err_ok), m_detach_time_base(0), m_detach_time_size(0), m_dnload_complete_time(0)
+	explicit dfu_handler(pic_flash_handler & pfh)
+		: m_state(app_idle), m_status(err_ok), m_detach_time_base(0), m_detach_time_size(0), m_dnload_complete_time(0), m_pfh(pfh)
 	{
 		m_flash_pos = 0;
 
@@ -327,6 +535,7 @@ public:
 		if (TMR - m_detach_time_base <= m_detach_time_size)
 		{
 			m_state = dfu_idle;
+			m_pfh.enter();
 		}
 		else
 		{
@@ -334,6 +543,7 @@ public:
 				reconfigure();
 
 			m_state = app_idle;
+			m_pfh.exit();
 		}
 		m_status = err_ok;
 	}
@@ -392,6 +602,7 @@ public:
 			{
 				if (m_state == dfu_idle)
 				{
+					m_upload_state = us_yb_header;
 					m_flash_pos = 0;
 					m_state = dfu_upload_idle;
 				}
@@ -456,43 +667,43 @@ public:
 		return false;
 	}
 
+	bool on_data_out_done(usb_ctrl_req_t & req)
+	{
+		if (req.cmd() == cmd_dnload && m_state == dfu_dnload_sync)
+		{
+			uint32_t next_boundary = (m_flash_pos + 0xffff) & ~(uint32_t)0xffff;
+			if (next_boundary - m_flash_pos < m_write_buf_size)
+			{
+				this->flash_write_enable();
+
+				spi_begin();
+				spi(0xD8);
+				spi(next_boundary >> 16);
+				spi(next_boundary >> 8);
+				spi(next_boundary);
+				spi_end();
+
+				m_dnload_complete_time = TMR + 600;
+			}
+			else
+			{
+				m_dnload_complete_time = TMR;
+			}
+
+			m_write_buf_offs = 0;
+			m_state = dfu_dnbusy;
+		}
+
+		return true;
+	}
+
 	bool on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len)
 	{
 		switch (req.cmd())
 		{
 		case cmd_dnload:
-			if (m_state == dfu_dnload_sync)
-			{
-				if (len == 0)
-				{
-					uint32_t next_boundary = (m_flash_pos + 0xffff) & ~(uint32_t)0xffff;
-					if (next_boundary - m_flash_pos < m_write_buf_size)
-					{
-						this->flash_write_enable();
-
-						spi_begin();
-						spi(0xD8);
-						spi(next_boundary >> 16);
-						spi(next_boundary >> 8);
-						spi(next_boundary);
-						spi_end();
-
-						m_dnload_complete_time = TMR + 600;
-					}
-					else
-					{
-						m_dnload_complete_time = TMR;
-					}
-
-					m_write_buf_offs = 0;
-					m_state = dfu_dnbusy;
-				}
-				else
-				{
-					memcpy(m_write_buf + m_write_buf_size, p, len);
-					m_write_buf_size += len;
-				}
-			}
+			memcpy(m_write_buf + m_write_buf_size, p, len);
+			m_write_buf_size += len;
 			break;
 		}
 
@@ -529,26 +740,75 @@ public:
 		}
 		case cmd_upload:
 			{
-				uint8_t chunk = req.wLength > 64? 64: req.wLength;
+				static uint16_t const pic_pgm_size = 512;
 
-				uint32_t rem = m_flash_size - m_flash_pos;
-				if (chunk > rem)
-					chunk = rem;
+				switch (m_upload_state)
+				{
+				case us_yb_header:
+					memcpy(p, usb_descriptor_data + version_info_offset, version_info_length);
+					memset(p + version_info_length, 0, 64 - version_info_length);
+					m_upload_state = us_pic_config_header;
+					return 64;
+				case us_pic_config_header:
+					p = store_le<uint32_t>(p, 2);
+					p = store_le<uint32_t>(p, 0x14);
+					p = store_le<uint32_t>(p, 0x4000);
+					memset(p, 0, 64-12);
+					m_upload_state = us_pic_config;
+					return 64;
+				case us_pic_config:
+					m_pfh.read(0x2000, p, 0x14);
+					memset(p + 0x14, 0, 64-0x14);
+					m_upload_state = us_pic_pgm_header;
+					return 64;
+				case us_pic_pgm_header:
+					p = store_le<uint32_t>(p, 2);
+					p = store_le<uint32_t>(p, pic_pgm_size);
+					p = store_le<uint32_t>(p, 0);
+					memset(p, 0, 64-12);
+					m_pfh.seek(0x0000);
+					m_upload_state = us_pic_pgm_data;
+					m_flash_pos = 0;
+					return 64;
+				case us_pic_pgm_data:
+					m_pfh.read(p, 64);
+					m_flash_pos += 64;
+					if (m_flash_pos == pic_pgm_size)
+						m_upload_state = us_flash_header;
+					return 64;
+				case us_flash_header:
+					p = store_le<uint32_t>(p, 1);
+					p = store_le<uint32_t>(p, m_flash_size);
+					memset(p, 0, 64-8);
+					m_upload_state = us_flash;
+					m_flash_pos = 0;
+					return 64;
+				case us_flash:
+					{
+						uint8_t chunk = req.wLength > 64? 64: req.wLength;
 
-				spi_begin();
-				spi(0x0B);
-				spi(m_flash_pos >> 16);
-				spi(m_flash_pos >> 8);
-				spi(m_flash_pos);
-				spi(0x00);
-				for (uint32_t i = 0; i < chunk; ++i)
-					*p++ = spi(0x00);
-				spi_end();
+						uint32_t rem = m_flash_size - m_flash_pos;
+						if (chunk > rem)
+							chunk = rem;
 
-				m_flash_pos += chunk;
-				if (chunk < 64)
-					m_state = dfu_idle;
-				return chunk;
+						spi_begin();
+						spi(0x0B);
+						spi(m_flash_pos >> 16);
+						spi(m_flash_pos >> 8);
+						spi(m_flash_pos);
+						spi(0x00);
+						for (uint32_t i = 0; i < chunk; ++i)
+							*p++ = spi(0x00);
+						spi_end();
+
+						m_flash_pos += chunk;
+						if (chunk < 64)
+							m_state = dfu_idle;
+						return chunk;
+					}
+				}
+
+				return 0;
 			}
 		}
 
@@ -659,12 +919,20 @@ private:
 	uint32_t m_detach_time_size;
 	uint32_t m_dnload_complete_time;
 
+	enum {
+		us_yb_header,
+		us_pic_config_header, us_pic_config, us_pic_pgm_header, us_pic_pgm_data,
+		us_flash_header, us_flash
+	} m_upload_state;
+
 	uint32_t m_flash_pos;
 	uint32_t m_flash_size;
 
 	uint16_t m_write_buf_offs;
 	uint16_t m_write_buf_size;
 	uint8_t m_write_buf[256];
+
+	pic_flash_handler & m_pfh;
 };
 
 class usb_core_handler
@@ -773,6 +1041,11 @@ public:
 		return false;
 	}
 
+	bool on_data_out_done(usb_ctrl_req_t & req)
+	{
+		return false;
+	}
+
 	uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p)
 	{
 		switch (req.cmd())
@@ -820,28 +1093,6 @@ private:
 	uint8_t m_descriptor_set;
 	uint8_t m_sn[30];
 };
-
-template <typename T>
-T load_le(uint8_t const * p, uint8_t size = sizeof(T))
-{
-	T res = 0;
-	p += size;
-	while (size--)
-		res = (res << 8) | *--p;
-	return res;
-}
-
-template <typename T>
-uint8_t * store_le(uint8_t * p, T v, uint8_t size = sizeof(T))
-{
-	while (size--)
-	{
-		*p++ = (uint8_t)v;
-		v = v >> 8;
-	}
-
-	return p;
-}
 
 class usb_omicron_handler
 	: public usb_control_handler
@@ -914,72 +1165,65 @@ public:
 		return false;
 	}
 
+	bool on_data_out_done(usb_ctrl_req_t & req)
+	{
+		return true;
+	}
+
 	bool on_data_out(usb_ctrl_req_t & req, uint8_t const * p, uint8_t len)
 	{
 		switch (req.cmd())
 		{
 		case cmd_set_wraddr:
-			if (len)
+			USB_EP3_OUT_CTRL = USB_EP_PAUSE_SET;
+
+			while (!(SDRAM_DMA_WRSTATUS & SDRAM_DMA_BUF_EMPTY_bm))
 			{
-				USB_EP3_OUT_CTRL = USB_EP_PAUSE_SET;
-
-				while (!(SDRAM_DMA_WRSTATUS & SDRAM_DMA_BUF_EMPTY_bm))
-				{
-				}
-
-				SDRAM_DMA_WRADDR = load_le<uint32_t>(p);
-				USB_EP3_OUT_CTRL = USB_EP_PAUSE_CLR;
 			}
+
+			SDRAM_DMA_WRADDR = load_le<uint32_t>(p);
+			USB_EP3_OUT_CTRL = USB_EP_PAUSE_CLR;
 			return true;
 		case cmd_set_rdaddr:
-			if (len)
+			USB_EP3_IN_CTRL = USB_EP_PAUSE_SET;
+			SDRAM_DMA_RDSTATUS = 0;
+
+			while (USB_EP3_IN_STATUS & USB_EP_TRANSIT_bm)
 			{
-				USB_EP3_IN_CTRL = USB_EP_PAUSE_SET;
-				SDRAM_DMA_RDSTATUS = 0;
-
-				while (USB_EP3_IN_STATUS & USB_EP_TRANSIT_bm)
-				{
-				}
-
-				while (SDRAM_DMA_RDSTATUS & SDRAM_DMA_BUF_BUSY_bm)
-				{
-				}
-
-				while (!(USB_EP3_IN_STATUS & USB_EP_EMPTY))
-				{
-					USB_EP3_IN_CTRL = USB_EP_PULL;
-				}
-
-				SDRAM_DMA_RDADDR = load_le<uint32_t>(p);
-
-				SDRAM_DMA_RDSTATUS = SDRAM_DMA_ENABLED_bm;
-				USB_EP3_IN_CTRL = USB_EP_PAUSE_CLR;
 			}
+
+			while (SDRAM_DMA_RDSTATUS & SDRAM_DMA_BUF_BUSY_bm)
+			{
+			}
+
+			while (!(USB_EP3_IN_STATUS & USB_EP_EMPTY))
+			{
+				USB_EP3_IN_CTRL = USB_EP_PULL;
+			}
+
+			SDRAM_DMA_RDADDR = load_le<uint32_t>(p);
+
+			SDRAM_DMA_RDSTATUS = SDRAM_DMA_ENABLED_bm;
+			USB_EP3_IN_CTRL = USB_EP_PAUSE_CLR;
 			return true;
 		case cmd_start:
-			if (len)
-			{
-				assert(!m_running);
-				if (*p > 4)
-					return false;
+			assert(!m_running);
+			if (*p > 4)
+				return false;
 
-				SAMPLER_MUX1 = load_le<uint32_t>(p + 6);
-				SAMPLER_MUX2 = load_le<uint32_t>(p + 10);
-				SAMPLER_MUX3 = load_le<uint32_t>(p + 14);
+			SAMPLER_MUX1 = load_le<uint32_t>(p + 6);
+			SAMPLER_MUX2 = load_le<uint32_t>(p + 10);
+			SAMPLER_MUX3 = load_le<uint32_t>(p + 14);
 
-				this->start(
-					p[0],
-					load_le<uint32_t>(p + 2),
-					p[1]);
-			}
+			this->start(
+				p[0],
+				load_le<uint32_t>(p + 2),
+				p[1]);
 			return true;
 		case cmd_move_choke:
-			if (len)
-			{
-				uint32_t addr = load_le<uint32_t>(p);
-				uint8_t new_choke = (addr + 0xff0000) >> 16;
-				SDRAM_DMA_CTRL = (new_choke << SDRAM_DMA_CHOKE_ADDR_gp) | SDRAM_DMA_CHOKE_ENABLE_bm;
-			}
+			uint32_t addr = load_le<uint32_t>(p);
+			uint8_t new_choke = (addr + 0xff0000) >> 16;
+			SDRAM_DMA_CTRL = (new_choke << SDRAM_DMA_CHOKE_ADDR_gp) | SDRAM_DMA_CHOKE_ENABLE_bm;
 			return true;
 		}
 
@@ -1151,109 +1395,18 @@ private:
 	uint64_t m_start_recv_index;
 };
 
-void wait(uint32_t us)
-{
-	uint32_t base = TMR;
-	while ((TMR - base) <= us)
-	{
-	}
-}
-
-struct pic_flash_handler
-{
-	pic_flash_handler()
-	{
-	}
-
-	void enter()
-	{
-		PIC_CTRL = PIC_MCLR_bm;
-		wait(250);
-
-		this->write(0x4D434850, 33);
-	}
-
-	void read_seq(uint8_t size)
-	{
-		while (size--)
-		{
-			this->write(0x04, 6);
-			this->read(16);
-		}
-	}
-
-	void read(uint16_t addr, uint16_t * buf, uint8_t size)
-	{
-		if (addr >= 0x2000)
-		{
-			this->write(0x00, 6);
-			this->write(0, 16);
-		}
-		else
-		{
-			this->write(0x02, 6);
-			this->write(0, 16);
-		}
-
-		uint16_t incr_count = addr & 0x1fff;
-		while (incr_count)
-		{
-			this->write(0x06, 6);
-			--incr_count;
-		}
-
-		while (size)
-		{
-			this->write(0x04, 6);
-			*buf++ = (this->read(16) >> 1) & 0x3fff;
-			if (--size)
-				this->write(0x06, 6);
-		}
-	}
-
-	void exit()
-	{
-		PIC_CTRL = 0;
-	}
-
-private:
-	uint16_t read(uint8_t len)
-	{
-		PIC_SHIFT = 0xFFFFFFFF;
-		PIC_CNT = len;
-		while (PIC_STATUS & PIC_BUSY_bm)
-		{
-		}
-		wait(1);
-		return PIC_SHIFT >> (32 - len);
-	}
-
-	void write(uint32_t shift, uint8_t len)
-	{
-		PIC_SHIFT = shift;
-		PIC_CTRL = PIC_MCLR_bm | PIC_OUT_bm;
-		PIC_CNT = len;
-		while (PIC_STATUS & PIC_BUSY_bm)
-		{
-		}
-		wait(1);
-		PIC_CTRL = PIC_MCLR_bm;
-	}
-};
-
 int main()
 {
 	USB_CTRL = USB_CTRL_ATTACH;
 	SDRAM_CTRL = SDRAM_ENABLE_bm;
 	LEDBITS = 0;
 
-	dfu_handler dh;
+	pic_flash_handler pfh;
+	dfu_handler dh(pfh);
 	usb_core_handler uc;
 	usb_omicron_handler oh;
 	usb_control_handler * usb_handler = 0;
 	usb_ctrl_req_t usb_req;
-
-	pic_flash_handler pfh;
 
 	bool last_reset_state = false;
 
@@ -1275,13 +1428,16 @@ int main()
 			case 'P':
 				pfh.enter();
 				break;
-			case 'D':
+			case 'S':
+				pfh.seek(0x000);
+				break;
+			case 'd':
 				{
-					uint16_t data[10];
-					pfh.read(0x2000, data, 10);
+					uint8_t data[32];
+					pfh.read(0x0000, data, sizeof data);
 
-					sendch('p');
-					for (uint8_t i = 0; i < 10; ++i)
+					sendch('d');
+					for (uint8_t i = 0; i < sizeof data; ++i)
 					{
 						sendhex(data[i]);
 						sendch(':');
@@ -1289,8 +1445,42 @@ int main()
 					sendch('\n');
 				}
 				break;
-			case 'R':
-				pfh.read_seq(32);
+			case 'f':
+				{
+					uint8_t data[32];
+					pfh.read(0x2000, data, sizeof data);
+
+					sendch('f');
+					for (uint8_t i = 0; i < sizeof data; ++i)
+					{
+						sendhex(data[i]);
+						sendch(':');
+					}
+					sendch('\n');
+				}
+				break;
+			case 'E':
+				pfh.seek(0x2000);
+				pfh.bulk_erase();
+				break;
+			case 'W':
+				{
+					static uint16_t const data[16] = {
+						0x3000, 0x0087, 0x3001, 0x0086, 0x0687, 0x2804, 0x3400, 0x3400,
+						0x0201, 0x0403, 0x0605, 0x0807, 0x0a09, 0x0c0b, 0x0e0d, 0x100f,
+					};
+					pfh.program_block(0x0000, data, sizeof data / 2);
+				}
+				break;
+			case 'Q':
+				{
+					pfh.program_config(0x2007, 0x3fe6);
+				}
+				break;
+			case 'T':
+				{
+					pfh.program_config(0x2000, 0x0001);
+				}
 				break;
 			default:
 				send("omicron analyzer -- DFU loader");
@@ -1298,6 +1488,7 @@ int main()
 			}
 		}
 
+		pfh.process();
 		dh.process();
 
 		if (USB_CTRL & USB_CTRL_RST)
@@ -1386,7 +1577,7 @@ int main()
 				else
 				{
 					USB_EP0_OUT_CTRL = USB_EP_STALL_SET;
-					if (!usb_handler->on_data_out(usb_req, 0, 0))
+					if (!usb_handler->on_data_out_done(usb_req))
 					{
 						USB_EP0_IN_CTRL = USB_EP_STALL_SET;
 						usb_handler = 0;
