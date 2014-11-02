@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
-#include <assert.h>
 #include "descs.h"
 
 #define LEDBITS *((uint32_t volatile *)0xC0000000)
@@ -262,6 +261,12 @@ static void sendhex(char *& res, T n)
 	}
 }
 
+static void assert(bool expr)
+{
+	if (!expr)
+		LEDBITS |= 1;
+}
+
 static void spi_begin()
 {
 	SPI_CTRL = 0;
@@ -515,10 +520,8 @@ class dfu_handler
 {
 public:
 	explicit dfu_handler(pic_flash_handler & pfh)
-		: m_state(app_idle), m_status(err_ok), m_detach_time_base(0), m_detach_time_size(0), m_dnload_complete_time(0), m_pfh(pfh)
+		: m_state(app_idle), m_status(err_ok), m_detach_time_base(0), m_detach_time_size(0), m_getstatus_poll(0), m_pfh(pfh)
 	{
-		m_flash_pos = 0;
-
 		spi_begin();
 		spi(0x9F);
 		spi(0x00);
@@ -552,43 +555,6 @@ public:
 	{
 	}
 
-	void process()
-	{
-		if (m_state == dfu_dnbusy)
-		{
-			spi_begin();
-			spi(0x05);
-			uint8_t status = spi(0x00);
-			spi_end();
-
-			if ((status & 1) == 0)
-			{
-				if (m_write_buf_size)
-				{
-					uint32_t next_page_boundary = (m_flash_pos + 0x100) & ~(uint32_t)0xff;
-					if (next_page_boundary - m_flash_pos < m_write_buf_size)
-					{
-						uint16_t part = next_page_boundary - m_flash_pos;
-						this->flash_write(m_flash_pos, m_write_buf + m_write_buf_offs, part);
-						m_flash_pos += part;
-						m_write_buf_size -= part;
-						m_write_buf_offs = part;
-					}
-					else
-					{
-						this->flash_write(m_flash_pos, m_write_buf + m_write_buf_offs, m_write_buf_size);
-						m_flash_pos += m_write_buf_size;
-						m_write_buf_size = 0;
-					}
-				}
-				else
-				{
-					m_state = dfu_dnload_idle;
-				}
-			}
-		}
-	}
-
 	bool on_control_transfer(usb_ctrl_req_t & req)
 	{
 		switch (req.cmd())
@@ -603,7 +569,7 @@ public:
 				if (m_state == dfu_idle)
 				{
 					m_upload_state = us_yb_header;
-					m_flash_pos = 0;
+					m_block_offset = 0;
 					m_state = dfu_upload_idle;
 				}
 				return true;
@@ -622,17 +588,21 @@ public:
 				&& (m_state == dfu_idle || m_state == dfu_dnload_idle))
 			{
 				if (m_state == dfu_idle)
-					m_flash_pos = 0;
+					this->dnload_init();
 
-				if (req.wLength)
+				m_state = dfu_dnload_sync;
+				if (req.wLength == 0)
 				{
-					m_write_buf_size = 0;
-					m_state = dfu_dnload_sync;
-				}
-				else
-				{
-					m_state = dfu_idle;
-					m_needs_manifest = true;
+					status_t status = this->dnload_finalize();
+					if (status != err_ok)
+					{
+						m_state = dfu_error;
+						m_status = status;
+					}
+					else
+					{
+						m_state = dfu_manifest_sync;
+					}
 				}
 
 				return true;
@@ -657,7 +627,20 @@ public:
 			break;
 		case cmd_getstatus:
 			if (this->is_dfu_mode() && req.wLength >= 6)
+			{
+				if (m_state == dfu_dnload_sync)
+				{
+					if (m_download_state != ds_flash_erase_wait && m_download_state != ds_flash_wait)
+						m_state = dfu_dnload_idle;
+				}
+				else if (m_state == dfu_manifest_sync)
+				{
+					m_state = dfu_idle;
+					m_needs_manifest = true;
+				}
+
 				return true;
+			}
 			break;
 		}
 
@@ -669,31 +652,6 @@ public:
 
 	bool on_data_out_done(usb_ctrl_req_t & req)
 	{
-		if (req.cmd() == cmd_dnload && m_state == dfu_dnload_sync)
-		{
-			uint32_t next_boundary = (m_flash_pos + 0xffff) & ~(uint32_t)0xffff;
-			if (next_boundary - m_flash_pos < m_write_buf_size)
-			{
-				this->flash_write_enable();
-
-				spi_begin();
-				spi(0xD8);
-				spi(next_boundary >> 16);
-				spi(next_boundary >> 8);
-				spi(next_boundary);
-				spi_end();
-
-				m_dnload_complete_time = TMR + 600;
-			}
-			else
-			{
-				m_dnload_complete_time = TMR;
-			}
-
-			m_write_buf_offs = 0;
-			m_state = dfu_dnbusy;
-		}
-
 		return true;
 	}
 
@@ -702,12 +660,28 @@ public:
 		switch (req.cmd())
 		{
 		case cmd_dnload:
-			memcpy(m_write_buf + m_write_buf_size, p, len);
-			m_write_buf_size += len;
+			m_chbuf.push(p, len);
+			this->process();
 			break;
 		}
 
 		return true;
+	}
+
+	void process()
+	{
+		if (TMR - m_getstatus_pollbase >= m_getstatus_poll)
+			m_getstatus_poll = 0;
+
+		if (m_state == dfu_dnload_sync || m_state == dfu_dnload_idle)
+		{
+			status_t status = this->dnload_process();
+			if (status != err_notdone && status != err_ok)
+			{
+				m_state = dfu_error;
+				m_status = status;
+			}
+		}
 	}
 
 	uint8_t on_data_in(usb_ctrl_req_t & req, uint8_t * p)
@@ -721,7 +695,7 @@ public:
 		{
 			p[0] = m_status;
 			uint32_t tmr = TMR;
-			if (m_dnload_complete_time < tmr)
+			if (tmr - m_getstatus_pollbase >= m_getstatus_poll)
 			{
 				p[1] = 0;
 				p[2] = 0;
@@ -729,12 +703,13 @@ public:
 			}
 			else
 			{
-				tmr = m_dnload_complete_time - tmr;
+				tmr = m_getstatus_poll - (tmr - m_getstatus_pollbase);
+				tmr /= 1000;
 				p[1] = (uint8_t)tmr;
 				p[2] = (uint8_t)(tmr >> 8);
 				p[3] = (uint8_t)(tmr >> 16);
 			}
-			p[4] = m_state;
+			p[4] = (m_state == dfu_dnload_sync? dfu_dnbusy: m_state);
 			p[5] = 0;
 			return 6;
 		}
@@ -768,12 +743,12 @@ public:
 					memset(p, 0, 64-12);
 					m_pfh.seek(0x0000);
 					m_upload_state = us_pic_pgm_data;
-					m_flash_pos = 0;
+					m_block_offset = 0;
 					return 64;
 				case us_pic_pgm_data:
 					m_pfh.read(p, 64);
-					m_flash_pos += 64;
-					if (m_flash_pos == pic_pgm_size)
+					m_block_offset += 64;
+					if (m_block_offset == pic_pgm_size)
 						m_upload_state = us_flash_header;
 					return 64;
 				case us_flash_header:
@@ -781,27 +756,27 @@ public:
 					p = store_le<uint32_t>(p, m_flash_size);
 					memset(p, 0, 64-8);
 					m_upload_state = us_flash;
-					m_flash_pos = 0;
+					m_block_offset = 0;
 					return 64;
 				case us_flash:
 					{
 						uint8_t chunk = req.wLength > 64? 64: req.wLength;
 
-						uint32_t rem = m_flash_size - m_flash_pos;
+						uint32_t rem = m_flash_size - m_block_offset;
 						if (chunk > rem)
 							chunk = rem;
 
 						spi_begin();
 						spi(0x0B);
-						spi(m_flash_pos >> 16);
-						spi(m_flash_pos >> 8);
-						spi(m_flash_pos);
+						spi(m_block_offset >> 16);
+						spi(m_block_offset >> 8);
+						spi(m_block_offset);
 						spi(0x00);
 						for (uint32_t i = 0; i < chunk; ++i)
 							*p++ = spi(0x00);
 						spi_end();
 
-						m_flash_pos += chunk;
+						m_block_offset += chunk;
 						if (chunk < 64)
 							m_state = dfu_idle;
 						return chunk;
@@ -844,6 +819,26 @@ public:
 	}
 
 private:
+	enum status_t
+	{
+		err_ok = 0x00,
+		err_target = 0x01,
+		err_file = 0x02,
+		err_write = 0x03,
+		err_erase = 0x04,
+		err_check_erased = 0x05,
+		err_prog = 0x06,
+		err_verify = 0x07,
+		err_address = 0x08,
+		err_notdone = 0x09,
+		err_firmware = 0x0a,
+		err_vendor = 0x0b,
+		err_usbr = 0x0c,
+		err_por = 0x0d,
+		err_unknown = 0x0e,
+		err_stalledpkt = 0x0f,
+	};
+
 	void flash_write_enable()
 	{
 		spi_begin();
@@ -851,19 +846,172 @@ private:
 		spi_end();
 	}
 
-	void flash_write(uint32_t addr, uint8_t const * p, uint16_t len)
+	void flash_erase(uint8_t sector_addr)
 	{
 		this->flash_write_enable();
 
 		spi_begin();
-		spi(0x02);
-		spi(addr >> 16);
-		spi(addr >> 8);
-		spi(addr);
-		for (; len > 0; --len)
-			spi(*p++);
+		spi(0xD8); // ERASE_SECTOR
+		spi(sector_addr);
+		spi(0);
+		spi(0);
 		spi_end();
 
+		m_getstatus_pollbase = TMR;
+		m_getstatus_poll = 600000;
+	}
+
+	void dnload_init()
+	{
+		m_chbuf.clear();
+		m_download_state = ds_yb_header;
+	}
+
+	status_t dnload_process()
+	{
+		for (;;)
+		{
+			switch (m_download_state)
+			{
+			case ds_yb_header:
+				if (uint8_t const * p = m_chbuf.pop64())
+				{
+					if (memcmp(p, usb_descriptor_data + version_info_offset, 17) != 0)
+						return err_firmware;
+
+					m_download_state = ds_block_header;
+					break;
+				}
+
+				return err_notdone;
+			case ds_block_header:
+				if (uint8_t const * p = m_chbuf.pop64())
+				{
+					uint32_t block_type = load_le<uint32_t>(p);
+					m_block_size = load_le<uint32_t>(p + 4);
+					m_block_offset = load_le<uint32_t>(p + 8);
+
+					switch (block_type)
+					{
+					case 0:
+						m_download_state = ds_pad;
+						if (m_block_offset != 0 || m_block_size == 0 || m_block_size % 64 != 0)
+							return err_firmware;
+						break;
+					case 1:
+						if (m_block_offset % 0x10000 != 0 || m_block_size == 0)
+							return err_firmware;
+						this->flash_erase(m_block_offset >> 16);
+						m_download_state = ds_flash_erase_wait;
+						return err_notdone;
+					default:
+						return err_firmware;
+					}
+
+					break;
+				}
+				return err_notdone;
+			case ds_pad:
+				if (m_chbuf.pop64())
+				{
+					if (m_block_size > 64)
+						m_block_size -= 64;
+					else
+						m_download_state = ds_block_header;
+					break;
+				}
+				return err_notdone;
+			case ds_flash_erase_wait:
+				{
+					spi_begin();
+					spi(0x05); // GET_STATUS
+					uint8_t status = spi(0x00);
+					spi_end();
+
+					if ((status & 1) == 0)
+					{
+						m_download_state = ds_flash;
+						break;
+					}
+				}
+				return err_notdone;
+			case ds_flash:
+				{
+					size_t chunk = m_block_size > 256? 256: m_block_size;
+					if (m_chbuf.size64() >= chunk)
+					{
+						this->flash_write_enable();
+
+						spi_begin();
+
+						spi(0x02); // WRITE_MEMORY
+						spi(m_block_offset >> 16);
+						spi(m_block_offset >> 8);
+						spi(0);
+
+						m_block_offset += chunk;
+						m_block_size -= chunk;
+
+						while (chunk)
+						{
+							uint8_t const * p = m_chbuf.pop64();
+							assert(p != 0);
+
+							uint8_t subchunk = chunk > 64? 64: chunk;
+							uint8_t const * last = p + subchunk;
+							chunk -= subchunk;
+							while (p != last)
+								spi(*p++);
+						}
+						spi_end();
+
+						m_download_state = ds_flash_wait;
+						break;
+					}
+				}
+				return err_notdone;
+			case ds_flash_wait:
+				{
+					spi_begin();
+					spi(0x05); // GET_STATUS
+					uint8_t status = spi(0x00);
+					spi_end();
+
+					if ((status & 1) == 0)
+					{
+						if (m_block_size == 0)
+						{
+							m_download_state = ds_block_header;
+						}
+						else if (m_block_offset % 0x10000 == 0)
+						{
+							this->flash_erase(m_block_offset >> 16);
+							m_download_state = ds_flash_erase_wait;
+						}
+						else
+						{
+							m_download_state = ds_flash;
+						}
+						break;
+					}
+				}
+				return err_notdone;
+
+			default:
+				return err_unknown;
+			}
+		}
+	}
+
+	status_t dnload_finalize()
+	{
+		if (m_download_state != ds_block_header)
+			return err_notdone;
+
+		if (!m_chbuf.empty())
+			return err_firmware;
+
+		return err_ok;
 	}
 
 	enum
@@ -892,32 +1040,11 @@ private:
 		dfu_error
 	};
 
-	enum status_t
-	{
-		err_ok = 0x00,
-		err_target = 0x01,
-		err_file = 0x02,
-		err_write = 0x03,
-		err_erase = 0x04,
-		err_check_erased = 0x05,
-		err_prog = 0x06,
-		err_verify = 0x07,
-		err_address = 0x08,
-		err_notdone = 0x09,
-		err_firmware = 0x0a,
-		err_vendor = 0x0b,
-		err_usbr = 0x0c,
-		err_por = 0x0d,
-		err_unknown = 0x0e,
-		err_stalledpkt = 0x0f,
-	};
-
 	state_t m_state;
 	status_t m_status;
 	bool m_needs_manifest;
 	uint32_t m_detach_time_base;
 	uint32_t m_detach_time_size;
-	uint32_t m_dnload_complete_time;
 
 	enum {
 		us_yb_header,
@@ -925,12 +1052,98 @@ private:
 		us_flash_header, us_flash
 	} m_upload_state;
 
-	uint32_t m_flash_pos;
-	uint32_t m_flash_size;
+	enum {
+		ds_yb_header,
+		ds_block_header,
+		ds_pad,
+		ds_flash_erase_wait,
+		ds_flash,
+		ds_flash_wait,
+		ds_pic,
+	} m_download_state;
 
-	uint16_t m_write_buf_offs;
-	uint16_t m_write_buf_size;
-	uint8_t m_write_buf[256];
+	uint32_t m_block_offset;
+	uint32_t m_block_size;
+
+	class chunked_buffer
+	{
+	public:
+		static const size_t capacity = 256;
+
+		chunked_buffer()
+			: m_rd(0), m_wr(0), m_size(0)
+		{
+		}
+
+		void push(uint8_t const * p, size_t len)
+		{
+			assert(m_size + len <= capacity);
+
+			if (m_wr + len > capacity)
+			{
+				size_t chunk = capacity - m_wr;
+				memcpy(m_buffer + m_wr, p, chunk);
+				m_wr = len - chunk;
+				memcpy(m_buffer, p + chunk, m_wr);
+			}
+			else
+			{
+				memcpy(m_buffer + m_wr, p, len);
+				m_wr += len;
+			}
+
+			m_size += len;
+		}
+
+		uint8_t const * pop64()
+		{
+			if (m_size >= 64)
+			{
+				uint8_t const * res = m_buffer + m_rd;
+
+				m_rd += 64;
+				if (m_rd >= capacity)
+					m_rd -= capacity;
+				m_size -= 64;
+
+				return res;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		size_t const size64() const
+		{
+			return m_size & ~(size_t)63;
+		}
+
+		bool empty() const
+		{
+			return m_size == 0;
+		}
+
+		void clear()
+		{
+			m_size = 0;
+			m_rd = 0;
+			m_wr = 0;
+		}
+
+	private:
+		uint8_t m_buffer[capacity];
+		size_t m_rd;
+		size_t m_wr;
+		size_t m_size;
+	};
+
+	chunked_buffer m_chbuf;
+
+	uint32_t m_getstatus_pollbase;
+	uint32_t m_getstatus_poll;
+
+	uint32_t m_flash_size;
 
 	pic_flash_handler & m_pfh;
 };

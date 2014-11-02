@@ -97,7 +97,7 @@ def _main():
     ts_str = datetime.datetime.utcfromtimestamp(ts + zone*60).strftime('%Y_%m_%d')
 
     yb = uuid.UUID('49e8fed9-9f8d-4ff9-bc8c-c8d0f43f904f')
-    res.append(struct.pack('<H16sIhH20s18s', 64, yb.get_bytes(), ts, zone, 20, githash, ''))
+    res.append(struct.pack('<B16sIhH20s19s', 2, yb.get_bytes(), ts, zone, 20, githash, ''))
 
     if args.flash:
         data = args.flash.read()
