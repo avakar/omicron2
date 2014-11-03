@@ -1,0 +1,12 @@
+*.dfu
+**/_xmsgs/
+**.xco
+**.xise
+**.cgc
+**.xrpt
+main_fw/ipcore_dir/s_read_fifo/
+main_fw/ipcore_dir/sdram_wr_fifo/
+main_fw/ipcore_dir/xclock_mem/
+main_fw/ipcore_dir/xclock_mem_8_to_16/
+design/ipcore_dir/sampler_index_ram/
+design/ipcore_dir/sdram_rd_fifo/
