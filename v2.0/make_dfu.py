@@ -99,17 +99,21 @@ def _main():
     yb = uuid.UUID('49e8fed9-9f8d-4ff9-bc8c-c8d0f43f904f')
     res.append(struct.pack('<B16sIhH20s19s', 2, yb.get_bytes(), ts, zone, 20, githash, ''))
 
+    if args.pic:
+        mem = DeviceMemory()
+        read_hex(args.pic, mem)
+
+        mem_chunks = list(mem.data().iteritems())
+        mem_chunks.sort(key=lambda x: -(x[0] >> 10))
+
+        for chaddr, chdata in mem_chunks:
+            res.append(struct.pack('<III52s', 2, len(chdata), chaddr, ''))
+            res.append(pad(chdata, 64))
+
     if args.flash:
         data = args.flash.read()
         res.append(struct.pack('<III52s', 1, len(data), 0, ''))
         res.append(pad(data, 64))
-
-    if args.pic:
-        mem = DeviceMemory()
-        read_hex(args.pic, mem)
-        for chaddr, chdata in mem.data().iteritems():
-            res.append(struct.pack('<III52s', 2, len(chdata), chaddr, ''))
-            res.append(pad(chdata, 64))
 
     res.append(struct.pack('<HHHHBBBB',
         0x0203, 0x679c, 0x4a61,
