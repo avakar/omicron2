@@ -351,6 +351,33 @@ struct pic_flash_handler
 		return m_status == st_init || m_status == st_busy_flash || m_status == st_busy_config;
 	}
 
+	uint32_t busy_time() const
+	{
+		uint32_t res;
+
+		switch (m_status)
+		{
+		case st_init:
+			res = 250;
+			break;
+		case st_busy_flash:
+			res = 2500;
+			break;
+		case st_busy_config:
+			res = 5000;
+			break;
+		default:
+			res = 0;
+		}
+
+		uint32_t tmr = TMR;
+		if (tmr - m_time_base < res)
+			res = res - (tmr - m_time_base);
+		else
+			res = 0;
+		return res;
+	}
+
 	void process()
 	{
 		switch (m_status)
@@ -520,7 +547,9 @@ class dfu_handler
 {
 public:
 	explicit dfu_handler(pic_flash_handler & pfh)
-		: m_state(app_idle), m_status(err_ok), m_detach_time_base(0), m_detach_time_size(0), m_getstatus_poll(0), m_pfh(pfh)
+		: m_state(app_idle), m_status(err_ok),
+		  m_needs_manifest(nm_no),
+		  m_detach_time_base(0), m_detach_time_size(0), m_getstatus_poll(0), m_pfh(pfh)
 	{
 		spi_begin();
 		spi(0x9F);
@@ -535,14 +564,14 @@ public:
 
 	void on_usb_reset()
 	{
-		if (TMR - m_detach_time_base <= m_detach_time_size)
+		if (TMR - m_detach_time_base < m_detach_time_size)
 		{
 			m_state = dfu_idle;
 			m_pfh.enter();
 		}
 		else
 		{
-			if (m_needs_manifest)
+			if (m_needs_manifest == nm_flash_committed)
 				reconfigure();
 
 			m_state = app_idle;
@@ -587,6 +616,8 @@ public:
 			if (req.wLength <= 256
 				&& (m_state == dfu_idle || m_state == dfu_dnload_idle))
 			{
+				m_detach_time_size = 0;
+
 				if (m_state == dfu_idle)
 					this->dnload_init();
 
@@ -630,13 +661,15 @@ public:
 			{
 				if (m_state == dfu_dnload_sync)
 				{
-					if (m_download_state != ds_flash_erase_wait && m_download_state != ds_flash_wait)
+					if (m_download_state != ds_flash_erase_wait && m_download_state != ds_flash_wait
+							&& m_download_state != ds_pic_wait)
 						m_state = dfu_dnload_idle;
 				}
 				else if (m_state == dfu_manifest_sync)
 				{
 					m_state = dfu_idle;
-					m_needs_manifest = true;
+					if (m_needs_manifest == nm_flash_modified)
+						m_needs_manifest = nm_flash_committed;
 				}
 
 				return true;
@@ -694,21 +727,16 @@ public:
 		case cmd_getstatus:
 		{
 			p[0] = m_status;
+			uint32_t poll_timeout = 0;
 			uint32_t tmr = TMR;
-			if (tmr - m_getstatus_pollbase >= m_getstatus_poll)
-			{
-				p[1] = 0;
-				p[2] = 0;
-				p[3] = 0;
-			}
-			else
+			if (tmr - m_getstatus_pollbase < m_getstatus_poll)
 			{
 				tmr = m_getstatus_poll - (tmr - m_getstatus_pollbase);
-				tmr /= 1000;
-				p[1] = (uint8_t)tmr;
-				p[2] = (uint8_t)(tmr >> 8);
-				p[3] = (uint8_t)(tmr >> 16);
+				poll_timeout = tmr / 1000;
 			}
+			p[1] = (uint8_t)poll_timeout;
+			p[2] = (uint8_t)(poll_timeout >> 8);
+			p[3] = (uint8_t)(poll_timeout >> 16);
 			p[4] = (m_state == dfu_dnload_sync? dfu_dnbusy: m_state);
 			p[5] = 0;
 			return 6;
@@ -728,7 +756,8 @@ public:
 					p = store_le<uint32_t>(p, 2);
 					p = store_le<uint32_t>(p, 0x14);
 					p = store_le<uint32_t>(p, 0x4000);
-					memset(p, 0, 64-12);
+					p = store_le<uint32_t>(p, 0x01);
+					memset(p, 0, 64-16);
 					m_upload_state = us_pic_config;
 					return 64;
 				case us_pic_config:
@@ -890,19 +919,35 @@ private:
 					uint32_t block_type = load_le<uint32_t>(p);
 					m_block_size = load_le<uint32_t>(p + 4);
 					m_block_offset = load_le<uint32_t>(p + 8);
+					uint32_t flags = load_le<uint32_t>(p + 12);
 
 					switch (block_type)
 					{
 					case 0:
 						m_download_state = ds_pad;
-						if (m_block_offset != 0 || m_block_size == 0 || m_block_size % 64 != 0)
+						if (m_block_offset != 0 || m_block_size == 0 || m_block_size % 64 != 0 || flags != 0)
 							return err_firmware;
 						break;
 					case 1:
-						if (m_block_offset % 0x10000 != 0 || m_block_size == 0)
+						if (m_block_offset % 0x10000 != 0 || m_block_size == 0 || flags != 0)
 							return err_firmware;
 						this->flash_erase(m_block_offset >> 16);
 						m_download_state = ds_flash_erase_wait;
+						m_needs_manifest = nm_flash_modified;
+						return err_notdone;
+					case 2:
+						if (m_block_offset % 2 != 0 || m_block_offset > 0x8000 || (flags & ~(uint32_t)0x01))
+							return err_firmware;
+						if (m_block_offset >= 0x4000 && (m_block_size > 0x14 || m_block_offset + m_block_size > 0x4014))
+							return err_firmware;
+						if (m_block_offset < 0x4000 && (m_block_size > 0x200 || m_block_offset + m_block_size > 0x200 || m_block_offset % 32 != 0))
+							return err_firmware;
+
+						m_pfh.seek(m_block_offset / 2);
+						if (flags & 0x01)
+							m_pfh.bulk_erase();
+						m_subblock_offset = 0;
+						m_download_state = ds_pic_wait;
 						return err_notdone;
 					default:
 						return err_firmware;
@@ -996,7 +1041,59 @@ private:
 					}
 				}
 				return err_notdone;
+			case ds_pic:
+				if (m_block_size == 0)
+				{
+					m_download_state = ds_block_header;
+					break;
+				}
 
+				if (uint8_t const * p = m_chbuf.data64())
+				{
+					if (m_block_offset >= 0x4000)
+					{
+						if (m_block_offset == 0x4000 || m_block_offset == 0x4002
+							|| m_block_offset == 0x4004 || m_block_offset == 0x4006
+							|| m_block_offset == 0x400e)
+						{
+							m_pfh.program_config(m_block_offset / 2, load_le<uint16_t>(p + m_subblock_offset));
+							m_download_state = ds_pic_wait;
+						}
+
+						m_subblock_offset += 2;
+						m_block_offset += 2;
+						m_block_size -= 2;
+						if (m_block_size == 0)
+							m_chbuf.pop64();
+					}
+					else
+					{
+						assert(m_block_offset % 32 == 0);
+						uint8_t chunk = m_block_size > 32? 32: m_block_size;
+						m_pfh.program_block(m_block_offset / 2, (uint16_t const *)(p + m_subblock_offset), chunk / 2);
+						m_download_state = ds_pic_wait;
+
+						m_subblock_offset += chunk;
+						m_block_offset += chunk;
+						m_block_size -= chunk;
+
+						if (m_subblock_offset == 64 || m_block_size == 0)
+						{
+							m_subblock_offset = 0;
+							m_chbuf.pop64();
+						}
+					}
+
+					break;
+				}
+				return err_notdone;
+			case ds_pic_wait:
+				if (!m_pfh.is_busy())
+				{
+					m_download_state = ds_pic;
+					break;
+				}
+				return err_notdone;
 			default:
 				return err_unknown;
 			}
@@ -1042,7 +1139,7 @@ private:
 
 	state_t m_state;
 	status_t m_status;
-	bool m_needs_manifest;
+	enum { nm_no, nm_flash_modified, nm_flash_committed } m_needs_manifest;
 	uint32_t m_detach_time_base;
 	uint32_t m_detach_time_size;
 
@@ -1060,10 +1157,12 @@ private:
 		ds_flash,
 		ds_flash_wait,
 		ds_pic,
+		ds_pic_wait,
 	} m_download_state;
 
 	uint32_t m_block_offset;
 	uint32_t m_block_size;
+	uint32_t m_subblock_offset;
 
 	class chunked_buffer
 	{
@@ -1112,6 +1211,14 @@ private:
 			{
 				return 0;
 			}
+		}
+
+		uint8_t const * data64() const
+		{
+			if (m_size >= 64)
+				return m_buffer + m_rd;
+			else
+				return 0;
 		}
 
 		size_t const size64() const
@@ -1694,6 +1801,31 @@ int main()
 				{
 					pfh.program_config(0x2000, 0x0001);
 				}
+				break;
+			case 'R':
+				pfh.enter();
+				while (pfh.is_busy())
+					pfh.process();
+				for (int i = 0; i < 32; ++i)
+				{
+					uint8_t buf[16];
+					pfh.read((i * sizeof buf) / 2 , buf, sizeof buf);
+					sendch(':');
+					for (size_t j = 0; j < sizeof buf; ++j)
+						sendhex(buf[j]);
+					sendch('\n');
+				}
+
+				for (int i = 0; i < 2; ++i)
+				{
+					uint8_t buf[16];
+					pfh.read(0x2000 + (i * sizeof buf) / 2 , buf, sizeof buf);
+					sendch(':');
+					for (size_t j = 0; j < sizeof buf; ++j)
+						sendhex(buf[j]);
+					sendch('\n');
+				}
+				pfh.exit();
 				break;
 			default:
 				send("omicron analyzer -- DFU loader");

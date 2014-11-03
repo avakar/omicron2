@@ -106,8 +106,9 @@ def _main():
         mem_chunks = list(mem.data().iteritems())
         mem_chunks.sort(key=lambda x: -(x[0] >> 10))
 
-        for chaddr, chdata in mem_chunks:
-            res.append(struct.pack('<III52s', 2, len(chdata), chaddr, ''))
+        for i, (chaddr, chdata) in enumerate(mem_chunks):
+            flags = 0x01 if i == 0 else 0x00
+            res.append(struct.pack('<IIII48s', 2, len(chdata), chaddr, flags, ''))
             res.append(pad(chdata, 64))
 
     if args.flash:
