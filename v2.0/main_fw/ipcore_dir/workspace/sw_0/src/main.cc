@@ -261,10 +261,12 @@ static void sendhex(char *& res, T n)
 	}
 }
 
-static void assert(bool expr)
+#define assert(x) do { if (!(x)) assertion_failed(__LINE__); } while(0)
+int g_assert_lineno = 0;
+static void assertion_failed(int lineno)
 {
-	if (!expr)
-		LEDBITS |= 1;
+	g_assert_lineno = lineno;
+	LEDBITS |= 1;
 }
 
 static void spi_begin()
@@ -420,7 +422,7 @@ struct pic_flash_handler
 			return;
 
 		assert((addr & 0x2000) == 0);
-		assert((addr & 0x0f) == ((addr + size - 1) & 0x0f));
+		assert((addr & 0xfff0) == ((addr + size - 1) & 0xfff0));
 
 		this->seek(addr);
 
@@ -1830,6 +1832,12 @@ int main()
 			default:
 				send("omicron analyzer -- DFU loader");
 				send("\nbL?\n");
+				if (g_assert_lineno)
+				{
+					send("Assertion failed: ");
+					sendhex(g_assert_lineno);
+					sendch('\n');
+				}
 			}
 		}
 
