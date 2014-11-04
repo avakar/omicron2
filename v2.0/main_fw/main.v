@@ -91,6 +91,8 @@ assign s = 16'bzzzz_zzzz_zzzz_zzzz;
 /* 32'hC0000050 */ wire[31:0] io_pic_ctrl;
 /* 32'hC0000054 */ wire[31:0] io_pic_shift;
 
+/* 32'hC0000058 */ wire[31:0] io_ad0;
+
 /* 32'hC0001000 */ wire[31:0] io_usb_mem;
 
 /* 32'hD0000000 */ wire[31:0] io_br100;
@@ -141,6 +143,7 @@ always @(*) begin
         32'hC000004C: cpu0_io_read_data <= io_usb_ep2_ctrl;
         32'hC0000050: cpu0_io_read_data <= io_pic_ctrl;
         32'hC0000054: cpu0_io_read_data <= io_pic_shift;
+        32'hC0000058: cpu0_io_read_data <= io_ad0;
         32'hC0001???: cpu0_io_read_data <= io_usb_mem;
         32'hD???????: cpu0_io_read_data <= io_br100;
         32'hE???????: cpu0_io_read_data <= io_br200;
@@ -242,6 +245,64 @@ always @(posedge clk_dram or negedge rst_n) begin
             32'hD0000048: io100_bdata <= io100_stop_marker[31:0];
             32'hD000004C: io100_bdata <= io100_stop_marker[63:32];
         endcase
+    end
+end
+
+//---------------------------------------------------------------------
+// A/D coverter
+
+wire[7:0] adrx0_data;
+wire adrx0_frame_err;
+wire adrx0_valid;
+reg[3:0] adrx0_strobe_cnt;
+uart_rx#(.w(8), .ss(8))  adrx0(
+    .rst(!rst_n && pic_mclr_n),
+    .clk(clk_48),
+    .clken(1'b1),
+
+    .rxd(pic_data),
+    .strobe(adrx0_strobe_cnt == 1'b0),
+
+    .data(adrx0_data),
+    .overflow_error(),
+    .frame_error(adrx0_frame_err),
+    .valid(adrx0_valid),
+    .ready(1'b1)
+    );
+
+always @(posedge clk_48 or negedge rst_n) begin
+    if (!rst_n) begin
+        adrx0_strobe_cnt <= 1'b0;
+    end else begin
+        if (adrx0_strobe_cnt == 4'd8)
+            adrx0_strobe_cnt <= 1'b0;
+        else
+            adrx0_strobe_cnt <= adrx0_strobe_cnt + 1'b1;
+    end
+end
+
+reg[7:0] ad0_value;
+reg ad0_valid;
+assign io_ad0 = { ad0_valid, ad0_value };
+
+reg[15:0] ad0_validity_cntr;
+
+always @(posedge clk_48 or negedge rst_n) begin
+    if (!rst_n) begin
+        ad0_valid <= 1'b0;
+        ad0_value <= 1'sbx;
+        ad0_validity_cntr <= 1'b0;
+    end else begin
+        ad0_validity_cntr <= ad0_validity_cntr + 1'b1;
+        if (!pic_mclr_n || ad0_validity_cntr == 16'd47999) begin
+            ad0_valid <= 1'b0;
+        end
+
+        if (adrx0_valid && !adrx0_frame_err) begin
+            ad0_value <= adrx0_data;
+            ad0_valid <= 1'b1;
+            ad0_validity_cntr <= 1'b0;
+        end
     end
 end
 

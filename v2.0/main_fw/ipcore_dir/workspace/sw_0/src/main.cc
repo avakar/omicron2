@@ -138,6 +138,8 @@
 #define PIC_CNT *((uint8_t volatile *)0xC0000051)
 #define PIC_SHIFT *((uint32_t volatile *)0xC0000054)
 
+#define AD0 *((uint16_t volatile *)0xC0000058)
+
 static void wait(uint32_t us)
 {
 	uint32_t base = TMR;
@@ -1464,6 +1466,8 @@ public:
 			break;
 		case cmd_get_config:
 			return true;
+		case cmd_read_voltage:
+			return true;
 		case cmd_unchoke:
 			{
 				uint32_t ctrl = SDRAM_DMA_CTRL;
@@ -1587,6 +1591,13 @@ public:
 			p = store_le(p, SAMPLER_MUX2);
 			p = store_le(p, SAMPLER_MUX3);
 			break;
+		case cmd_read_voltage:
+			{
+				uint16_t v = AD0;
+				if (v & 0x100)
+					p = store_le<uint32_t>(p, v & 0xff);
+			}
+			return true;
 		case cmd_unchoke:
 			p = store_le(p, SDRAM_DMA_SFADDR & SDRAM_DMA_SFADDR_PTR_bm);
 			SDRAM_DMA_CTRL |= SDRAM_DMA_UNCHOKE_bm;
@@ -1709,6 +1720,7 @@ private:
 		cmd_get_config = 0xc106,
 		cmd_unchoke = 0xc107,
 		cmd_move_choke = 0x4108,
+		cmd_read_voltage = 0xc109,
 	};
 
 	bool m_running;
@@ -1744,90 +1756,10 @@ int main()
 			case 'L':
 				dh.reconfigure();
 				break;
-			case 'p':
-				pfh.exit();
-				break;
-			case 'P':
-				pfh.enter();
-				break;
-			case 'S':
-				pfh.seek(0x000);
-				break;
-			case 'd':
-				{
-					uint8_t data[32];
-					pfh.read(0x0000, data, sizeof data);
-
-					sendch('d');
-					for (uint8_t i = 0; i < sizeof data; ++i)
-					{
-						sendhex(data[i]);
-						sendch(':');
-					}
-					sendch('\n');
-				}
-				break;
-			case 'f':
-				{
-					uint8_t data[32];
-					pfh.read(0x2000, data, sizeof data);
-
-					sendch('f');
-					for (uint8_t i = 0; i < sizeof data; ++i)
-					{
-						sendhex(data[i]);
-						sendch(':');
-					}
-					sendch('\n');
-				}
-				break;
-			case 'E':
-				pfh.seek(0x2000);
-				pfh.bulk_erase();
-				break;
-			case 'W':
-				{
-					static uint16_t const data[16] = {
-						0x3000, 0x0087, 0x3001, 0x0086, 0x0687, 0x2804, 0x3400, 0x3400,
-						0x0201, 0x0403, 0x0605, 0x0807, 0x0a09, 0x0c0b, 0x0e0d, 0x100f,
-					};
-					pfh.program_block(0x0000, data, sizeof data / 2);
-				}
-				break;
-			case 'Q':
-				{
-					pfh.program_config(0x2007, 0x3fe6);
-				}
-				break;
-			case 'T':
-				{
-					pfh.program_config(0x2000, 0x0001);
-				}
-				break;
-			case 'R':
-				pfh.enter();
-				while (pfh.is_busy())
-					pfh.process();
-				for (int i = 0; i < 32; ++i)
-				{
-					uint8_t buf[16];
-					pfh.read((i * sizeof buf) / 2 , buf, sizeof buf);
-					sendch(':');
-					for (size_t j = 0; j < sizeof buf; ++j)
-						sendhex(buf[j]);
-					sendch('\n');
-				}
-
-				for (int i = 0; i < 2; ++i)
-				{
-					uint8_t buf[16];
-					pfh.read(0x2000 + (i * sizeof buf) / 2 , buf, sizeof buf);
-					sendch(':');
-					for (size_t j = 0; j < sizeof buf; ++j)
-						sendhex(buf[j]);
-					sendch('\n');
-				}
-				pfh.exit();
+			case 'a':
+				sendch('a');
+				sendhex(AD0);
+				sendch('\n');
 				break;
 			default:
 				send("omicron analyzer -- DFU loader");

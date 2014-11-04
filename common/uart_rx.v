@@ -1,53 +1,39 @@
-module uart_rx(
+module uart_rx #(
+    parameter w = 8,
+    parameter ss = 16
+    )(
     input rst,
     input clk,
     input clken,
-    input baud_x16_strobe,
 
     input rxd,
+    input strobe,
 
-    output reg[7:0] data,
+    output reg[w-1:0] data,
     output reg overflow_error,
     output reg frame_error,
     output reg valid,
     input ready
     );
 
-reg[1:0] prev_samples;
+localparam ss_mid = (ss + 1) / 2 - 1;
+
+reg[w:0] shift_reg;
+wire receiving = &{rxd, shift_reg} == 1'b0;
+
+reg[$clog2(ss)-1:0] strobe_cnt;
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        prev_samples <= 1'sb1;
-    end else if (clken && baud_x16_strobe) begin
-        prev_samples <= { prev_samples[0], rxd };
-    end
-end
-
-reg multisample;
-always @(*) begin
-    case ({ prev_samples, rxd })
-        3'b000: multisample = 1'b0;
-        3'b001: multisample = 1'b0;
-        3'b010: multisample = 1'b0;
-        3'b011: multisample = 1'b1;
-        3'b100: multisample = 1'b0;
-        3'b101: multisample = 1'b1;
-        3'b110: multisample = 1'b1;
-        3'b111: multisample = 1'b1;
-    endcase
-end
-
-reg[8:0] shift_reg;
-wire receiving = multisample == 1'b0 || shift_reg != 9'b111111111;
-
-reg[3:0] strobe_cnt;
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
-        strobe_cnt <= 4'd7;
-    end else if (clken && baud_x16_strobe) begin
-        if (receiving)
-            strobe_cnt <= strobe_cnt - 1'b1;
-        else
-            strobe_cnt <= 4'd7;
+        strobe_cnt <= ss_mid;
+    end else if (clken && strobe) begin
+        if (receiving) begin
+            if (strobe_cnt == 1'b0)
+                strobe_cnt <= ss - 1;
+            else
+                strobe_cnt <= strobe_cnt - 1'b1;
+        end else begin
+            strobe_cnt <= ss_mid;
+        end
     end
 end
 
@@ -57,20 +43,20 @@ always @(posedge clk or posedge rst) begin
         frame_error <= 1'b0;
         overflow_error <= 1'b0;
         valid <= 1'b0;
-        shift_reg <= 9'b111111111;
+        shift_reg <= 1'sb1;
     end else if (clken) begin
         if (valid && ready)
             valid <= 1'b0;
 
-        if (baud_x16_strobe && strobe_cnt == 1'b0) begin
+        if (strobe && strobe_cnt == 1'b0) begin
             if (shift_reg[0] == 1'b0) begin
-                data <= shift_reg[8:1];
-                frame_error <= !multisample;
+                data <= shift_reg[w:1];
+                frame_error <= !rxd;
                 overflow_error <= valid;
                 valid <= 1'b1;
-                shift_reg <= 9'b111111111;
+                shift_reg <= 1'sb1;
             end else begin
-                shift_reg <= { multisample, shift_reg[8:1] };
+                shift_reg <= { rxd, shift_reg[w:1] };
             end
         end
     end
