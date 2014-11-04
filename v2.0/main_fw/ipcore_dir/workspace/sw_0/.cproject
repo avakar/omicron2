@@ -97,6 +97,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 		<cconfiguration id="xilinx.gnu.mb.exe.release.2131888672">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="xilinx.gnu.mb.exe.release.2131888672" moduleId="org.eclipse.cdt.core.settings" name="Release">
@@ -140,7 +141,7 @@
 								<option id="xilinx.gnu.compiler.inferred.swplatform.includes.1691886636" name="Software Platform Include Path" superClass="xilinx.gnu.compiler.inferred.swplatform.includes" valueType="includePath">
 									<listOptionValue builtIn="false" value="../../bsp_0/cpu/include"/>
 								</option>
-								<option id="xilinx.gnu.compiler.misc.other.746517519" name="Other flags" superClass="xilinx.gnu.compiler.misc.other" value="-c -fmessage-length=0" valueType="string"/>
+								<option id="xilinx.gnu.compiler.misc.other.746517519" name="Other flags" superClass="xilinx.gnu.compiler.misc.other" value="-c -fmessage-length=0 -fno-rtti -fno-exceptions" valueType="string"/>
 								<option id="xilinx.gnu.compiler.symbols.defined.1493765531" name="Defined symbols (-D)" superClass="xilinx.gnu.compiler.symbols.defined" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="NDEBUG"/>
 								</option>
@@ -192,6 +193,7 @@
 			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+			<storageModule moduleId="scannerConfiguration"/>
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
