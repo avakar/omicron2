@@ -49,9 +49,6 @@ wire clk_24_s;
 wire strobe_1hz;
 wire strobe_4mhz;
 
-assign vio33 = 1'b0;
-assign vio50 = 1'b0;
-
 wire usb_rx_j, usb_rx_se0;
 wire usb_tx_en, usb_tx_j, usb_tx_se0;
 
@@ -92,6 +89,10 @@ assign s = 16'bzzzz_zzzz_zzzz_zzzz;
 /* 32'hC0000054 */ wire[31:0] io_pic_shift;
 
 /* 32'hC0000058 */ wire[31:0] io_ad0;
+
+/* 32'hC000005C */ wire[15:0] io_vout0_ctrl;
+/* 32'hC000005E */ reg[7:0] io_vout0_min_thres;
+/* 32'hC000005F */ reg[7:0] io_vout0_max_thres;
 
 /* 32'hC0001000 */ wire[31:0] io_usb_mem;
 
@@ -144,6 +145,7 @@ always @(*) begin
         32'hC0000050: cpu0_io_read_data <= io_pic_ctrl;
         32'hC0000054: cpu0_io_read_data <= io_pic_shift;
         32'hC0000058: cpu0_io_read_data <= io_ad0;
+        32'hC000005C: cpu0_io_read_data <= { io_vout0_max_thres, io_vout0_min_thres, io_vout0_ctrl };
         32'hC0001???: cpu0_io_read_data <= io_usb_mem;
         32'hD???????: cpu0_io_read_data <= io_br100;
         32'hE???????: cpu0_io_read_data <= io_br200;
@@ -302,6 +304,38 @@ always @(posedge clk_48 or negedge rst_n) begin
             ad0_value <= adrx0_data;
             ad0_valid <= 1'b1;
             ad0_validity_cntr <= 1'b0;
+        end
+    end
+end
+
+//---------------------------------------------------------------------
+// Vout
+
+reg[1:0] vout0_ctrl;
+wire vout0_thres_valid = ad0_valid && ad0_value >= io_vout0_min_thres && ad0_value <= io_vout0_max_thres;
+
+assign io_vout0_ctrl = { vout0_thres_valid, 6'b0, vout0_ctrl };
+
+assign vio33 = vout0_ctrl == 2'b01;
+assign vio50 = vout0_ctrl == 2'b10;
+
+always @(posedge clk_48 or negedge rst_n) begin
+    if (!rst_n) begin
+        vout0_ctrl <= 1'b0;
+    end else begin
+        if (cpu0_io_addr_strobe && cpu0_io_write_strobe) begin
+            if ({cpu0_io_address[31:2], 2'b00} == 32'hC000005C) begin
+                if (cpu0_io_byte_enable[0])
+                    vout0_ctrl <= cpu0_io_write_data[1:0];
+                if (cpu0_io_byte_enable[2])
+                    io_vout0_min_thres <= cpu0_io_write_data[23:16];
+                if (cpu0_io_byte_enable[3])
+                    io_vout0_max_thres <= cpu0_io_write_data[31:24];
+            end
+        end
+
+        if (!vout0_thres_valid) begin
+            vout0_ctrl <= 1'b0;
         end
     end
 end
@@ -711,7 +745,6 @@ always @(posedge clk_48 or negedge rst_n) begin
     end else begin
         icap0_clk <= icap0_next_clk;
         icap0_next_clk <= icap0_run_clk? !icap0_next_clk: 1'b0;
-
         if (cpu0_io_addr_strobe && cpu0_io_write_strobe) begin
             case ({cpu0_io_address[31:2], 2'b00})
                 32'hC0000028: begin
@@ -719,6 +752,7 @@ always @(posedge clk_48 or negedge rst_n) begin
                     icap0_run_clk <= cpu0_io_write_data[2];
                 end
                 32'hC000002C: begin
+
                     icap0_data <= {
                         cpu0_io_write_data[8],
                         cpu0_io_write_data[9],
@@ -1153,7 +1187,7 @@ end
 
 //---------------------------------------------------------------------
 // LED drivers
-assign led = { io_ledbits[0], s0_overflow, s0_running };
+assign led = io_ledbits;
 
 //---------------------------------------------------------------------
 // DNA

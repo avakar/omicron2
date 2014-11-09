@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include <string.h>
 #include "descs.h"
+#include "stopwatch.hpp"
+using namespace avrlib;
 
 #define LEDBITS *((uint32_t volatile *)0xC0000000)
 #define TMR *((uint32_t volatile *)0xC0000004)
@@ -140,13 +142,23 @@
 
 #define AD0 *((uint16_t volatile *)0xC0000058)
 
-static void wait(uint32_t us)
+#define VOUT0 *((uint16_t volatile *)0xC000005C)
+#define VOUT_VALUE_bm 0x03
+#define VOUT_VALID_bm 0x100
+#define VOUT0_MIN_THRES *((uint8_t volatile *)0xC000005E)
+#define VOUT0_MAX_THRES *((uint8_t volatile *)0xC000005F)
+
+struct timer_t
 {
-	uint32_t base = TMR;
-	while ((TMR - base) <= us)
+	typedef uint32_t value_type;
+	typedef uint32_t time_type;
+	static uint8_t const value_bits = 32;
+
+	static value_type value()
 	{
+		return TMR;
 	}
-}
+} timer;
 
 template <typename T>
 T load_le(uint8_t const * p, uint8_t size = sizeof(T))
@@ -524,7 +536,7 @@ private:
 		while (PIC_STATUS & PIC_BUSY_bm)
 		{
 		}
-		wait(1);
+		wait(timer, 1);
 		return PIC_SHIFT >> (32 - len);
 	}
 
@@ -536,7 +548,7 @@ private:
 		while (PIC_STATUS & PIC_BUSY_bm)
 		{
 		}
-		wait(1);
+		wait(timer, 1);
 		PIC_CTRL = PIC_MCLR_bm;
 	}
 
@@ -1418,6 +1430,9 @@ private:
 	uint8_t m_sn[30];
 };
 
+static uint8_t const g_min_voltage_thres[3] = { 0x00, 0x8A, 0xD7 };
+static uint8_t const g_max_voltage_thres[3] = { 0x0E, 0xA5, 0xFF };
+
 class usb_omicron_handler
 	: public usb_control_handler
 {
@@ -1425,7 +1440,7 @@ public:
 	usb_omicron_handler()
 		: m_running(false), m_start_src_index(0), m_start_recv_index(0)
 	{
-
+		m_voltage_timeout.init_stopped(timer, 100000);
 	}
 
 	void on_usb_reset()
@@ -1484,6 +1499,10 @@ public:
 			}
 		case cmd_move_choke:
 			if (req.wLength == 4)
+				return true;
+			break;
+		case cmd_set_voltage:
+			if (req.wLength == 1)
 				return true;
 			break;
 		}
@@ -1547,9 +1566,17 @@ public:
 				p[1]);
 			return true;
 		case cmd_move_choke:
-			uint32_t addr = load_le<uint32_t>(p);
-			uint8_t new_choke = (addr + 0xff0000) >> 16;
-			SDRAM_DMA_CTRL = (new_choke << SDRAM_DMA_CHOKE_ADDR_gp) | SDRAM_DMA_CHOKE_ENABLE_bm;
+			{
+				uint32_t addr = load_le<uint32_t>(p);
+				uint8_t new_choke = (addr + 0xff0000) >> 16;
+				SDRAM_DMA_CTRL = (new_choke << SDRAM_DMA_CHOKE_ADDR_gp) | SDRAM_DMA_CHOKE_ENABLE_bm;
+			}
+			return true;
+		case cmd_set_voltage:
+			if (p[0] >= 3)
+				return false;
+
+			this->set_voltage(static_cast<voltage_t>(p[0]));
 			return true;
 		}
 
@@ -1709,6 +1736,45 @@ public:
 		m_running = false;
 	}
 
+	enum voltage_t { v_0, v_33, v_50 };
+	voltage_t get_voltage() const
+	{
+		return static_cast<voltage_t>(VOUT0 & VOUT_VALUE_bm);
+	}
+
+	void set_voltage(voltage_t v)
+	{
+		m_next_voltage = v;
+		VOUT0 = 0;
+		VOUT0_MIN_THRES = g_min_voltage_thres[v_0];
+		VOUT0_MAX_THRES = g_max_voltage_thres[v_0];
+		m_voltage_timeout.restart();
+	}
+
+	void process()
+	{
+		uint16_t vout = VOUT0;
+		uint8_t vout_value = vout & VOUT_VALUE_bm;
+		if (m_voltage_timeout)
+		{
+			VOUT0_MIN_THRES = g_min_voltage_thres[vout_value];
+			m_next_voltage = v_0;
+			m_voltage_timeout.cancel();
+		}
+
+		if (vout_value)
+			LEDBITS |= 2;
+		else
+			LEDBITS &= ~2;
+
+		if (m_next_voltage && (vout & VOUT_VALID_bm))
+		{
+			VOUT0_MAX_THRES = g_max_voltage_thres[m_next_voltage];
+			VOUT0 = m_next_voltage;
+			m_next_voltage = v_0;
+		}
+	}
+
 private:
 	enum
 	{
@@ -1721,12 +1787,16 @@ private:
 		cmd_unchoke = 0xc107,
 		cmd_move_choke = 0x4108,
 		cmd_read_voltage = 0xc109,
+		cmd_set_voltage = 0x410a,
 	};
 
 	bool m_running;
 	uint8_t m_serializer_shift;
 	uint64_t m_start_src_index;
 	uint64_t m_start_recv_index;
+
+	voltage_t m_next_voltage;
+	timeout<timer_t> m_voltage_timeout;
 };
 
 int main()
@@ -1761,20 +1831,35 @@ int main()
 				sendhex(AD0);
 				sendch('\n');
 				break;
+			case '1':
+				oh.set_voltage(usb_omicron_handler::v_0);
+				break;
+			case '2':
+				oh.set_voltage(usb_omicron_handler::v_33);
+				break;
+			case '3':
+				oh.set_voltage(usb_omicron_handler::v_50);
+				break;
 			default:
-				send("omicron analyzer -- DFU loader");
-				send("\nbL?\n");
+				send("omicron analyzer -- DFU loader\nbL?");
+				send("\nVOUT0: ");
+				sendhex(VOUT0);
+				send("\nVOUT0_MIN_THRES: ");
+				sendhex(VOUT0_MIN_THRES);
+				send("\nVOUT0_MAX_THRES: ");
+				sendhex(VOUT0_MAX_THRES);
 				if (g_assert_lineno)
 				{
-					send("Assertion failed: ");
+					send("\nAssertion failed: ");
 					sendhex(g_assert_lineno);
-					sendch('\n');
 				}
+				sendch('\n');
 			}
 		}
 
 		pfh.process();
 		dh.process();
+		oh.process();
 
 		if (USB_CTRL & USB_CTRL_RST)
 		{
@@ -1801,13 +1886,10 @@ int main()
 				uc.set_desc_set(ds);
 				last_reset_state = true;
 			}
-
-			LEDBITS |= 2;
 		}
 		else
 		{
 			last_reset_state = false;
-			LEDBITS &= ~2;
 		}
 
 		if ((USB_EP1_IN_STATUS & USB_EP_EMPTY) && usb_dbg_tx_pos)
